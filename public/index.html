@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>STRICT Racing - Super Mario Kart Style</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div id="menu" class="screen active">
+        <div class="menu-container">
+            <h1 class="game-title">🏁 STRICT RACING 🏁</h1>
+            <div class="menu-content">
+                <input type="text" id="username" placeholder="Enter your name" maxlength="20">
+                <button id="singlePlayerBtn" class="menu-btn">Single Player</button>
+                <button id="multiPlayerBtn" class="menu-btn">Multiplayer</button>
+                <button id="leaderboardBtn" class="menu-btn">Leaderboard</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="trackSelect" class="screen">
+        <div class="menu-container">
+            <h2>Select Track</h2>
+            <div class="track-grid">
+                <div class="track-card" data-track="circuit">
+                    <h3>🏎️ Speed Circuit</h3>
+                    <p>A fast oval track with tight turns</p>
+                </div>
+                <div class="track-card" data-track="forest">
+                    <h3>🌲 Forest Path</h3>
+                    <p>Winding path through the woods</p>
+                </div>
+            </div>
+            <button id="backToMenuBtn" class="menu-btn">Back</button>
+        </div>
+    </div>
+
+    <div id="lobby" class="screen">
+        <div class="menu-container">
+            <h2>Multiplayer Lobby</h2>
+            <div id="roomInfo">
+                <p>Room Code: <span id="roomCode"></span></p>
+            </div>
+            <div id="playersList"></div>
+            <button id="startRaceBtn" class="menu-btn">Start Race</button>
+            <button id="leaveLobbyBtn" class="menu-btn">Leave</button>
+        </div>
+    </div>
+
+    <div id="leaderboard" class="screen">
+        <div class="menu-container">
+            <h2>🏆 Leaderboard 🏆</h2>
+            <div id="leaderboardList"></div>
+            <button id="backFromLeaderboardBtn" class="menu-btn">Back</button>
+        </div>
+    </div>
+
+    <div id="game" class="screen">
+        <div id="gameUI">
+            <div id="raceInfo">
+                <div class="ui-element">Lap: <span id="currentLap">1</span>/<span id="totalLaps">3</span></div>
+                <div class="ui-element">Time: <span id="raceTime">0:00</span></div>
+                <div class="ui-element">Position: <span id="position">1</span>/<span id="totalPlayers">4</span></div>
+            </div>
+            <div id="itemSlot">
+                <div id="currentItem"></div>
+            </div>
+            <div id="countdown"></div>
+        </div>
+        <canvas id="gameCanvas"></canvas>
+        <div id="raceResults" class="hidden">
+            <div class="results-container">
+                <h2>Race Results</h2>
+                <div id="resultsContent"></div>
+                <button id="returnToMenuBtn" class="menu-btn">Return to Menu</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/js/game.js"></script>
+    <script src="/js/player.js"></script>
+    <script src="/js/track.js"></script>
+    <script src="/js/items.js"></script>
+    <script src="/js/network.js"></script>
+    <script src="/js/main.js"></script>
+</body>
+</html>

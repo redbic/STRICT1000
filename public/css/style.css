@@ -1,0 +1,251 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Arial', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    overflow: hidden;
+}
+
+.screen {
+    display: none;
+    width: 100vw;
+    height: 100vh;
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.screen.active {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.menu-container {
+    background: rgba(0, 0, 0, 0.8);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+    text-align: center;
+    max-width: 600px;
+    width: 90%;
+}
+
+.game-title {
+    font-size: 3em;
+    margin-bottom: 30px;
+    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.menu-content {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#username {
+    padding: 15px;
+    font-size: 18px;
+    border: none;
+    border-radius: 10px;
+    text-align: center;
+}
+
+.menu-btn {
+    padding: 15px 30px;
+    font-size: 18px;
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+    font-weight: bold;
+}
+
+.menu-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 20px rgba(245, 87, 108, 0.5);
+}
+
+.menu-btn:active {
+    transform: translateY(0);
+}
+
+.track-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin: 30px 0;
+}
+
+.track-card {
+    background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+    padding: 20px;
+    border-radius: 15px;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.track-card:hover {
+    transform: scale(1.05);
+}
+
+.track-card h3 {
+    margin-bottom: 10px;
+    color: #1a1a1a;
+}
+
+.track-card p {
+    color: #333;
+    font-size: 14px;
+}
+
+#game {
+    background: black;
+}
+
+#gameCanvas {
+    display: block;
+    margin: 0 auto;
+    background: #2a5a2a;
+}
+
+#gameUI {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    z-index: 10;
+}
+
+#raceInfo {
+    display: flex;
+    gap: 20px;
+    background: rgba(0, 0, 0, 0.7);
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.ui-element {
+    font-size: 20px;
+    font-weight: bold;
+}
+
+#itemSlot {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 80px;
+    height: 80px;
+    background: rgba(0, 0, 0, 0.7);
+    border: 3px solid #fff;
+    border-radius: 10px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#currentItem {
+    font-size: 40px;
+}
+
+#countdown {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 120px;
+    font-weight: bold;
+    text-shadow: 4px 4px 8px rgba(0, 0, 0, 0.8);
+}
+
+#raceResults {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0, 0, 0, 0.95);
+    padding: 40px;
+    border-radius: 20px;
+    z-index: 100;
+}
+
+#raceResults.hidden {
+    display: none;
+}
+
+.results-container {
+    text-align: center;
+}
+
+.results-container h2 {
+    font-size: 36px;
+    margin-bottom: 20px;
+}
+
+#resultsContent {
+    margin: 20px 0;
+    font-size: 20px;
+}
+
+#playersList {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.player-item {
+    padding: 10px;
+    margin: 5px 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+}
+
+#leaderboardList {
+    background: rgba(255, 255, 255, 0.1);
+    padding: 20px;
+    border-radius: 10px;
+    margin: 20px 0;
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.leaderboard-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 15px;
+    margin: 5px 0;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 5px;
+}
+
+.leaderboard-rank {
+    font-weight: bold;
+    font-size: 24px;
+    width: 40px;
+}
+
+.leaderboard-name {
+    flex: 1;
+    text-align: left;
+    padding: 0 15px;
+}
+
+.leaderboard-stats {
+    text-align: right;
+}
