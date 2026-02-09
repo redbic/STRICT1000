@@ -243,12 +243,12 @@ class Game {
         
         finishedPlayers.forEach((player, index) => {
             const minutes = Math.floor(player.finishTime / 60000);
-            const seconds = ((player.finishTime % 60000) / 1000).toFixed(3);
+            const seconds = String(((player.finishTime % 60000) / 1000).toFixed(3)).padStart(6, '0');
             html += `
                 <div class="result-item">
                     <span class="result-position">${index + 1}.</span>
                     <span class="result-name">${player.username}</span>
-                    <span class="result-time">${minutes}:${seconds.padStart(6, '0')}</span>
+                    <span class="result-time">${minutes}:${seconds}</span>
                 </div>
             `;
         });

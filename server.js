@@ -119,10 +119,15 @@ app.post('/api/race-result', async (req, res) => {
     
     const player = playerResult.rows[0];
     
-    // Update player stats
-    const updateQuery = position === 1 
-      ? 'UPDATE players SET total_races = total_races + 1, wins = wins + 1, best_time = CASE WHEN best_time IS NULL OR $2 < best_time THEN $2 ELSE best_time END WHERE id = $1'
-      : 'UPDATE players SET total_races = total_races + 1, best_time = CASE WHEN best_time IS NULL OR $2 < best_time THEN $2 ELSE best_time END WHERE id = $1';
+    // Build dynamic update query
+    const isWinner = position === 1;
+    const winsIncrement = isWinner ? ', wins = wins + 1' : '';
+    const updateQuery = `
+      UPDATE players 
+      SET total_races = total_races + 1${winsIncrement},
+          best_time = CASE WHEN best_time IS NULL OR $2 < best_time THEN $2 ELSE best_time END 
+      WHERE id = $1
+    `;
     
     await pool.query(updateQuery, [player.id, raceTime]);
     

@@ -59,8 +59,8 @@ function setupEventListeners() {
                 await networkManager.connect();
                 
                 // Generate room ID
-                const roomId = 'room-' + Math.random().toString(36).substr(2, 9);
-                const playerId = 'player-' + Math.random().toString(36).substr(2, 9);
+                const roomId = 'room-' + Math.random().toString(36).substring(2, 11);
+                const playerId = 'player-' + Math.random().toString(36).substring(2, 11);
                 
                 networkManager.joinRoom(roomId, playerId, username);
                 
