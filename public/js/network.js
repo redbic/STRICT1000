@@ -7,8 +7,8 @@ class NetworkManager {
         this.connected = false;
         this.onRoomUpdate = null;
         this.onPlayerState = null;
-        this.onRaceStart = null;
-        this.onItemUsed = null;
+        this.onGameStart = null;
+        this.onAbilityUsed = null;
         this.onPlayerLeft = null;
     }
     
@@ -54,11 +54,11 @@ class NetworkManager {
             case 'player_state':
                 if (this.onPlayerState) this.onPlayerState(data);
                 break;
-            case 'race_start':
-                if (this.onRaceStart) this.onRaceStart(data);
+            case 'game_start':
+                if (this.onGameStart) this.onGameStart(data);
                 break;
-            case 'item_used':
-                if (this.onItemUsed) this.onItemUsed(data);
+            case 'ability_used':
+                if (this.onAbilityUsed) this.onAbilityUsed(data);
                 break;
             case 'player_left':
                 if (this.onPlayerLeft) this.onPlayerLeft(data);
@@ -99,21 +99,21 @@ class NetworkManager {
         });
     }
     
-    startRace() {
+    startGame() {
         if (!this.connected) return;
         
         this.send({
-            type: 'race_start',
+            type: 'game_start',
             roomId: this.roomId
         });
     }
     
-    useItem(itemType, target) {
+    useAbility(abilityType, target) {
         if (!this.connected) return;
         
         this.send({
-            type: 'item_use',
-            itemType: itemType,
+            type: 'ability_use',
+            abilityType: abilityType,
             target: target
         });
     }
