@@ -25,6 +25,33 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupEventListeners() {
+    const singleBtn = document.getElementById('singlePlayerBtn');
+    const multiBtn = document.getElementById('multiPlayerBtn');
+    singleBtn.disabled = true;
+    multiBtn.disabled = true;
+
+    document.getElementById('confirmNameBtn').addEventListener('click', async () => {
+        const username = document.getElementById('username').value.trim();
+        if (!username) {
+            alert('Please enter your name');
+            return;
+        }
+        currentUsername = username;
+        localStorage.setItem('username', username);
+
+        await loadProfile(username);
+
+        // Register player
+        fetch('/api/player', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ username })
+        }).catch(err => console.error('Failed to register player:', err));
+
+        singleBtn.disabled = false;
+        multiBtn.disabled = false;
+    });
+
     // Main menu
     document.getElementById('singlePlayerBtn').addEventListener('click', () => {
         const username = document.getElementById('username').value.trim();
@@ -33,16 +60,6 @@ function setupEventListeners() {
             return;
         }
         currentUsername = username;
-        localStorage.setItem('username', username);
-        
-        // Register player
-        fetch('/api/player', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ username })
-        }).catch(err => console.error('Failed to register player:', err));
-
-        loadProfile(username);
         showScreen('hub');
     });
     
@@ -53,7 +70,6 @@ function setupEventListeners() {
             return;
         }
         currentUsername = username;
-        localStorage.setItem('username', username);
         
         // Initialize network
         if (!networkManager) {
@@ -70,11 +86,9 @@ function setupEventListeners() {
                 document.getElementById('roomCode').textContent = roomId;
                 
                 setupNetworkHandlers();
-                loadProfile(username);
                 showScreen('lobby');
             } catch (error) {
                 alert('Failed to connect to server. Playing single player instead.');
-                loadProfile(username);
                 showScreen('hub');
             }
         }
