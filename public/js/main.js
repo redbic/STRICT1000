@@ -47,6 +47,7 @@ function setupEventListeners() {
         }).catch(err => console.error('Failed to register player:', err));
 
         multiBtn.disabled = false;
+        multiBtn.click();
     });
 
     // Main menu
