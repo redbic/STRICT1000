@@ -50,6 +50,10 @@ class Game {
         });
 
         window.addEventListener('mousedown', (e) => {
+            if (e.button === 2) {
+                e.preventDefault();
+                return;
+            }
             if (e.button !== 0 || !this.localPlayer) return;
 
             const worldX = this.lastMouse.x + this.cameraX;
@@ -63,6 +67,10 @@ class Game {
 
         window.addEventListener('resize', () => {
             this.resizeCanvas();
+        });
+
+        this.canvas.addEventListener('contextmenu', (e) => {
+            e.preventDefault();
         });
     }
 
