@@ -141,6 +141,12 @@ function setupNetworkHandlers() {
         }
     };
     
+    networkManager.onBalanceUpdate = (data) => {
+        const balanceEl = document.getElementById('profileBalanceAmount');
+        const hudBalanceEl = document.getElementById('hudBalanceAmount');
+        if (balanceEl) balanceEl.textContent = Number(data.balance).toFixed(2);
+        if (hudBalanceEl) hudBalanceEl.textContent = Number(data.balance).toFixed(2);
+    };
     
     networkManager.onPlayerLeft = (data) => {
         if (game) {
@@ -241,6 +247,33 @@ function startGame(zoneName, isMultiplayer = false) {
             game.transitionZone(targetZoneId, false);
         }
     };
+    
+    // Wire up enemy kill callback
+    game.onEnemyKilled = (enemyId, zone) => {
+        if (networkManager && networkManager.connected) {
+            networkManager.sendEnemyKilled(enemyId, zone);
+        } else {
+            // Fallback: use REST API for single-player or no WebSocket
+            fetch('/api/balance/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: currentUsername,
+                    amount: 5,
+                    reason: 'enemy_kill',
+                    metadata: { game: 'strict1000', enemy: enemyId, zone: zone }
+                })
+            }).then(res => res.json()).then(data => {
+                if (data.balance !== undefined) {
+                    const balanceEl = document.getElementById('profileBalanceAmount');
+                    const hudBalanceEl = document.getElementById('hudBalanceAmount');
+                    if (balanceEl) balanceEl.textContent = Number(data.balance).toFixed(2);
+                    if (hudBalanceEl) hudBalanceEl.textContent = Number(data.balance).toFixed(2);
+                }
+            }).catch(err => console.error('Balance update failed:', err));
+        }
+    };
+    
     showScreen('game');
     game.start();
     

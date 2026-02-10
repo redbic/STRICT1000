@@ -4,6 +4,7 @@ const WebSocket = require('ws');
 const path = require('path');
 const { Pool } = require('pg');
 const rateLimit = require('express-rate-limit');
+const currency = require('./server/currency');
 require('dotenv').config();
 
 const app = express();
@@ -12,6 +13,7 @@ const wss = new WebSocket.Server({ server });
 
 const PORT = process.env.PORT || 3000;
 const MAX_PARTY_SIZE = 6;
+const ENEMY_KILL_REWARD = 5; // coins per enemy killed
 
 // PostgreSQL connection pool for Neon.tech
 let pool = null;
@@ -92,6 +94,23 @@ app.get('/api/profile', async (req, res) => {
   }
 });
 
+// API endpoint for balance operations
+app.post('/api/balance/add', async (req, res) => {
+  const { username, amount, reason, metadata } = req.body;
+  
+  if (!username || typeof amount !== 'number') {
+    return res.status(400).json({ error: 'Invalid request' });
+  }
+  
+  const newBalance = await currency.addBalance(pool, username, amount, reason || 'manual', metadata || {});
+  
+  if (newBalance === null) {
+    return res.status(500).json({ error: 'Failed to update balance' });
+  }
+  
+  res.json({ success: true, balance: newBalance });
+});
+
 // WebSocket game rooms
 const gameRooms = new Map();
 
@@ -118,6 +137,9 @@ wss.on('connection', (ws) => {
         case 'zone_enter':
           handleZoneEnter(ws, data);
           break;
+        case 'enemy_killed':
+          handleEnemyKilled(ws, data);
+          break;
       }
     } catch (error) {
       console.error('WebSocket message error:', error);
@@ -135,7 +157,8 @@ function handleJoinRoom(ws, data) {
   if (!gameRooms.has(roomId)) {
     gameRooms.set(roomId, {
       players: [],
-      started: false
+      started: false,
+      killedEnemies: new Set() // Track killed enemies to prevent double-rewards
     });
   }
   
@@ -156,6 +179,7 @@ function handleJoinRoom(ws, data) {
   room.players.push(player);
   ws.roomId = roomId;
   ws.playerId = playerId;
+  ws.username = username; // Store username on WebSocket object
   
   // Notify all players in room
   broadcastToRoom(roomId, {
@@ -213,6 +237,46 @@ function handleZoneEnter(ws, data) {
       zoneId: data.zoneId,
       playerId: ws.playerId
     });
+  }
+}
+
+async function handleEnemyKilled(ws, data) {
+  const { enemyId, zone } = data;
+  
+  if (!ws.roomId || !ws.username || !enemyId) {
+    return;
+  }
+  
+  const room = gameRooms.get(ws.roomId);
+  if (!room) {
+    return;
+  }
+  
+  // Check if this enemy has already been rewarded
+  const enemyKey = `${zone || 'unknown'}-${enemyId}`;
+  if (room.killedEnemies.has(enemyKey)) {
+    console.log(`Enemy ${enemyKey} already rewarded, skipping`);
+    return;
+  }
+  
+  // Mark enemy as killed
+  room.killedEnemies.add(enemyKey);
+  
+  // Award coins
+  const newBalance = await currency.addBalance(
+    pool, 
+    ws.username, 
+    ENEMY_KILL_REWARD, 
+    'enemy_kill',
+    { game: 'strict1000', enemy: enemyId, zone: zone || 'unknown' }
+  );
+  
+  if (newBalance !== null) {
+    // Send balance update to the player
+    ws.send(JSON.stringify({
+      type: 'balance_update',
+      balance: newBalance
+    }));
   }
 }
 

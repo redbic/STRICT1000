@@ -19,6 +19,7 @@ class Game {
         this.enemies = [];
         this.attackFx = { active: false, timer: 0, angle: 0 };
         this.lastMouse = { x: 0, y: 0 };
+        this.onEnemyKilled = null; // Callback for when an enemy is killed
         
         // Bind keyboard events
         const normalizeKey = (event) => {
@@ -136,7 +137,15 @@ class Game {
         // No abilities or pickups for now
         
         // Check enemy defeats
+        const newlyDead = this.enemies.filter(enemy => enemy.hp <= 0);
         this.enemies = this.enemies.filter(enemy => enemy.hp > 0);
+        
+        // Notify about kills
+        newlyDead.forEach(enemy => {
+            if (this.onEnemyKilled) {
+                this.onEnemyKilled(enemy.id, this.zone ? this.zone.name : 'unknown');
+            }
+        });
         
         // Update camera (follow local player)
         if (this.localPlayer) {
