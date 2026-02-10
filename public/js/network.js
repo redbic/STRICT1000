@@ -11,6 +11,7 @@ class NetworkManager {
         this.onPlayerLeft = null;
         this.onRoomFull = null;
         this.onZoneEnter = null;
+        this.onBalanceUpdate = null; // Callback for balance updates
     }
     
     connect() {
@@ -67,6 +68,9 @@ class NetworkManager {
             case 'zone_enter':
                 if (this.onZoneEnter) this.onZoneEnter(data);
                 break;
+            case 'balance_update':
+                if (this.onBalanceUpdate) this.onBalanceUpdate(data);
+                break;
         }
     }
     
@@ -117,6 +121,15 @@ class NetworkManager {
         this.send({
             type: 'zone_enter',
             zoneId: zoneId
+        });
+    }
+    
+    sendEnemyKilled(enemyId, zone) {
+        if (!this.connected) return;
+        this.send({
+            type: 'enemy_killed',
+            enemyId: enemyId,
+            zone: zone
         });
     }
     

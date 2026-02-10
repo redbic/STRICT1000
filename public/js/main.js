@@ -5,6 +5,14 @@ let currentUsername = '';
 let currentRoomPlayers = [];
 let currentProfile = null;
 
+// Helper function to update balance display
+function updateBalanceDisplay(balance) {
+    const balanceEl = document.getElementById('profileBalanceAmount');
+    const hudBalanceEl = document.getElementById('hudBalanceAmount');
+    if (balanceEl) balanceEl.textContent = Number(balance).toFixed(2);
+    if (hudBalanceEl) hudBalanceEl.textContent = Number(balance).toFixed(2);
+}
+
 // Screen management
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(screen => {
@@ -141,6 +149,9 @@ function setupNetworkHandlers() {
         }
     };
     
+    networkManager.onBalanceUpdate = (data) => {
+        updateBalanceDisplay(data.balance);
+    };
     
     networkManager.onPlayerLeft = (data) => {
         if (game) {
@@ -241,6 +252,31 @@ function startGame(zoneName, isMultiplayer = false) {
             game.transitionZone(targetZoneId, false);
         }
     };
+    
+    // Wire up enemy kill callback
+    game.onEnemyKilled = (enemyId, zone) => {
+        if (networkManager && networkManager.connected) {
+            networkManager.sendEnemyKilled(enemyId, zone);
+        } else {
+            // Fallback: use REST API for single-player or no WebSocket
+            // Note: Reward amount should match ENEMY_KILL_REWARD in server.js (5 coins)
+            fetch('/api/balance/add', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: currentUsername,
+                    amount: 5,
+                    reason: 'enemy_kill',
+                    metadata: { game: 'strict1000', enemy: enemyId, zone: zone }
+                })
+            }).then(res => res.json()).then(data => {
+                if (data.balance !== undefined) {
+                    updateBalanceDisplay(data.balance);
+                }
+            }).catch(err => console.error('Balance update failed:', err));
+        }
+    };
+    
     showScreen('game');
     game.start();
     
