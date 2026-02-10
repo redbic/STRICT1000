@@ -8,6 +8,8 @@ class Player {
         this.color = color || '#3498db';
         this.id = id;
         this.username = username || 'Player';
+        this.avatarUrl = '';
+        this.avatarImg = null;
         
         // Physics
         this.velocityX = 0;
@@ -135,12 +137,31 @@ class Player {
         
         ctx.restore();
         
-        // Draw username above character
+        // Draw avatar + username above character
+        const labelY = screenY - 26;
+        if (this.avatarImg && this.avatarImg.complete) {
+            const size = 20;
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(this.avatarImg, screenX - size / 2, labelY - size, size, size);
+        } else {
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('👽', screenX, labelY - 6);
+        }
+
         ctx.fillStyle = 'white';
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
-        ctx.fillText(this.username, screenX, screenY - 20);
+        ctx.fillText(this.username, screenX, labelY + 12);
         
+    }
+
+    setAvatar(url) {
+        if (!url || this.avatarUrl === url) return;
+        this.avatarUrl = url;
+        this.avatarImg = new Image();
+        this.avatarImg.src = url;
     }
 
     tryAttack(enemies) {

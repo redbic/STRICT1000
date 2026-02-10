@@ -116,6 +116,7 @@ function setupNetworkHandlers() {
         currentRoomPlayers = data.players || [];
         if (game && networkManager) {
             game.syncMultiplayerPlayers(currentRoomPlayers, networkManager.playerId);
+            hydrateRoomAvatars(currentRoomPlayers);
         }
     };
     
@@ -171,8 +172,30 @@ async function loadProfile(username) {
         const avatarUrl = data.character && data.character.dataURL ? data.character.dataURL : '';
         updateAvatar('profileAvatarImg', 'profileAvatarPlaceholder', avatarUrl);
         updateAvatar('hudAvatarImg', 'hudAvatarPlaceholder', avatarUrl);
+        if (game && game.localPlayer) {
+            game.localPlayer.setAvatar(avatarUrl);
+        }
     } catch (error) {
         console.error('Failed to load profile:', error);
+    }
+}
+
+async function hydrateRoomAvatars(players) {
+    if (!game || !players) return;
+    const targets = players.filter(p => p && p.username);
+    for (const p of targets) {
+        const playerObj = game.players.find(player => player.username === p.username);
+        if (!playerObj) continue;
+        if (playerObj.avatarUrl) continue;
+        try {
+            const res = await fetch(`/api/profile?name=${encodeURIComponent(p.username)}`);
+            const data = await res.json();
+            if (data && data.character && data.character.dataURL) {
+                playerObj.setAvatar(data.character.dataURL);
+            }
+        } catch (err) {
+            console.error('Failed to hydrate avatar:', err);
+        }
     }
 }
 
