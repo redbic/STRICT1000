@@ -90,8 +90,9 @@ class Game {
         this.players.push(this.localPlayer);
         
         // Add enemies for single player
-        if (!isMultiplayer) {
-            for (let i = 1; i < 4; i++) {
+        if (!isMultiplayer && !this.zone.isHub) {
+            const enemyCount = this.zone.enemyCount || 3;
+            for (let i = 1; i <= enemyCount; i++) {
                 const enemy = new Player(
                     this.zone.startX + (i * 120) - 180,
                     this.zone.startY + 200,

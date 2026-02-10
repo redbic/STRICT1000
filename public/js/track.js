@@ -233,6 +233,7 @@ const ZONES = {
         wallColor: '#2f2b38',
         floorColor: '#17151c',
         totalLevels: 2,
+        enemyCount: 1,
         walls: [
             // Outer boundary
             { x: 0, y: 0, width: 1600, height: 40 },
