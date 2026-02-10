@@ -70,6 +70,8 @@ class Game {
         this.zone = new Zone(zoneData);
         this.players = [];
         this.enemies = [];
+        this.lastPortalId = null;
+        this.portalCooldown = 0;
         this.keys = {};
         this.score = 0;
         
@@ -160,10 +162,65 @@ class Game {
         // Update UI
         this.updateUI();
         
+        // Handle portals
+        this.handlePortalTransitions();
+
         // Check game over (skip in hub)
         if (!this.zone.isHub) {
             this.checkGameOver();
         }
+    }
+
+    handlePortalTransitions() {
+        if (!this.zone || !this.localPlayer) return;
+        if (this.portalCooldown > 0) {
+            this.portalCooldown--;
+            return;
+        }
+
+        const portal = this.zone.getPortalAt(this.localPlayer.x, this.localPlayer.y);
+        if (!portal) {
+            this.lastPortalId = null;
+            return;
+        }
+        if (this.lastPortalId === portal.id) return;
+
+        if (this.onPortalEnter) {
+            this.onPortalEnter(portal.id);
+        } else {
+            this.transitionZone(portal.id, false);
+        }
+
+        this.lastPortalId = portal.id;
+        this.portalCooldown = 30;
+    }
+
+    transitionZone(zoneName, isMultiplayer, roster = [], localId = '') {
+        this.init(zoneName, this.localPlayer ? this.localPlayer.username : 'Player', isMultiplayer);
+        if (isMultiplayer) {
+            this.syncMultiplayerPlayers(roster, localId);
+        }
+    }
+
+    syncMultiplayerPlayers(roster, localId) {
+        if (!Array.isArray(roster)) return;
+
+        const existing = new Map(this.players.map(p => [p.id, p]));
+        roster.forEach(playerInfo => {
+            if (playerInfo.id === localId) return;
+            if (existing.has(playerInfo.id)) return;
+
+            const colors = ['#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c'];
+            const color = colors[existing.size % colors.length];
+            const remotePlayer = new Player(
+                this.zone.startX + (existing.size * 30) - 60,
+                this.zone.startY + 40,
+                color,
+                playerInfo.id,
+                playerInfo.username
+            );
+            this.players.push(remotePlayer);
+        });
     }
     
     updateEnemy(enemy) {

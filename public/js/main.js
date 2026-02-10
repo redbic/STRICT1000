@@ -2,6 +2,7 @@
 let game = null;
 let networkManager = null;
 let currentUsername = '';
+let currentRoomPlayers = [];
 
 // Screen management
 function showScreen(screenId) {
@@ -120,6 +121,10 @@ function setupEventListeners() {
 function setupNetworkHandlers() {
     networkManager.onRoomUpdate = (data) => {
         updatePlayersList(data.players);
+        currentRoomPlayers = data.players || [];
+        if (game && networkManager) {
+            game.syncMultiplayerPlayers(currentRoomPlayers, networkManager.playerId);
+        }
     };
     
     networkManager.onPlayerState = (data) => {
@@ -132,7 +137,13 @@ function setupNetworkHandlers() {
     };
     
     networkManager.onGameStart = (data) => {
-        startGame('forest', true);
+        startGame('hub', true);
+    };
+
+    networkManager.onZoneEnter = (data) => {
+        if (game && data.zoneId) {
+            game.transitionZone(data.zoneId, true, currentRoomPlayers, networkManager.playerId);
+        }
     };
     
     networkManager.onAbilityUsed = (data) => {
@@ -173,17 +184,25 @@ function updatePlayersList(players) {
     });
 }
 
-function startGame(trackName, isMultiplayer = false) {
+function startGame(zoneName, isMultiplayer = false) {
     if (!game) {
         game = new Game();
     }
     
-    game.init(trackName, currentUsername, isMultiplayer);
+    game.init(zoneName, currentUsername, isMultiplayer);
+    game.onPortalEnter = (targetZoneId) => {
+        if (isMultiplayer && networkManager) {
+            networkManager.enterZone(targetZoneId);
+        } else {
+            game.transitionZone(targetZoneId, false);
+        }
+    };
     showScreen('game');
     game.start();
     
     // Send updates to server if multiplayer
     if (isMultiplayer && networkManager) {
+        game.syncMultiplayerPlayers(currentRoomPlayers, networkManager.playerId);
         setInterval(() => {
             if (game.localPlayer && game.running) {
                 networkManager.sendPlayerUpdate(game.localPlayer.getState());

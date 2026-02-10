@@ -182,6 +182,9 @@ wss.on('connection', (ws) => {
         case 'ability_use':
           handleAbilityUse(ws, data);
           break;
+        case 'zone_enter':
+          handleZoneEnter(ws, data);
+          break;
       }
     } catch (error) {
       console.error('WebSocket message error:', error);
@@ -278,6 +281,16 @@ function handleAbilityUse(ws, data) {
       abilityType: data.abilityType,
       target: data.target
     }, ws);
+  }
+}
+
+function handleZoneEnter(ws, data) {
+  if (ws.roomId && data.zoneId) {
+    broadcastToRoom(ws.roomId, {
+      type: 'zone_enter',
+      zoneId: data.zoneId,
+      playerId: ws.playerId
+    });
   }
 }
 

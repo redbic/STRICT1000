@@ -11,6 +11,7 @@ class NetworkManager {
         this.onAbilityUsed = null;
         this.onPlayerLeft = null;
         this.onRoomFull = null;
+        this.onZoneEnter = null;
     }
     
     connect() {
@@ -67,6 +68,9 @@ class NetworkManager {
             case 'room_full':
                 if (this.onRoomFull) this.onRoomFull(data);
                 break;
+            case 'zone_enter':
+                if (this.onZoneEnter) this.onZoneEnter(data);
+                break;
         }
     }
     
@@ -109,6 +113,14 @@ class NetworkManager {
         this.send({
             type: 'game_start',
             roomId: this.roomId
+        });
+    }
+
+    enterZone(zoneId) {
+        if (!this.connected) return;
+        this.send({
+            type: 'zone_enter',
+            zoneId: zoneId
         });
     }
     

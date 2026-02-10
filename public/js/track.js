@@ -11,6 +11,7 @@ class Zone {
         this.nodes = zoneData.nodes || [];
         this.walls = zoneData.walls || [];
         this.pickups = zoneData.pickups || [];
+        this.portals = zoneData.portals || [];
         this.totalLevels = zoneData.totalLevels || 3;
     }
     
@@ -83,6 +84,23 @@ class Zone {
                 }
             }
         });
+
+        // Draw portals
+        this.portals.forEach(portal => {
+            if (this.isVisible(portal, cameraX, cameraY, ctx.canvas.width, ctx.canvas.height)) {
+                ctx.strokeStyle = 'rgba(120, 200, 255, 0.8)';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.arc(
+                    portal.x + portal.width / 2 - cameraX,
+                    portal.y + portal.height / 2 - cameraY,
+                    Math.min(portal.width, portal.height) / 2,
+                    0,
+                    Math.PI * 2
+                );
+                ctx.stroke();
+            }
+        });
     }
     
     isVisible(rect, cameraX, cameraY, viewWidth, viewHeight) {
@@ -151,6 +169,20 @@ class Zone {
         }
         return false;
     }
+
+    getPortalAt(x, y) {
+        for (const portal of this.portals) {
+            if (
+                x > portal.x &&
+                x < portal.x + portal.width &&
+                y > portal.y &&
+                y < portal.y + portal.height
+            ) {
+                return portal;
+            }
+        }
+        return null;
+    }
 }
 
 // Zone definitions
@@ -187,6 +219,44 @@ const ZONES = {
         nodes: [
             { x: 860, y: 660, width: 80, height: 80 }
         ],
+        portals: [
+            { id: 'archive_entry', x: 870, y: 610, width: 60, height: 60, label: 'Archive Entry' }
+        ],
         pickups: []
+    },
+    archive_entry: {
+        name: 'Archive Entry',
+        width: 1600,
+        height: 1200,
+        startX: 800,
+        startY: 1050,
+        wallColor: '#2f2b38',
+        floorColor: '#17151c',
+        totalLevels: 2,
+        walls: [
+            // Outer boundary
+            { x: 0, y: 0, width: 1600, height: 40 },
+            { x: 0, y: 0, width: 40, height: 1200 },
+            { x: 0, y: 1160, width: 1600, height: 40 },
+            { x: 1560, y: 0, width: 40, height: 1200 },
+
+            // Room pillars
+            { x: 360, y: 300, width: 80, height: 120 },
+            { x: 1160, y: 300, width: 80, height: 120 },
+            { x: 360, y: 720, width: 80, height: 120 },
+            { x: 1160, y: 720, width: 80, height: 120 }
+        ],
+        nodes: [
+            { x: 760, y: 120, width: 80, height: 80 },
+            { x: 200, y: 520, width: 80, height: 80 },
+            { x: 1320, y: 520, width: 80, height: 80 }
+        ],
+        portals: [
+            { id: 'hub', x: 770, y: 1080, width: 60, height: 60, label: 'Return to Hub' }
+        ],
+        pickups: [
+            { x: 520, y: 520, collected: false, respawnTime: 0 },
+            { x: 1080, y: 520, collected: false, respawnTime: 0 }
+        ]
     }
 };
