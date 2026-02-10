@@ -1,20 +1,20 @@
-# STRICT Racing 🏁
+# STRICT Adventure ⚔️
 
-A browser-based party racing game inspired by SNES Super Mario Kart with top-down 2D perspective, power-ups, multiple tracks, and multiplayer support.
+A browser-based top-down adventure game inspired by Realm of the Mad God, Undertale, and Inscryption with exploration, combat, NPCs, and multiplayer support.
 
 ## Features
 
-- **Top-down 2D Racing**: Classic SNES Mario Kart-style perspective
-- **Multiple Tracks**: Speed Circuit and Forest Path with unique layouts
-- **Power-up System**: 
-  - 🚀 Speed Boost - Temporary speed increase
-  - 🐚 Shell - Stun nearest opponent
-  - ⭐ Star - Invincibility
-  - 🍌 Banana - Place hazard on track
-- **Single Player**: Race against AI opponents
-- **Multiplayer**: Real-time racing with WebSocket support
-- **Leaderboard**: Track your best times and wins
-- **Responsive Controls**: WASD or Arrow keys + Space for items
+- **Top-down 2D Exploration**: Realm of the Mad God-style perspective
+- **Multiple Areas**: Dark Forest and Ancient Dungeon with unique layouts
+- **Ability System**:
+  - ⚔️ Sword Strike - Melee attack
+  - 🛡️ Shield Block - Temporary defense
+  - 💫 Dash - Quick dodge movement
+  - 🔥 Fireball - Ranged magic attack
+- **Single Player**: Explore and battle against enemies
+- **Multiplayer**: Real-time co-op with WebSocket support
+- **Leaderboard**: Track your scores and progress
+- **Responsive Controls**: WASD or Arrow keys + Space for abilities
 
 ## Tech Stack
 
@@ -88,24 +88,24 @@ npm run dev
 
 ### Controls
 
-- **Arrow Keys** or **WASD**: Steer and accelerate
-- **Space**: Use current power-up
-- **ESC**: Pause (in development)
+- **Arrow Keys** or **WASD**: Movement
+- **Space**: Use ability
+- **ESC**: Pause
 
 ### Game Modes
 
-**Single Player**: Race against 3 AI opponents on your chosen track
+**Single Player**: Explore areas and fight enemies
 
-**Multiplayer**: Create or join a room and race with friends in real-time
+**Multiplayer**: Co-op with friends in real-time
 
 ### Tips
 
-- Collect item boxes (?) to get power-ups
-- Use power-ups strategically to gain advantage
-- Complete 3 laps to finish the race
-- Hit checkpoints to track your progress
-- Avoid banana hazards and opponent shells
-- Use the star for invincibility when in tight situations
+- Explore areas to find items
+- Use abilities strategically
+- Defeat enemies to earn points
+- Avoid enemy attacks
+- Use the shield when overwhelmed
+- Discover secrets in each area
 
 ## Project Structure
 
@@ -116,9 +116,9 @@ STRICT/
 │   │   └── style.css          # Game styling
 │   ├── js/
 │   │   ├── game.js            # Main game engine
-│   │   ├── player.js          # Player/kart mechanics
-│   │   ├── track.js           # Track definitions
-│   │   ├── items.js           # Power-up system
+│   │   ├── player.js          # Player/character mechanics
+│   │   ├── track.js           # World/area definitions
+│   │   ├── items.js           # Ability system
 │   │   ├── network.js         # WebSocket client
 │   │   └── main.js            # UI and app logic
 │   └── index.html             # Main HTML
@@ -133,7 +133,7 @@ STRICT/
 - `GET /`: Serve the game
 - `GET /api/leaderboard`: Get top 10 players
 - `POST /api/player`: Register/update player
-- `POST /api/race-result`: Submit race results
+- `POST /api/game-result`: Submit game results
 - `WebSocket`: Real-time multiplayer communication
 
 ## Database Schema
@@ -141,29 +141,29 @@ STRICT/
 ### Players Table
 - `id`: Serial primary key
 - `username`: Unique player name
-- `total_races`: Total races completed
-- `wins`: Number of first place finishes
-- `best_time`: Best lap time in milliseconds
+- `total_games`: Total games completed
+- `high_score`: Cumulative high score across all games
+- `best_score`: Best score in a single game session
 - `created_at`: Timestamp
 
-### Race Results Table
+### Game Results Table
 - `id`: Serial primary key
 - `player_id`: Foreign key to players
-- `track_name`: Name of the track
-- `race_time`: Time in milliseconds
-- `position`: Finish position
+- `area_name`: Name of the area
+- `score`: Points earned
+- `level_reached`: Furthest level reached
 - `created_at`: Timestamp
 
 ## Future Enhancements
 
-- Additional tracks
-- More power-ups
-- Ghost racing (race against your best time)
-- Tournament mode
-- Custom kart selection
+- Additional areas
+- More abilities
+- Boss battles
+- Card-based encounters (Inscryption style)
+- Story/dialogue system (Undertale style)
 - Sound effects and music
 - Mobile touch controls
-- Power-up balance adjustments
+- Ability balance adjustments
 
 ## License
 
@@ -171,4 +171,4 @@ MIT
 
 ## Credits
 
-Inspired by SNES Super Mario Kart and modern browser-based racing games.
+Inspired by Realm of the Mad God, Undertale, and Inscryption.
