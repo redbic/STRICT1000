@@ -1,24 +1,24 @@
-// Item system for power-ups
+// Ability system for adventure
 const ITEM_TYPES = {
-    boost: {
-        name: 'Speed Boost',
-        icon: '🚀',
-        description: 'Temporary speed increase'
+    dash: {
+        name: 'Dash',
+        icon: '💫',
+        description: 'Quick burst of speed'
     },
-    shell: {
-        name: 'Shell',
-        icon: '🐚',
-        description: 'Stun nearest player'
+    sword: {
+        name: 'Sword Strike',
+        icon: '⚔️',
+        description: 'Strike nearest enemy'
     },
-    star: {
-        name: 'Star',
-        icon: '⭐',
-        description: 'Invincibility'
+    shield: {
+        name: 'Shield Block',
+        icon: '🛡️',
+        description: 'Temporary invincibility'
     },
-    banana: {
-        name: 'Banana',
-        icon: '🍌',
-        description: 'Place hazard on track'
+    fireball: {
+        name: 'Fireball',
+        icon: '🔥',
+        description: 'Launch a fireball'
     }
 };
 
@@ -35,8 +35,8 @@ class ItemManager {
                 
                 const dist = Math.hypot(player.x - hazard.x, player.y - hazard.y);
                 if (dist < 25) {
-                    // Hit banana
-                    if (hazard.type === 'banana') {
+                    // Hit by fireball
+                    if (hazard.type === 'fireball') {
                         player.stunned = true;
                         player.stunnedTime = 60;
                         this.hazards.splice(index, 1);
@@ -50,8 +50,8 @@ class ItemManager {
         // Draw hazards
         ctx.font = '30px Arial';
         this.hazards.forEach(hazard => {
-            if (hazard.type === 'banana') {
-                ctx.fillText('🍌', hazard.x - cameraX - 15, hazard.y - cameraY + 15);
+            if (hazard.type === 'fireball') {
+                ctx.fillText('🔥', hazard.x - cameraX - 15, hazard.y - cameraY + 15);
             }
         });
     }
