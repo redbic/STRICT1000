@@ -5,6 +5,14 @@ let currentUsername = '';
 let currentRoomPlayers = [];
 let currentProfile = null;
 
+// Helper function to update balance display
+function updateBalanceDisplay(balance) {
+    const balanceEl = document.getElementById('profileBalanceAmount');
+    const hudBalanceEl = document.getElementById('hudBalanceAmount');
+    if (balanceEl) balanceEl.textContent = Number(balance).toFixed(2);
+    if (hudBalanceEl) hudBalanceEl.textContent = Number(balance).toFixed(2);
+}
+
 // Screen management
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(screen => {
@@ -142,10 +150,7 @@ function setupNetworkHandlers() {
     };
     
     networkManager.onBalanceUpdate = (data) => {
-        const balanceEl = document.getElementById('profileBalanceAmount');
-        const hudBalanceEl = document.getElementById('hudBalanceAmount');
-        if (balanceEl) balanceEl.textContent = Number(data.balance).toFixed(2);
-        if (hudBalanceEl) hudBalanceEl.textContent = Number(data.balance).toFixed(2);
+        updateBalanceDisplay(data.balance);
     };
     
     networkManager.onPlayerLeft = (data) => {
@@ -254,6 +259,7 @@ function startGame(zoneName, isMultiplayer = false) {
             networkManager.sendEnemyKilled(enemyId, zone);
         } else {
             // Fallback: use REST API for single-player or no WebSocket
+            // Note: Reward amount should match ENEMY_KILL_REWARD in server.js (5 coins)
             fetch('/api/balance/add', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -265,10 +271,7 @@ function startGame(zoneName, isMultiplayer = false) {
                 })
             }).then(res => res.json()).then(data => {
                 if (data.balance !== undefined) {
-                    const balanceEl = document.getElementById('profileBalanceAmount');
-                    const hudBalanceEl = document.getElementById('hudBalanceAmount');
-                    if (balanceEl) balanceEl.textContent = Number(data.balance).toFixed(2);
-                    if (hudBalanceEl) hudBalanceEl.textContent = Number(data.balance).toFixed(2);
+                    updateBalanceDisplay(data.balance);
                 }
             }).catch(err => console.error('Balance update failed:', err));
         }
