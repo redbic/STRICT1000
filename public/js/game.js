@@ -8,6 +8,7 @@ class Game {
         this.players = [];
         this.localPlayer = null;
         this.zone = null;
+        this.npcs = [];
         
         this.keys = {};
         this.running = false;
@@ -103,6 +104,7 @@ class Game {
         this.zone = new Zone(zoneData);
         this.players = [];
         this.enemies = [];
+        this.npcs = (zoneData.npcs || []).map(n => new NPC(n.x, n.y, n.name, n.color));
         this.lastPortalId = null;
         this.portalCooldown = 0;
         this.keys = {};
@@ -175,6 +177,13 @@ class Game {
             return;
         }
         if (this.lastPortalId === portal.id) return;
+        
+        // Check if portal is locked
+        if (portal.locked) {
+            this.lastPortalId = portal.id;
+            this.portalCooldown = 30;
+            return;
+        }
 
         if (this.onPortalEnter) {
             this.onPortalEnter(portal.id);
@@ -245,6 +254,11 @@ class Game {
 
         this.enemies.forEach(enemy => {
             enemy.draw(this.ctx, this.cameraX, this.cameraY);
+        });
+
+        // Draw NPCs
+        this.npcs.forEach(npc => {
+            npc.draw(this.ctx, this.cameraX, this.cameraY);
         });
 
         this.drawAttackFx();

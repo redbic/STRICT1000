@@ -75,6 +75,23 @@ class Zone {
                     Math.PI * 2
                 );
                 ctx.stroke();
+                
+                // Draw portal label if it exists
+                if (portal.label) {
+                    const centerX = portal.x + portal.width / 2 - cameraX;
+                    const centerY = portal.y + portal.height / 2 - cameraY;
+                    
+                    ctx.font = '12px monospace';
+                    ctx.textAlign = 'center';
+                    
+                    if (portal.locked) {
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+                        ctx.fillText('🔒 ' + portal.label, centerX, centerY + 30);
+                    } else {
+                        ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                        ctx.fillText(portal.label, centerX, centerY + 30);
+                    }
+                }
             }
         });
     }
@@ -144,32 +161,47 @@ class Zone {
 // Zone definitions
 const ZONES = {
     hub: {
-        name: 'The Archive Hub',
+        name: 'Hotel Lobby',
         width: 1800,
         height: 1400,
         startX: 900,
         startY: 700,
         isHub: true,
         enemyCount: 0,
-        wallColor: '#3a2f2a',
-        floorColor: '#1f1a18',
+        wallColor: '#2e2420',
+        floorColor: '#1a1510',
         totalLevels: 1,
         walls: [
             // Outer boundary
             { x: 0, y: 0, width: 1800, height: 50 },
             { x: 0, y: 0, width: 50, height: 1400 },
             { x: 0, y: 1350, width: 1800, height: 50 },
-            { x: 1750, y: 0, width: 50, height: 1400 }
+            { x: 1750, y: 0, width: 50, height: 1400 },
+            // Reception desk (horizontal wall near top-center)
+            { x: 750, y: 300, width: 300, height: 20 },
+            // Pillars/columns (decorative)
+            { x: 300, y: 400, width: 30, height: 30 },
+            { x: 1470, y: 400, width: 30, height: 30 },
+            { x: 300, y: 900, width: 30, height: 30 },
+            { x: 1470, y: 900, width: 30, height: 30 },
+            // Corridor partitions
+            { x: 600, y: 1100, width: 100, height: 15 },
+            { x: 1100, y: 1100, width: 100, height: 15 }
         ],
         nodes: [
             { x: 860, y: 660, width: 80, height: 80 }
         ],
         portals: [
-            { id: 'archive_entry', x: 870, y: 610, width: 60, height: 60, label: 'Hallway' }
+            { id: 'archive_entry', x: 870, y: 610, width: 60, height: 60, label: 'The Archive' },
+            { id: 'archive_entry', x: 400, y: 350, width: 60, height: 60, label: 'Room 102' },
+            { id: 'locked_room', x: 1340, y: 350, width: 60, height: 60, label: 'Room 237 (Locked)', locked: true }
         ],
+        npcs: [
+            { x: 900, y: 400, name: 'The Curator', color: '#d4a745' }
+        ]
     },
     archive_entry: {
-        name: 'Hallway',
+        name: 'The Archive',
         width: 1600,
         height: 1200,
         startX: 800,
@@ -191,7 +223,7 @@ const ZONES = {
             { x: 1320, y: 520, width: 80, height: 80 }
         ],
         portals: [
-            { id: 'hub', x: 770, y: 1080, width: 60, height: 60, label: 'Return to Hub' }
+            { id: 'hub', x: 770, y: 1080, width: 60, height: 60, label: 'Return to Lobby' }
         ],
     }
 };
