@@ -45,6 +45,18 @@ class Game {
             this.keys[key] = false;
         });
 
+        // Clear all pressed keys when the window loses focus to prevent
+        // keys from getting "stuck" (e.g. when clicking while moving)
+        window.addEventListener('blur', () => {
+            this.keys = {};
+        });
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                this.keys = {};
+            }
+        });
+
         window.addEventListener('mousemove', (e) => {
             this.lastMouse.x = e.clientX;
             this.lastMouse.y = e.clientY;
