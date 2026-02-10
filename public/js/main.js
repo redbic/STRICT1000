@@ -25,9 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function setupEventListeners() {
-    const singleBtn = document.getElementById('singlePlayerBtn');
     const multiBtn = document.getElementById('multiPlayerBtn');
-    singleBtn.disabled = true;
     multiBtn.disabled = true;
 
     document.getElementById('confirmNameBtn').addEventListener('click', async () => {
@@ -48,21 +46,10 @@ function setupEventListeners() {
             body: JSON.stringify({ username })
         }).catch(err => console.error('Failed to register player:', err));
 
-        singleBtn.disabled = false;
         multiBtn.disabled = false;
     });
 
     // Main menu
-    document.getElementById('singlePlayerBtn').addEventListener('click', () => {
-        const username = document.getElementById('username').value.trim();
-        if (!username) {
-            alert('Please enter your name');
-            return;
-        }
-        currentUsername = username;
-        showScreen('hub');
-    });
-    
     document.getElementById('multiPlayerBtn').addEventListener('click', async () => {
         const username = document.getElementById('username').value.trim();
         if (!username) {
@@ -88,8 +75,8 @@ function setupEventListeners() {
                 setupNetworkHandlers();
                 showScreen('lobby');
             } catch (error) {
-                alert('Failed to connect to server. Playing single player instead.');
-                showScreen('hub');
+                alert('Failed to connect to server.');
+                showScreen('menu');
             }
         }
     });
