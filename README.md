@@ -144,11 +144,44 @@ STRICT/
 - Additional areas
 - More abilities
 - Boss battles
-- Card-based encounters (Inscryption style)
+- Real-time strategic combat encounters inspired by Wii Play Tanks
 - Story/dialogue system (Undertale style)
 - Sound effects and music
 - Mobile touch controls
 - Ability balance adjustments
+
+## Narrative & Design Direction (Current)
+
+### Core Pillars
+
+- **Uneasy intimacy**: The game should feel like it is watching or listening to the player.
+- **Tactile strategy**: Board objects, movement, and interactions should feel physical and consequential.
+- **Rule instability**: Players should gradually learn that the rules are not fixed.
+- **Meta-layer mystery**: There is always a hidden game behind the visible one.
+
+### Structure
+
+- Follow a three-act, Inscryption-inspired structure:
+  - **Act 1**: A contained ritual-like loop.
+  - **Act 2**: A reframing where prior assumptions are challenged.
+  - **Act 3**: Systemic collapse/recombination where story and mechanics converge.
+
+### World Hook
+
+- The central hub is a **hotel lobby**.
+- Each room in the hotel is a self-contained ruleset/game variant.
+- The host/curator role is unreliable and deceptive.
+
+### Prototype Focus
+
+- Build toward a first playable slice centered on:
+  - Real-time strategic combat (instead of card combat)
+  - Room-based ruleset variation
+  - Early narrative manipulation from the narrator
+
+### Narrative Reveal
+
+- The player slowly realizes the narrator is intentionally preventing access to the hotel's presidential suite.
 
 ## License
 
