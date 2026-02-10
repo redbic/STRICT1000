@@ -34,13 +34,8 @@ class Game {
         window.addEventListener('keydown', (e) => {
             const key = normalizeKey(e);
             this.keys[key] = true;
-            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(key)) {
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
                 e.preventDefault();
-            }
-            
-            // Melee attack with Space
-            if (key === ' ' && this.localPlayer) {
-                this.localPlayer.tryAttack(this.enemies);
             }
         });
         
@@ -120,10 +115,6 @@ class Game {
     update() {
         if (!this.gameStarted) return;
 
-        if (this.keys[' '] && this.localPlayer) {
-            this.localPlayer.tryAttack(this.enemies);
-        }
-        
         // Update local player
         if (this.localPlayer) {
             this.localPlayer.update(this.keys, this.zone);
