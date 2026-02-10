@@ -17,6 +17,8 @@ class Game {
         this.cameraY = 0;
         
         this.enemies = [];
+        this.attackFx = { active: false, timer: 0, angle: 0 };
+        this.lastMouse = { x: 0, y: 0 };
         
         // Bind keyboard events
         const normalizeKey = (event) => {
@@ -45,6 +47,23 @@ class Game {
         window.addEventListener('keyup', (e) => {
             const key = normalizeKey(e);
             this.keys[key] = false;
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            this.lastMouse.x = e.clientX;
+            this.lastMouse.y = e.clientY;
+        });
+
+        window.addEventListener('mousedown', (e) => {
+            if (e.button !== 0 || !this.localPlayer) return;
+
+            const worldX = this.lastMouse.x + this.cameraX;
+            const worldY = this.lastMouse.y + this.cameraY;
+            const angle = Math.atan2(worldY - this.localPlayer.y, worldX - this.localPlayer.x);
+            this.attackFx.active = true;
+            this.attackFx.timer = 8;
+            this.attackFx.angle = angle;
+            this.localPlayer.tryAttack(this.enemies);
         });
 
         window.addEventListener('resize', () => {
@@ -221,6 +240,33 @@ class Game {
         this.enemies.forEach(enemy => {
             enemy.draw(this.ctx, this.cameraX, this.cameraY);
         });
+
+        this.drawAttackFx();
+    }
+
+    drawAttackFx() {
+        if (!this.attackFx.active || !this.localPlayer) return;
+        if (this.attackFx.timer <= 0) {
+            this.attackFx.active = false;
+            return;
+        }
+
+        const centerX = this.localPlayer.x - this.cameraX;
+        const centerY = this.localPlayer.y - this.cameraY;
+        const radius = 36;
+        const spread = Math.PI / 3;
+        const start = this.attackFx.angle - spread / 2;
+        const end = this.attackFx.angle + spread / 2;
+
+        this.ctx.save();
+        this.ctx.strokeStyle = 'rgba(255, 220, 180, 0.9)';
+        this.ctx.lineWidth = 4;
+        this.ctx.beginPath();
+        this.ctx.arc(centerX, centerY, radius, start, end);
+        this.ctx.stroke();
+        this.ctx.restore();
+
+        this.attackFx.timer--;
     }
     
     gameLoop() {
