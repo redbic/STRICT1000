@@ -118,24 +118,6 @@ body {
     font-weight: bold;
 }
 
-#itemSlot {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    width: 80px;
-    height: 80px;
-    background: rgba(0, 0, 0, 0.7);
-    border: 3px solid #fff;
-    border-radius: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-}
-
-#currentItem {
-    font-size: 40px;
-}
-
 #controlsInfo {
     position: absolute;
     bottom: 20px;

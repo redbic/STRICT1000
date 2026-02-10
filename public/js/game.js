@@ -8,7 +8,6 @@ class Game {
         this.players = [];
         this.localPlayer = null;
         this.zone = null;
-        this.abilityManager = new ItemManager();
         
         this.keys = {};
         this.running = false;
@@ -85,7 +84,7 @@ class Game {
         this.players.push(this.localPlayer);
         
         // Add enemies for single player
-        if (!isMultiplayer && !this.zone.isHub) {
+        if (!isMultiplayer && this.zone.allowEnemies !== false) {
             const enemyCount = this.zone.enemyCount || 3;
             for (let i = 1; i <= enemyCount; i++) {
                 const enemy = new Enemy(
@@ -110,7 +109,6 @@ class Game {
         // Update local player
         if (this.localPlayer) {
             this.localPlayer.update(this.keys, this.zone);
-            this.zone.checkPickup(this.localPlayer, this.abilityManager);
         }
         
         // Update enemies
@@ -118,8 +116,7 @@ class Game {
             enemy.update(this.zone, this.localPlayer);
         });
         
-        // Update abilities/hazards
-        this.abilityManager.update([...this.players, ...this.enemies]);
+        // No abilities or pickups for now
         
         // Check enemy defeats
         this.enemies = this.enemies.filter(enemy => enemy.hp > 0);
@@ -204,14 +201,7 @@ class Game {
         if (currentHPEl) currentHPEl.textContent = Math.max(0, this.localPlayer.hp);
         if (maxHPEl) maxHPEl.textContent = this.localPlayer.maxHp;
         
-        // Update ability display
-        const itemEl = document.getElementById('currentItem');
-        if (this.localPlayer.currentItem) {
-            const itemType = this.localPlayer.currentItem.type;
-            itemEl.textContent = ITEM_TYPES[itemType].icon;
-        } else {
-            itemEl.textContent = '';
-        }
+        // Ability display disabled for now
     }
     
     
@@ -223,9 +213,6 @@ class Game {
         if (this.zone) {
             this.zone.draw(this.ctx, this.cameraX, this.cameraY);
         }
-        
-        // Draw abilities/effects
-        this.abilityManager.draw(this.ctx, this.cameraX, this.cameraY);
         
         // Draw players and enemies
         this.players.forEach(player => {

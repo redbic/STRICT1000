@@ -8,7 +8,6 @@ class NetworkManager {
         this.onRoomUpdate = null;
         this.onPlayerState = null;
         this.onGameStart = null;
-        this.onAbilityUsed = null;
         this.onPlayerLeft = null;
         this.onRoomFull = null;
         this.onZoneEnter = null;
@@ -58,9 +57,6 @@ class NetworkManager {
                 break;
             case 'game_start':
                 if (this.onGameStart) this.onGameStart(data);
-                break;
-            case 'ability_used':
-                if (this.onAbilityUsed) this.onAbilityUsed(data);
                 break;
             case 'player_left':
                 if (this.onPlayerLeft) this.onPlayerLeft(data);
@@ -121,16 +117,6 @@ class NetworkManager {
         this.send({
             type: 'zone_enter',
             zoneId: zoneId
-        });
-    }
-    
-    useAbility(abilityType, target) {
-        if (!this.connected) return;
-        
-        this.send({
-            type: 'ability_use',
-            abilityType: abilityType,
-            target: target
         });
     }
     

@@ -10,7 +10,6 @@ class Zone {
         this.startY = zoneData.startY;
         this.nodes = zoneData.nodes || [];
         this.walls = zoneData.walls || [];
-        this.pickups = zoneData.pickups || [];
         this.portals = zoneData.portals || [];
         this.totalLevels = zoneData.totalLevels || 3;
     }
@@ -62,29 +61,6 @@ class Zone {
             ctx.fill();
         }
         
-        // Draw ability pickups
-        ctx.font = '20px Arial';
-        this.pickups.forEach(box => {
-            if (this.isVisible(box, cameraX, cameraY, ctx.canvas.width, ctx.canvas.height)) {
-                if (!box.collected || box.respawnTime <= 0) {
-                    // Draw glowing orb
-                    ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
-                    ctx.beginPath();
-                    ctx.arc(box.x - cameraX, box.y - cameraY, 18, 0, Math.PI * 2);
-                    ctx.fill();
-                    ctx.fillStyle = '#FFD700';
-                    ctx.fillText('✦', box.x - cameraX - 7, box.y - cameraY + 7);
-                }
-            }
-            
-            if (box.respawnTime > 0) {
-                box.respawnTime--;
-                if (box.respawnTime <= 0) {
-                    box.collected = false;
-                }
-            }
-        });
-
         // Draw portals
         this.portals.forEach(portal => {
             if (this.isVisible(portal, cameraX, cameraY, ctx.canvas.width, ctx.canvas.height)) {
@@ -150,26 +126,6 @@ class Zone {
         }
     }
     
-    checkPickup(player, items) {
-        for (const box of this.pickups) {
-            if (box.collected || box.respawnTime > 0) continue;
-            
-            const dist = Math.hypot(player.x - box.x, player.y - box.y);
-            if (dist < 30 && !player.currentItem) {
-                box.collected = true;
-                box.respawnTime = 300;
-                
-                // Give random ability
-                const abilityTypes = ['dash', 'sword', 'shield', 'fireball'];
-                const randomAbility = abilityTypes[Math.floor(Math.random() * abilityTypes.length)];
-                player.currentItem = { type: randomAbility };
-                
-                return true;
-            }
-        }
-        return false;
-    }
-
     getPortalAt(x, y) {
         for (const portal of this.portals) {
             if (
@@ -194,6 +150,7 @@ const ZONES = {
         startX: 900,
         startY: 700,
         isHub: true,
+        allowEnemies: false,
         wallColor: '#3a2f2a',
         floorColor: '#1f1a18',
         totalLevels: 1,
@@ -202,19 +159,7 @@ const ZONES = {
             { x: 0, y: 0, width: 1800, height: 50 },
             { x: 0, y: 0, width: 50, height: 1400 },
             { x: 0, y: 1350, width: 1800, height: 50 },
-            { x: 1750, y: 0, width: 50, height: 1400 },
-
-            // Central plaza structures
-            { x: 820, y: 560, width: 160, height: 40 },
-            { x: 820, y: 800, width: 160, height: 40 },
-            { x: 740, y: 640, width: 40, height: 120 },
-            { x: 1020, y: 640, width: 40, height: 120 },
-
-            // Market stalls
-            { x: 320, y: 420, width: 120, height: 60 },
-            { x: 320, y: 520, width: 120, height: 60 },
-            { x: 1360, y: 420, width: 120, height: 60 },
-            { x: 1360, y: 520, width: 120, height: 60 }
+            { x: 1750, y: 0, width: 50, height: 1400 }
         ],
         nodes: [
             { x: 860, y: 660, width: 80, height: 80 }
@@ -222,7 +167,6 @@ const ZONES = {
         portals: [
             { id: 'archive_entry', x: 870, y: 610, width: 60, height: 60, label: 'Archive Entry' }
         ],
-        pickups: []
     },
     archive_entry: {
         name: 'Archive Entry',
@@ -239,13 +183,7 @@ const ZONES = {
             { x: 0, y: 0, width: 1600, height: 40 },
             { x: 0, y: 0, width: 40, height: 1200 },
             { x: 0, y: 1160, width: 1600, height: 40 },
-            { x: 1560, y: 0, width: 40, height: 1200 },
-
-            // Room pillars
-            { x: 360, y: 300, width: 80, height: 120 },
-            { x: 1160, y: 300, width: 80, height: 120 },
-            { x: 360, y: 720, width: 80, height: 120 },
-            { x: 1160, y: 720, width: 80, height: 120 }
+            { x: 1560, y: 0, width: 40, height: 1200 }
         ],
         nodes: [
             { x: 760, y: 120, width: 80, height: 80 },
@@ -255,9 +193,5 @@ const ZONES = {
         portals: [
             { id: 'hub', x: 770, y: 1080, width: 60, height: 60, label: 'Return to Hub' }
         ],
-        pickups: [
-            { x: 520, y: 520, collected: false, respawnTime: 0 },
-            { x: 1080, y: 520, collected: false, respawnTime: 0 }
-        ]
     }
 };

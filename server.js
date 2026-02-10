@@ -104,9 +104,6 @@ wss.on('connection', (ws) => {
         case 'game_start':
           handleGameStart(ws, data);
           break;
-        case 'ability_use':
-          handleAbilityUse(ws, data);
-          break;
         case 'zone_enter':
           handleZoneEnter(ws, data);
           break;
@@ -195,17 +192,6 @@ function handleGameStart(ws, data) {
         timestamp: Date.now()
       });
     }
-  }
-}
-
-function handleAbilityUse(ws, data) {
-  if (ws.roomId) {
-    broadcastToRoom(ws.roomId, {
-      type: 'ability_used',
-      playerId: ws.playerId,
-      abilityType: data.abilityType,
-      target: data.target
-    }, ws);
   }
 }
 

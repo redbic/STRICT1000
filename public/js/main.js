@@ -134,17 +134,6 @@ function setupNetworkHandlers() {
         }
     };
     
-    networkManager.onAbilityUsed = (data) => {
-        if (game) {
-            const player = game.players.find(p => p.id === data.playerId);
-            if (player) {
-                const result = player.useItem(game.players);
-                if (result && result.type === 'fireball') {
-                    game.abilityManager.addHazard(result);
-                }
-            }
-        }
-    };
     
     networkManager.onPlayerLeft = (data) => {
         if (game) {
