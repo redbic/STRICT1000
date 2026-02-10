@@ -30,20 +30,20 @@ async function initDatabase() {
       CREATE TABLE IF NOT EXISTS players (
         id SERIAL PRIMARY KEY,
         username VARCHAR(50) UNIQUE NOT NULL,
-        total_races INTEGER DEFAULT 0,
-        wins INTEGER DEFAULT 0,
-        best_time INTEGER,
+        total_games INTEGER DEFAULT 0,
+        high_score INTEGER DEFAULT 0,
+        best_score INTEGER,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
     
     await pool.query(`
-      CREATE TABLE IF NOT EXISTS race_results (
+      CREATE TABLE IF NOT EXISTS game_results (
         id SERIAL PRIMARY KEY,
         player_id INTEGER REFERENCES players(id),
-        track_name VARCHAR(100),
-        race_time INTEGER,
-        position INTEGER,
+        area_name VARCHAR(100),
+        score INTEGER,
+        level_reached INTEGER,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);
@@ -78,9 +78,9 @@ app.get('/api/leaderboard', async (req, res) => {
   
   try {
     const result = await pool.query(`
-      SELECT username, total_races, wins, best_time
+      SELECT username, total_games, high_score, best_score
       FROM players
-      ORDER BY wins DESC, best_time ASC
+      ORDER BY high_score DESC, best_score DESC
       LIMIT 10
     `);
     res.json(result.rows);
@@ -113,16 +113,16 @@ app.post('/api/player', async (req, res) => {
   }
 });
 
-app.post('/api/race-result', async (req, res) => {
+app.post('/api/game-result', async (req, res) => {
   if (!pool) {
     return res.json({ success: true });
   }
   
-  const { username, trackName, raceTime, position } = req.body;
+  const { username, areaName, score, levelReached } = req.body;
   
   try {
     const playerResult = await pool.query(
-      'SELECT id, best_time FROM players WHERE username = $1',
+      'SELECT id, best_score FROM players WHERE username = $1',
       [username]
     );
     
@@ -132,27 +132,25 @@ app.post('/api/race-result', async (req, res) => {
     
     const player = playerResult.rows[0];
     
-    // Build dynamic update query
-    const isWinner = position === 1;
-    const winsIncrement = isWinner ? ', wins = wins + 1' : '';
     const updateQuery = `
       UPDATE players 
-      SET total_races = total_races + 1${winsIncrement},
-          best_time = CASE WHEN best_time IS NULL OR $2 < best_time THEN $2 ELSE best_time END 
+      SET total_games = total_games + 1,
+          high_score = CASE WHEN high_score IS NULL OR $2 > high_score THEN $2 ELSE high_score END,
+          best_score = CASE WHEN best_score IS NULL OR $2 > best_score THEN $2 ELSE best_score END
       WHERE id = $1
     `;
     
-    await pool.query(updateQuery, [player.id, raceTime]);
+    await pool.query(updateQuery, [player.id, score]);
     
-    // Insert race result
+    // Insert game result
     await pool.query(
-      'INSERT INTO race_results (player_id, track_name, race_time, position) VALUES ($1, $2, $3, $4)',
-      [player.id, trackName, raceTime, position]
+      'INSERT INTO game_results (player_id, area_name, score, level_reached) VALUES ($1, $2, $3, $4)',
+      [player.id, areaName, score, levelReached]
     );
     
     res.json({ success: true });
   } catch (error) {
-    console.error('Race result error:', error);
+    console.error('Game result error:', error);
     res.status(500).json({ error: 'Database error' });
   }
 });
@@ -177,11 +175,11 @@ wss.on('connection', (ws) => {
         case 'player_update':
           handlePlayerUpdate(ws, data);
           break;
-        case 'race_start':
-          handleRaceStart(ws, data);
+        case 'game_start':
+          handleGameStart(ws, data);
           break;
-        case 'item_use':
-          handleItemUse(ws, data);
+        case 'ability_use':
+          handleAbilityUse(ws, data);
           break;
       }
     } catch (error) {
@@ -254,25 +252,25 @@ function handlePlayerUpdate(ws, data) {
   }
 }
 
-function handleRaceStart(ws, data) {
+function handleGameStart(ws, data) {
   if (ws.roomId) {
     const room = gameRooms.get(ws.roomId);
     if (room) {
       room.started = true;
       broadcastToRoom(ws.roomId, {
-        type: 'race_start',
+        type: 'game_start',
         timestamp: Date.now()
       });
     }
   }
 }
 
-function handleItemUse(ws, data) {
+function handleAbilityUse(ws, data) {
   if (ws.roomId) {
     broadcastToRoom(ws.roomId, {
-      type: 'item_used',
+      type: 'ability_used',
       playerId: ws.playerId,
-      itemType: data.itemType,
+      abilityType: data.abilityType,
       target: data.target
     }, ws);
   }
