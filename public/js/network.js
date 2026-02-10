@@ -10,6 +10,7 @@ class NetworkManager {
         this.onGameStart = null;
         this.onAbilityUsed = null;
         this.onPlayerLeft = null;
+        this.onRoomFull = null;
     }
     
     connect() {
@@ -62,6 +63,9 @@ class NetworkManager {
                 break;
             case 'player_left':
                 if (this.onPlayerLeft) this.onPlayerLeft(data);
+                break;
+            case 'room_full':
+                if (this.onRoomFull) this.onRoomFull(data);
                 break;
         }
     }

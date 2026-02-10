@@ -19,8 +19,8 @@ class Player {
         this.friction = 0.85;
         
         // Game stats
-        this.lap = 1;
-        this.checkpoints = [];
+        this.zoneLevel = 1;
+        this.nodesVisited = [];
         this.position = 1;
         this.finishTime = null;
         
@@ -35,7 +35,7 @@ class Player {
         this.speedBoostTime = 0;
     }
     
-    update(keys, track) {
+    update(keys, zone) {
         // Handle stun effect
         if (this.stunned) {
             this.stunnedTime--;
@@ -113,14 +113,14 @@ class Player {
         this.y += this.velocityY;
         
         // Check area collision
-        if (track && track.checkCollision(this)) {
+        if (zone && zone.checkCollision(this)) {
             this.x = oldX;
             this.y = oldY;
         }
         
-        // Check area checkpoints
-        if (track) {
-            track.checkPlayerCheckpoint(this);
+        // Check area nodes
+        if (zone) {
+            zone.checkPlayerNode(this);
         }
     }
     
@@ -236,7 +236,7 @@ class Player {
             y: this.y,
             angle: this.angle,
             speed: this.speed,
-            lap: this.lap,
+            zoneLevel: this.zoneLevel,
             position: this.position,
             username: this.username,
             currentItem: this.currentItem,
@@ -251,7 +251,7 @@ class Player {
         this.y = state.y;
         this.angle = state.angle;
         this.speed = state.speed;
-        this.lap = state.lap;
+        this.zoneLevel = state.zoneLevel;
         this.position = state.position;
         this.currentItem = state.currentItem;
         this.invincible = state.invincible;

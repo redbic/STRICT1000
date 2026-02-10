@@ -1,26 +1,26 @@
-// Area class for adventure zones
-class Track {
-    constructor(trackData) {
-        this.name = trackData.name;
-        this.width = trackData.width;
-        this.height = trackData.height;
-        this.trackColor = trackData.trackColor || '#555';
-        this.grassColor = trackData.grassColor || '#2a5a2a';
-        this.startX = trackData.startX;
-        this.startY = trackData.startY;
-        this.checkpoints = trackData.checkpoints || [];
-        this.walls = trackData.walls || [];
-        this.itemBoxes = trackData.itemBoxes || [];
-        this.totalLaps = 3;
+// Zone class for adventure areas
+class Zone {
+    constructor(zoneData) {
+        this.name = zoneData.name;
+        this.width = zoneData.width;
+        this.height = zoneData.height;
+        this.wallColor = zoneData.wallColor || '#555';
+        this.floorColor = zoneData.floorColor || '#2a5a2a';
+        this.startX = zoneData.startX;
+        this.startY = zoneData.startY;
+        this.nodes = zoneData.nodes || [];
+        this.walls = zoneData.walls || [];
+        this.pickups = zoneData.pickups || [];
+        this.totalLevels = zoneData.totalLevels || 3;
     }
     
     draw(ctx, cameraX, cameraY) {
         // Draw ground
-        ctx.fillStyle = this.grassColor;
+        ctx.fillStyle = this.floorColor;
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         
         // Draw walls/obstacles
-        ctx.fillStyle = this.trackColor;
+        ctx.fillStyle = this.wallColor;
         this.walls.forEach(wall => {
             if (this.isVisible(wall, cameraX, cameraY, ctx.canvas.width, ctx.canvas.height)) {
                 ctx.fillRect(
@@ -32,16 +32,16 @@ class Track {
             }
         });
         
-        // Draw exploration waypoints
+        // Draw exploration nodes
         ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)';
         ctx.lineWidth = 2;
-        this.checkpoints.forEach((cp, index) => {
-            if (this.isVisible(cp, cameraX, cameraY, ctx.canvas.width, ctx.canvas.height)) {
+        this.nodes.forEach((node) => {
+            if (this.isVisible(node, cameraX, cameraY, ctx.canvas.width, ctx.canvas.height)) {
                 ctx.beginPath();
                 ctx.arc(
-                    cp.x + cp.width / 2 - cameraX,
-                    cp.y + cp.height / 2 - cameraY,
-                    Math.min(cp.width, cp.height) / 2,
+                    node.x + node.width / 2 - cameraX,
+                    node.y + node.height / 2 - cameraY,
+                    Math.min(node.width, node.height) / 2,
                     0,
                     Math.PI * 2
                 );
@@ -63,7 +63,7 @@ class Track {
         
         // Draw ability pickups
         ctx.font = '20px Arial';
-        this.itemBoxes.forEach(box => {
+        this.pickups.forEach(box => {
             if (this.isVisible(box, cameraX, cameraY, ctx.canvas.width, ctx.canvas.height)) {
                 if (!box.collected || box.respawnTime <= 0) {
                     // Draw glowing orb
@@ -109,31 +109,31 @@ class Track {
         return false;
     }
     
-    checkPlayerCheckpoint(player) {
-        for (let i = 0; i < this.checkpoints.length; i++) {
-            const cp = this.checkpoints[i];
+    checkPlayerNode(player) {
+        for (let i = 0; i < this.nodes.length; i++) {
+            const node = this.nodes[i];
             
             if (
-                player.x > cp.x &&
-                player.x < cp.x + cp.width &&
-                player.y > cp.y &&
-                player.y < cp.y + cp.height
+                player.x > node.x &&
+                player.x < node.x + node.width &&
+                player.y > node.y &&
+                player.y < node.y + node.height
             ) {
-                if (!player.checkpoints.includes(i)) {
-                    player.checkpoints.push(i);
+                if (!player.nodesVisited.includes(i)) {
+                    player.nodesVisited.push(i);
                     
-                    // If all waypoints explored, advance level
-                    if (player.checkpoints.length === this.checkpoints.length) {
-                        player.lap++;
-                        player.checkpoints = [];
+                    // If all nodes explored, advance depth
+                    if (player.nodesVisited.length === this.nodes.length) {
+                        player.zoneLevel++;
+                        player.nodesVisited = [];
                     }
                 }
             }
         }
     }
     
-    checkItemBox(player, items) {
-        for (const box of this.itemBoxes) {
+    checkPickup(player, items) {
+        for (const box of this.pickups) {
             if (box.collected || box.respawnTime > 0) continue;
             
             const dist = Math.hypot(player.x - box.x, player.y - box.y);
@@ -153,16 +153,17 @@ class Track {
     }
 }
 
-// Area definitions
-const TRACKS = {
+// Zone definitions
+const ZONES = {
     forest: {
         name: 'Dark Forest',
         width: 2000,
         height: 1500,
         startX: 300,
         startY: 300,
-        trackColor: '#2d5a1e',
-        grassColor: '#1a3a12',
+        wallColor: '#2d5a1e',
+        floorColor: '#1a3a12',
+        totalLevels: 3,
         walls: [
             // Outer boundary
             { x: 0, y: 0, width: 2000, height: 50 },
@@ -180,7 +181,7 @@ const TRACKS = {
             { x: 900, y: 1000, width: 120, height: 60 },
             { x: 1700, y: 1100, width: 80, height: 80 }
         ],
-        checkpoints: [
+        nodes: [
             { x: 200, y: 250, width: 100, height: 100 },
             { x: 700, y: 150, width: 100, height: 100 },
             { x: 1400, y: 150, width: 100, height: 100 },
@@ -188,7 +189,7 @@ const TRACKS = {
             { x: 1400, y: 1250, width: 100, height: 100 },
             { x: 700, y: 1250, width: 100, height: 100 }
         ],
-        itemBoxes: [
+        pickups: [
             { x: 500, y: 200, collected: false, respawnTime: 0 },
             { x: 1000, y: 200, collected: false, respawnTime: 0 },
             { x: 1500, y: 200, collected: false, respawnTime: 0 },
@@ -204,8 +205,9 @@ const TRACKS = {
         height: 2000,
         startX: 400,
         startY: 400,
-        trackColor: '#4a3728',
-        grassColor: '#2a2018',
+        wallColor: '#4a3728',
+        floorColor: '#2a2018',
+        totalLevels: 3,
         walls: [
             // Outer boundary
             { x: 0, y: 0, width: 2500, height: 50 },
@@ -220,7 +222,7 @@ const TRACKS = {
             { x: 1600, y: 300, width: 100, height: 600 },
             { x: 2000, y: 600, width: 100, height: 800 }
         ],
-        checkpoints: [
+        nodes: [
             { x: 300, y: 350, width: 100, height: 100 },
             { x: 600, y: 250, width: 100, height: 100 },
             { x: 1000, y: 450, width: 100, height: 100 },
@@ -230,7 +232,7 @@ const TRACKS = {
             { x: 1800, y: 1200, width: 100, height: 100 },
             { x: 1000, y: 1400, width: 100, height: 100 }
         ],
-        itemBoxes: [
+        pickups: [
             { x: 650, y: 300, collected: false, respawnTime: 0 },
             { x: 1050, y: 500, collected: false, respawnTime: 0 },
             { x: 1450, y: 400, collected: false, respawnTime: 0 },

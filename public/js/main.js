@@ -81,10 +81,10 @@ function setupEventListeners() {
     });
     
     // Track selection
-    document.querySelectorAll('.track-card').forEach(card => {
+    document.querySelectorAll('.zone-card').forEach(card => {
         card.addEventListener('click', () => {
-            const trackName = card.dataset.track;
-            startGame(trackName);
+            const zoneName = card.dataset.zone;
+            startGame(zoneName);
         });
     });
     
@@ -155,6 +155,13 @@ function setupNetworkHandlers() {
         if (game) {
             game.players = game.players.filter(p => p.id !== data.playerId);
         }
+    };
+
+    networkManager.onRoomFull = (data) => {
+        alert(`Room is full. Max party size is ${data.maxPlayers}.`);
+        networkManager.disconnect();
+        networkManager = null;
+        showScreen('menu');
     };
 }
 

@@ -23,11 +23,11 @@
         <div class="menu-container">
             <h2>Select Area</h2>
             <div class="track-grid">
-                <div class="track-card" data-track="forest">
+                <div class="zone-card" data-zone="forest">
                     <h3>🌲 Dark Forest</h3>
                     <p>A mysterious forest filled with creatures</p>
                 </div>
-                <div class="track-card" data-track="dungeon">
+                <div class="zone-card" data-zone="dungeon">
                     <h3>🏰 Ancient Dungeon</h3>
                     <p>Treacherous ruins with powerful enemies</p>
                 </div>
@@ -41,6 +41,7 @@
             <h2>Multiplayer Lobby</h2>
             <div id="roomInfo">
                 <p>Room Code: <span id="roomCode"></span></p>
+                <p>Max Party Size: 6</p>
             </div>
             <div id="playersList"></div>
             <button id="startAdventureBtn" class="menu-btn">Start Adventure</button>
@@ -59,9 +60,9 @@
     <div id="game" class="screen">
         <div id="gameUI">
             <div id="gameInfo">
-                <div class="ui-element">Level: <span id="currentLevel">1</span>/<span id="totalLevels">3</span></div>
-                <div class="ui-element">Score: <span id="gameScore">0:00</span></div>
-                <div class="ui-element">HP: <span id="currentHP">1</span>/<span id="maxHP">4</span></div>
+                <div class="ui-element">Depth: <span id="currentDepth">1</span>/<span id="totalDepth">3</span></div>
+                <div class="ui-element">Echoes: <span id="gameScore">0</span></div>
+                <div class="ui-element">HP: <span id="currentHP">100</span>/<span id="maxHP">100</span></div>
             </div>
             <div id="itemSlot">
                 <div id="currentItem"></div>

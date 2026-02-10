@@ -8,7 +8,7 @@ class Game {
         
         this.players = [];
         this.localPlayer = null;
-        this.area = null;
+        this.zone = null;
         this.abilityManager = new ItemManager();
         
         this.keys = {};
@@ -59,15 +59,15 @@ class Game {
         });
     }
     
-    init(areaName, playerName, isMultiplayer = false) {
-        // Load area
-        const areaData = TRACKS[areaName];
-        if (!areaData) {
-            console.error('Area not found:', areaName);
+    init(zoneName, playerName, isMultiplayer = false) {
+        // Load zone
+        const zoneData = ZONES[zoneName];
+        if (!zoneData) {
+            console.error('Zone not found:', zoneName);
             return;
         }
         
-        this.area = new Track(areaData);
+        this.zone = new Zone(zoneData);
         this.players = [];
         this.enemies = [];
         this.keys = {};
@@ -76,8 +76,8 @@ class Game {
         // Create local player
         const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c'];
         this.localPlayer = new Player(
-            this.area.startX,
-            this.area.startY,
+            this.zone.startX,
+            this.zone.startY,
             colors[0],
             'player1',
             playerName
@@ -88,8 +88,8 @@ class Game {
         if (!isMultiplayer) {
             for (let i = 1; i < 4; i++) {
                 const enemy = new Player(
-                    this.area.startX + (i * 120) - 180,
-                    this.area.startY + 200,
+                    this.zone.startX + (i * 120) - 180,
+                    this.zone.startY + 200,
                     colors[i],
                     'enemy' + i,
                     'Enemy ' + i
@@ -134,15 +134,15 @@ class Game {
         
         // Update local player
         if (this.localPlayer) {
-            this.localPlayer.update(this.keys, this.area);
-            this.area.checkItemBox(this.localPlayer, this.abilityManager);
+            this.localPlayer.update(this.keys, this.zone);
+            this.zone.checkPickup(this.localPlayer, this.abilityManager);
         }
         
         // Update enemies
         this.enemies.forEach(enemy => {
             this.updateEnemy(enemy);
-            enemy.update({}, this.area);
-            this.area.checkItemBox(enemy, this.abilityManager);
+            enemy.update({}, this.zone);
+            this.zone.checkPickup(enemy, this.abilityManager);
         });
         
         // Update abilities/hazards
@@ -186,14 +186,14 @@ class Game {
                 'ArrowRight': angleDiff > 0.1
             };
             
-            enemy.update(aiKeys, this.area);
+            enemy.update(aiKeys, this.zone);
         } else {
             // Wander randomly
             if (Math.random() < 0.02) {
                 enemy.angle += (Math.random() - 0.5) * 0.5;
             }
             const aiKeys = { 'ArrowUp': Math.random() > 0.3 };
-            enemy.update(aiKeys, this.area);
+            enemy.update(aiKeys, this.zone);
         }
         
         // Enemy uses abilities randomly
@@ -218,20 +218,20 @@ class Game {
     updateUI() {
         if (!this.localPlayer) return;
         
-        const levelEl = document.getElementById('currentLevel');
-        const totalLevelsEl = document.getElementById('totalLevels');
+        const levelEl = document.getElementById('currentDepth');
+        const totalLevelsEl = document.getElementById('totalDepth');
         const currentHPEl = document.getElementById('currentHP');
         const maxHPEl = document.getElementById('maxHP');
         
-        if (levelEl) levelEl.textContent = Math.min(this.localPlayer.lap, this.area.totalLaps);
-        if (totalLevelsEl) totalLevelsEl.textContent = this.area.totalLaps;
+        if (levelEl) levelEl.textContent = Math.min(this.localPlayer.zoneLevel, this.zone.totalLevels);
+        if (totalLevelsEl) totalLevelsEl.textContent = this.zone.totalLevels;
         if (currentHPEl) currentHPEl.textContent = Math.max(0, 100 - (this.localPlayer.stunned ? 20 : 0));
         if (maxHPEl) maxHPEl.textContent = '100';
         
         // Update score
         if (this.gameStartTime) {
             const elapsed = Date.now() - this.gameStartTime;
-            this.score = Math.floor(elapsed / 100) + (this.localPlayer.checkpoints.length * 50);
+            this.score = Math.floor(elapsed / 100) + (this.localPlayer.nodesVisited.length * 50);
             const scoreEl = document.getElementById('gameScore');
             if (scoreEl) scoreEl.textContent = this.score;
         }
@@ -247,8 +247,8 @@ class Game {
     }
     
     checkGameOver() {
-        // Check if player has explored all checkpoints and completed the area
-        if (this.localPlayer && this.localPlayer.lap > this.area.totalLaps && !this.localPlayer.finishTime) {
+        // Check if player has explored all nodes and completed the zone
+        if (this.localPlayer && this.localPlayer.zoneLevel > this.zone.totalLevels && !this.localPlayer.finishTime) {
             this.localPlayer.finishTime = Date.now() - this.gameStartTime;
             this.endGame();
         }
@@ -268,7 +268,7 @@ class Game {
             </div>
             <div class="result-item">
                 <span class="result-name">Areas Explored</span>
-                <span class="result-score">${this.localPlayer.lap - 1}</span>
+                <span class="result-score">${this.localPlayer.zoneLevel - 1}</span>
             </div>
             <div class="result-item">
                 <span class="result-name">Time</span>
@@ -288,9 +288,9 @@ class Game {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     username: this.localPlayer.username,
-                    areaName: this.area.name,
+                    areaName: this.zone.name,
                     score: this.score,
-                    levelReached: this.localPlayer.lap - 1
+                    levelReached: this.localPlayer.zoneLevel - 1
                 })
             }).catch(err => console.error('Failed to save game result:', err));
         }
@@ -300,9 +300,9 @@ class Game {
         // Clear canvas
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
-        // Draw area
-        if (this.area) {
-            this.area.draw(this.ctx, this.cameraX, this.cameraY);
+        // Draw zone
+        if (this.zone) {
+            this.zone.draw(this.ctx, this.cameraX, this.cameraY);
         }
         
         // Draw abilities/effects

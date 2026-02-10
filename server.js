@@ -11,6 +11,7 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 
 const PORT = process.env.PORT || 3000;
+const MAX_PARTY_SIZE = 6;
 
 // PostgreSQL connection pool for Neon.tech
 let pool = null;
@@ -203,6 +204,10 @@ function handleJoinRoom(ws, data) {
   }
   
   const room = gameRooms.get(roomId);
+  if (room.players.length >= MAX_PARTY_SIZE) {
+    ws.send(JSON.stringify({ type: 'room_full', maxPlayers: MAX_PARTY_SIZE }));
+    return;
+  }
   
   // Add player to room
   const player = {
