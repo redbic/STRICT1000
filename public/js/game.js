@@ -95,6 +95,10 @@ class Game {
                 this.enemies.push(enemy);
             }
         }
+
+        if (this.zone.isHub) {
+            this.enemies = [];
+        }
         
         this.gameStarted = true;
     }
@@ -112,6 +116,9 @@ class Game {
         }
         
         // Update enemies
+        if (this.zone && this.zone.isHub && this.enemies.length > 0) {
+            this.enemies = [];
+        }
         this.enemies.forEach(enemy => {
             enemy.update(this.zone, this.localPlayer);
         });
