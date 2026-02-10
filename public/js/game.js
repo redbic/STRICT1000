@@ -24,12 +24,25 @@ class Game {
         this.aiPlayers = [];
         
         // Bind keyboard events
+        const normalizeKey = (event) => {
+            if (event.code === 'Space' || event.key === ' ' || event.key === 'Spacebar') {
+                return ' ';
+            }
+            if (event.key.length === 1) {
+                return event.key.toLowerCase();
+            }
+            return event.key;
+        };
+
         window.addEventListener('keydown', (e) => {
-            this.keys[e.key] = true;
+            const key = normalizeKey(e);
+            this.keys[key] = true;
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(key)) {
+                e.preventDefault();
+            }
             
             // Use item with Space
-            if (e.key === ' ') {
-                e.preventDefault();
+            if (key === ' ') {
                 if (this.localPlayer && this.localPlayer.currentItem) {
                     const result = this.localPlayer.useItem(this.players);
                     if (result && result.type === 'banana') {
@@ -40,7 +53,8 @@ class Game {
         });
         
         window.addEventListener('keyup', (e) => {
-            this.keys[e.key] = false;
+            const key = normalizeKey(e);
+            this.keys[key] = false;
         });
     }
     
@@ -55,6 +69,7 @@ class Game {
         this.track = new Track(trackData);
         this.players = [];
         this.aiPlayers = [];
+        this.keys = {};
         
         // Create local player
         const colors = ['#ff0000', '#0000ff', '#00ff00', '#ffff00', '#ff00ff', '#00ffff'];
