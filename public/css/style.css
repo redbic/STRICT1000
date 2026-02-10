@@ -131,7 +131,7 @@ body {
     z-index: 10;
 }
 
-#raceInfo {
+#gameInfo {
     display: flex;
     gap: 20px;
     background: rgba(0, 0, 0, 0.7);
@@ -201,7 +201,7 @@ body {
     white-space: nowrap;
 }
 
-#raceResults {
+#gameResults {
     position: absolute;
     top: 50%;
     left: 50%;
@@ -212,7 +212,7 @@ body {
     z-index: 100;
 }
 
-#raceResults.hidden {
+#gameResults.hidden {
     display: none;
 }
 

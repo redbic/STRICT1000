@@ -93,7 +93,7 @@ function setupEventListeners() {
     });
     
     // Lobby
-    document.getElementById('startRaceBtn').addEventListener('click', () => {
+    document.getElementById('startAdventureBtn').addEventListener('click', () => {
         if (networkManager) {
             networkManager.startGame();
         }
@@ -112,7 +112,7 @@ function setupEventListeners() {
         showScreen('menu');
     });
     
-    // Race results
+    // Game results
     document.getElementById('returnToMenuBtn').addEventListener('click', () => {
         if (game) {
             game.stop();
