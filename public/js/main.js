@@ -97,7 +97,7 @@ function setupEventListeners() {
         if (networkManager) {
             networkManager.startRace();
         }
-        startGame('circuit', true);
+        startGame('forest', true);
     });
     
     document.getElementById('leaveLobbyBtn').addEventListener('click', () => {
@@ -136,7 +136,7 @@ function setupNetworkHandlers() {
     };
     
     networkManager.onRaceStart = (data) => {
-        startGame('circuit', true);
+        startGame('forest', true);
     };
     
     networkManager.onItemUsed = (data) => {

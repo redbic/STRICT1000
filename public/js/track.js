@@ -1,10 +1,10 @@
-// Track class for racing circuits
+// Area class for adventure zones
 class Track {
     constructor(trackData) {
         this.name = trackData.name;
         this.width = trackData.width;
         this.height = trackData.height;
-        this.trackColor = trackData.trackColor || '#666';
+        this.trackColor = trackData.trackColor || '#555';
         this.grassColor = trackData.grassColor || '#2a5a2a';
         this.startX = trackData.startX;
         this.startY = trackData.startY;
@@ -15,11 +15,11 @@ class Track {
     }
     
     draw(ctx, cameraX, cameraY) {
-        // Draw grass background
+        // Draw ground
         ctx.fillStyle = this.grassColor;
         ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
         
-        // Draw track (simplified)
+        // Draw walls/obstacles
         ctx.fillStyle = this.trackColor;
         this.walls.forEach(wall => {
             if (this.isVisible(wall, cameraX, cameraY, ctx.canvas.width, ctx.canvas.height)) {
@@ -32,51 +32,47 @@ class Track {
             }
         });
         
-        // Draw checkpoints (debug)
-        ctx.strokeStyle = 'rgba(255, 0, 0, 0.3)';
-        ctx.lineWidth = 3;
+        // Draw exploration waypoints
+        ctx.strokeStyle = 'rgba(255, 215, 0, 0.3)';
+        ctx.lineWidth = 2;
         this.checkpoints.forEach((cp, index) => {
             if (this.isVisible(cp, cameraX, cameraY, ctx.canvas.width, ctx.canvas.height)) {
-                ctx.strokeRect(
-                    cp.x - cameraX,
-                    cp.y - cameraY,
-                    cp.width,
-                    cp.height
+                ctx.beginPath();
+                ctx.arc(
+                    cp.x + cp.width / 2 - cameraX,
+                    cp.y + cp.height / 2 - cameraY,
+                    Math.min(cp.width, cp.height) / 2,
+                    0,
+                    Math.PI * 2
                 );
+                ctx.stroke();
             }
         });
         
-        // Draw start/finish line
-        const startLine = { x: this.startX - 50, y: this.startY - 20, width: 100, height: 40 };
-        if (this.isVisible(startLine, cameraX, cameraY, ctx.canvas.width, ctx.canvas.height)) {
-            // Checkered pattern
-            const squareSize = 10;
-            for (let i = 0; i < 10; i++) {
-                for (let j = 0; j < 4; j++) {
-                    ctx.fillStyle = (i + j) % 2 === 0 ? '#fff' : '#000';
-                    ctx.fillRect(
-                        startLine.x + i * squareSize - cameraX,
-                        startLine.y + j * squareSize - cameraY,
-                        squareSize,
-                        squareSize
-                    );
-                }
-            }
+        // Draw spawn point
+        const spawnArea = { x: this.startX - 30, y: this.startY - 30, width: 60, height: 60 };
+        if (this.isVisible(spawnArea, cameraX, cameraY, ctx.canvas.width, ctx.canvas.height)) {
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(this.startX - cameraX, this.startY - cameraY, 25, 0, Math.PI * 2);
+            ctx.stroke();
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.1)';
+            ctx.fill();
         }
         
-        // Draw item boxes
-        ctx.fillStyle = '#FFD700';
+        // Draw ability pickups
         ctx.font = '20px Arial';
         this.itemBoxes.forEach(box => {
             if (this.isVisible(box, cameraX, cameraY, ctx.canvas.width, ctx.canvas.height)) {
                 if (!box.collected || box.respawnTime <= 0) {
-                    ctx.fillRect(
-                        box.x - cameraX - 15,
-                        box.y - cameraY - 15,
-                        30,
-                        30
-                    );
-                    ctx.fillText('?', box.x - cameraX - 7, box.y - cameraY + 7);
+                    // Draw glowing orb
+                    ctx.fillStyle = 'rgba(255, 215, 0, 0.3)';
+                    ctx.beginPath();
+                    ctx.arc(box.x - cameraX, box.y - cameraY, 18, 0, Math.PI * 2);
+                    ctx.fill();
+                    ctx.fillStyle = '#FFD700';
+                    ctx.fillText('✦', box.x - cameraX - 7, box.y - cameraY + 7);
                 }
             }
             
@@ -123,11 +119,10 @@ class Track {
                 player.y > cp.y &&
                 player.y < cp.y + cp.height
             ) {
-                // Check if this is the next checkpoint
                 if (!player.checkpoints.includes(i)) {
                     player.checkpoints.push(i);
                     
-                    // If all checkpoints collected, increment lap
+                    // If all waypoints explored, advance level
                     if (player.checkpoints.length === this.checkpoints.length) {
                         player.lap++;
                         player.checkpoints = [];
@@ -144,12 +139,12 @@ class Track {
             const dist = Math.hypot(player.x - box.x, player.y - box.y);
             if (dist < 30 && !player.currentItem) {
                 box.collected = true;
-                box.respawnTime = 300; // 5 seconds at 60fps
+                box.respawnTime = 300;
                 
-                // Give random item
-                const itemTypes = ['boost', 'shell', 'star', 'banana'];
-                const randomItem = itemTypes[Math.floor(Math.random() * itemTypes.length)];
-                player.currentItem = { type: randomItem };
+                // Give random ability
+                const abilityTypes = ['dash', 'sword', 'shield', 'fireball'];
+                const randomAbility = abilityTypes[Math.floor(Math.random() * abilityTypes.length)];
+                player.currentItem = { type: randomAbility };
                 
                 return true;
             }
@@ -158,16 +153,16 @@ class Track {
     }
 }
 
-// Track definitions
+// Area definitions
 const TRACKS = {
-    circuit: {
-        name: 'Speed Circuit',
+    forest: {
+        name: 'Dark Forest',
         width: 2000,
         height: 1500,
         startX: 300,
         startY: 300,
-        trackColor: '#555',
-        grassColor: '#2a5a2a',
+        trackColor: '#2d5a1e',
+        grassColor: '#1a3a12',
         walls: [
             // Outer boundary
             { x: 0, y: 0, width: 2000, height: 50 },
@@ -175,19 +170,23 @@ const TRACKS = {
             { x: 0, y: 1450, width: 2000, height: 50 },
             { x: 1950, y: 0, width: 50, height: 1500 },
             
-            // Inner oval
-            { x: 300, y: 300, width: 1400, height: 100 },
-            { x: 300, y: 300, width: 100, height: 900 },
-            { x: 300, y: 1100, width: 1400, height: 100 },
-            { x: 1600, y: 300, width: 100, height: 900 }
+            // Trees and obstacles
+            { x: 400, y: 400, width: 80, height: 80 },
+            { x: 700, y: 200, width: 60, height: 120 },
+            { x: 1000, y: 500, width: 100, height: 100 },
+            { x: 1300, y: 300, width: 70, height: 70 },
+            { x: 600, y: 800, width: 90, height: 90 },
+            { x: 1500, y: 700, width: 80, height: 120 },
+            { x: 900, y: 1000, width: 120, height: 60 },
+            { x: 1700, y: 1100, width: 80, height: 80 }
         ],
         checkpoints: [
-            { x: 200, y: 250, width: 100, height: 200 },
-            { x: 700, y: 150, width: 200, height: 100 },
-            { x: 1400, y: 150, width: 200, height: 100 },
-            { x: 1700, y: 600, width: 100, height: 200 },
-            { x: 1400, y: 1250, width: 200, height: 100 },
-            { x: 700, y: 1250, width: 200, height: 100 }
+            { x: 200, y: 250, width: 100, height: 100 },
+            { x: 700, y: 150, width: 100, height: 100 },
+            { x: 1400, y: 150, width: 100, height: 100 },
+            { x: 1700, y: 600, width: 100, height: 100 },
+            { x: 1400, y: 1250, width: 100, height: 100 },
+            { x: 700, y: 1250, width: 100, height: 100 }
         ],
         itemBoxes: [
             { x: 500, y: 200, collected: false, respawnTime: 0 },
@@ -199,14 +198,14 @@ const TRACKS = {
         ]
     },
     
-    forest: {
-        name: 'Forest Path',
+    dungeon: {
+        name: 'Ancient Dungeon',
         width: 2500,
         height: 2000,
         startX: 400,
         startY: 400,
-        trackColor: '#8B4513',
-        grassColor: '#1a4a1a',
+        trackColor: '#4a3728',
+        grassColor: '#2a2018',
         walls: [
             // Outer boundary
             { x: 0, y: 0, width: 2500, height: 50 },
@@ -214,7 +213,7 @@ const TRACKS = {
             { x: 0, y: 1950, width: 2500, height: 50 },
             { x: 2450, y: 0, width: 50, height: 2000 },
             
-            // Winding path obstacles
+            // Dungeon walls and corridors
             { x: 400, y: 400, width: 100, height: 600 },
             { x: 800, y: 200, width: 100, height: 800 },
             { x: 1200, y: 500, width: 100, height: 700 },
@@ -222,14 +221,14 @@ const TRACKS = {
             { x: 2000, y: 600, width: 100, height: 800 }
         ],
         checkpoints: [
-            { x: 300, y: 350, width: 150, height: 150 },
-            { x: 600, y: 250, width: 150, height: 150 },
-            { x: 1000, y: 450, width: 150, height: 150 },
-            { x: 1400, y: 350, width: 150, height: 150 },
-            { x: 1800, y: 550, width: 150, height: 150 },
-            { x: 2100, y: 700, width: 150, height: 150 },
-            { x: 1800, y: 1200, width: 150, height: 150 },
-            { x: 1000, y: 1400, width: 150, height: 150 }
+            { x: 300, y: 350, width: 100, height: 100 },
+            { x: 600, y: 250, width: 100, height: 100 },
+            { x: 1000, y: 450, width: 100, height: 100 },
+            { x: 1400, y: 350, width: 100, height: 100 },
+            { x: 1800, y: 550, width: 100, height: 100 },
+            { x: 2100, y: 700, width: 100, height: 100 },
+            { x: 1800, y: 1200, width: 100, height: 100 },
+            { x: 1000, y: 1400, width: 100, height: 100 }
         ],
         itemBoxes: [
             { x: 650, y: 300, collected: false, respawnTime: 0 },
