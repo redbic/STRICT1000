@@ -193,8 +193,10 @@ const ZONES = {
         ],
         portals: [
             { id: 'archive_entry', x: 870, y: 610, width: 60, height: 60, label: 'The Archive' },
+            // Room 102 also points to archive_entry since it's the only combat zone currently
             { id: 'archive_entry', x: 400, y: 350, width: 60, height: 60, label: 'Room 102' },
-            { id: 'locked_room', x: 1340, y: 350, width: 60, height: 60, label: 'Room 237 (Locked)', locked: true }
+            // Placeholder portal for future content - locked to prevent entry
+            { id: 'room_237_placeholder', x: 1340, y: 350, width: 60, height: 60, label: 'Room 237 (Locked)', locked: true }
         ],
         npcs: [
             { x: 900, y: 400, name: 'The Curator', color: '#d4a745' }
