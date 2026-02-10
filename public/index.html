@@ -10,6 +10,19 @@
     <div id="menu" class="screen active">
         <div class="menu-container">
             <h1 class="game-title">⚔️ STRICT ADVENTURE ⚔️</h1>
+            <div id="profileBar" class="profile-bar">
+                <div class="profile-avatar">
+                    <div class="profile-avatar-placeholder" id="profileAvatarPlaceholder">👽</div>
+                    <img class="profile-avatar-img" id="profileAvatarImg" src="" alt="" style="display:none;">
+                </div>
+                <div class="profile-info">
+                    <div class="profile-name" id="profileName">Guest</div>
+                    <div class="profile-balance">
+                        <span class="currency-icon">🪙</span>
+                        <span id="profileBalanceAmount">—</span>
+                    </div>
+                </div>
+            </div>
             <div class="menu-content">
                 <input type="text" id="username" placeholder="Enter your name" maxlength="20">
                 <button id="singlePlayerBtn" class="menu-btn">Single Player</button>
@@ -46,6 +59,16 @@
             <div id="gameInfo">
                 <div class="ui-element">Depth: <span id="currentDepth">1</span>/<span id="totalDepth">3</span></div>
                 <div class="ui-element">HP: <span id="currentHP">100</span>/<span id="maxHP">100</span></div>
+            </div>
+            <div id="hudProfile" class="hud-profile">
+                <div class="hud-avatar">
+                    <div class="profile-avatar-placeholder" id="hudAvatarPlaceholder">👽</div>
+                    <img class="profile-avatar-img" id="hudAvatarImg" src="" alt="" style="display:none;">
+                </div>
+                <div class="hud-balance">
+                    <span class="currency-icon">🪙</span>
+                    <span id="hudBalanceAmount">—</span>
+                </div>
             </div>
             <div id="controlsInfo">
                 <div class="controls-title">Controls</div>

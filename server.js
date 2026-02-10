@@ -22,25 +22,6 @@ if (process.env.DATABASE_URL) {
   });
 }
 
-// Initialize database tables
-async function initDatabase() {
-  if (!pool) return;
-  
-  try {
-    await pool.query(`
-      CREATE TABLE IF NOT EXISTS players (
-        id SERIAL PRIMARY KEY,
-        username VARCHAR(50) UNIQUE NOT NULL,
-        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-      )
-    `);
-    
-    console.log('Database initialized successfully');
-  } catch (error) {
-    console.error('Database initialization error:', error);
-  }
-}
-
 // Serve static files
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
@@ -60,23 +41,53 @@ app.use('/api/', apiLimiter);
 // API Routes
 app.post('/api/player', async (req, res) => {
   if (!pool) {
-    return res.json({ success: true, player: { username: req.body.username } });
+    return res.json({ success: true, player: { name: req.body.username } });
   }
   
   const { username } = req.body;
   
   try {
     const result = await pool.query(`
-      INSERT INTO players (username) 
+      INSERT INTO players (name) 
       VALUES ($1) 
-      ON CONFLICT (username) 
-      DO UPDATE SET username = EXCLUDED.username
-      RETURNING *
+      ON CONFLICT (name) 
+      DO UPDATE SET name = EXCLUDED.name
+      RETURNING id, name, balance, character_data
     `, [username]);
     
     res.json({ success: true, player: result.rows[0] });
   } catch (error) {
     console.error('Player creation error:', error);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
+app.get('/api/profile', async (req, res) => {
+  if (!pool) {
+    return res.json({ name: req.query.name || '', balance: null, character: null });
+  }
+
+  const name = String(req.query.name || '').trim();
+  if (!name) {
+    return res.status(400).json({ error: 'Missing name' });
+  }
+
+  try {
+    const result = await pool.query(
+      'SELECT name, balance, character_data FROM players WHERE name = $1 LIMIT 1',
+      [name]
+    );
+    if (result.rows.length === 0) {
+      return res.json({ name, balance: null, character: null });
+    }
+    const row = result.rows[0];
+    res.json({
+      name: row.name,
+      balance: row.balance !== null ? Number(row.balance) : null,
+      character: row.character_data || null
+    });
+  } catch (error) {
+    console.error('Profile lookup error:', error);
     res.status(500).json({ error: 'Database error' });
   }
 });
@@ -237,5 +248,4 @@ function broadcastToRoom(roomId, message, excludeWs = null) {
 // Start server
 server.listen(PORT, async () => {
   console.log(`Server running on port ${PORT}`);
-  await initDatabase();
 });

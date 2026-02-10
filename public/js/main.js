@@ -3,6 +3,7 @@ let game = null;
 let networkManager = null;
 let currentUsername = '';
 let currentRoomPlayers = [];
+let currentProfile = null;
 
 // Screen management
 function showScreen(screenId) {
@@ -41,6 +42,7 @@ function setupEventListeners() {
             body: JSON.stringify({ username })
         }).catch(err => console.error('Failed to register player:', err));
 
+        loadProfile(username);
         showScreen('hub');
     });
     
@@ -68,9 +70,11 @@ function setupEventListeners() {
                 document.getElementById('roomCode').textContent = roomId;
                 
                 setupNetworkHandlers();
+                loadProfile(username);
                 showScreen('lobby');
             } catch (error) {
                 alert('Failed to connect to server. Playing single player instead.');
+                loadProfile(username);
                 showScreen('hub');
             }
         }
@@ -147,6 +151,44 @@ function setupNetworkHandlers() {
         networkManager = null;
         showScreen('menu');
     };
+}
+
+async function loadProfile(username) {
+    try {
+        const res = await fetch(`/api/profile?name=${encodeURIComponent(username)}`);
+        const data = await res.json();
+        currentProfile = data;
+
+        const nameEl = document.getElementById('profileName');
+        if (nameEl) nameEl.textContent = data.name || username;
+
+        const balance = typeof data.balance === 'number' ? data.balance : null;
+        const balanceEl = document.getElementById('profileBalanceAmount');
+        const hudBalanceEl = document.getElementById('hudBalanceAmount');
+        if (balanceEl) balanceEl.textContent = balance !== null ? balance.toFixed(2) : '—';
+        if (hudBalanceEl) hudBalanceEl.textContent = balance !== null ? balance.toFixed(2) : '—';
+
+        const avatarUrl = data.character && data.character.dataURL ? data.character.dataURL : '';
+        updateAvatar('profileAvatarImg', 'profileAvatarPlaceholder', avatarUrl);
+        updateAvatar('hudAvatarImg', 'hudAvatarPlaceholder', avatarUrl);
+    } catch (error) {
+        console.error('Failed to load profile:', error);
+    }
+}
+
+function updateAvatar(imgId, placeholderId, avatarUrl) {
+    const img = document.getElementById(imgId);
+    const placeholder = document.getElementById(placeholderId);
+    if (!img || !placeholder) return;
+
+    if (avatarUrl) {
+        img.src = avatarUrl;
+        img.style.display = 'block';
+        placeholder.style.display = 'none';
+    } else {
+        img.style.display = 'none';
+        placeholder.style.display = 'flex';
+    }
 }
 
 function updatePlayersList(players) {
