@@ -14,9 +14,6 @@ class Game {
         this.keys = {};
         this.running = false;
         this.gameStarted = false;
-        this.gameStartTime = null;
-        this.countdown = 3;
-        this.countdownTimer = null;
         this.score = 0;
         
         this.cameraX = 0;
@@ -102,33 +99,7 @@ class Game {
             }
         }
         
-        this.gameStarted = false;
-        this.countdown = 3;
-        
-        // Start countdown
-        this.startCountdown();
-    }
-    
-    startCountdown() {
-        const countdownEl = document.getElementById('countdown');
-        let count = 3;
-        
-        countdownEl.textContent = count;
-        
-        const interval = setInterval(() => {
-            count--;
-            if (count > 0) {
-                countdownEl.textContent = count;
-            } else if (count === 0) {
-                countdownEl.textContent = 'GO!';
-                this.gameStarted = true;
-                this.gameStartTime = Date.now();
-                setTimeout(() => {
-                    countdownEl.textContent = '';
-                }, 1000);
-                clearInterval(interval);
-            }
-        }, 1000);
+        this.gameStarted = true;
     }
     
     update() {
@@ -288,12 +259,9 @@ class Game {
         if (maxHPEl) maxHPEl.textContent = '100';
         
         // Update score
-        if (this.gameStartTime) {
-            const elapsed = Date.now() - this.gameStartTime;
-            this.score = Math.floor(elapsed / 100) + (this.localPlayer.nodesVisited.length * 50);
-            const scoreEl = document.getElementById('gameScore');
-            if (scoreEl) scoreEl.textContent = this.score;
-        }
+        this.score = this.localPlayer.nodesVisited.length * 50;
+        const scoreEl = document.getElementById('gameScore');
+        if (scoreEl) scoreEl.textContent = this.score;
         
         // Update ability display
         const itemEl = document.getElementById('currentItem');
@@ -307,8 +275,7 @@ class Game {
     
     checkGameOver() {
         // Check if player has explored all nodes and completed the zone
-        if (this.localPlayer && this.localPlayer.zoneLevel > this.zone.totalLevels && !this.localPlayer.finishTime) {
-            this.localPlayer.finishTime = Date.now() - this.gameStartTime;
+        if (this.localPlayer && this.localPlayer.zoneLevel > this.zone.totalLevels) {
             this.endGame();
         }
     }
@@ -329,10 +296,6 @@ class Game {
                 <span class="result-name">Areas Explored</span>
                 <span class="result-score">${this.localPlayer.zoneLevel - 1}</span>
             </div>
-            <div class="result-item">
-                <span class="result-name">Time</span>
-                <span class="result-score">${Math.floor(this.localPlayer.finishTime / 60000)}:${String(((this.localPlayer.finishTime % 60000) / 1000).toFixed(1)).padStart(5, '0')}</span>
-            </div>
         `;
         
         html += '</div>';
@@ -341,7 +304,7 @@ class Game {
         document.getElementById('gameResults').classList.remove('hidden');
         
         // Save result to server
-        if (this.localPlayer && this.localPlayer.finishTime) {
+        if (this.localPlayer) {
             fetch('/api/game-result', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },

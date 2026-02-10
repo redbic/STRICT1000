@@ -22,7 +22,6 @@ class Player {
         this.zoneLevel = 1;
         this.nodesVisited = [];
         this.position = 1;
-        this.finishTime = null;
         
         // Abilities
         this.currentItem = null;
