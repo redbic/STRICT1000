@@ -33,18 +33,13 @@ class Game {
         window.addEventListener('keydown', (e) => {
             const key = normalizeKey(e);
             this.keys[key] = true;
-            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' ', 'f'].includes(key)) {
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', ' '].includes(key)) {
                 e.preventDefault();
             }
             
-            // Use ability with Space
-            if (key === ' ') {
-                if (this.localPlayer && this.localPlayer.currentItem) {
-                    const result = this.localPlayer.useItem(this.enemies);
-                    if (result && result.type === 'fireball') {
-                        this.abilityManager.addHazard(result);
-                    }
-                }
+            // Melee attack with Space
+            if (key === ' ' && this.localPlayer) {
+                this.localPlayer.tryAttack(this.enemies);
             }
         });
         
@@ -108,7 +103,7 @@ class Game {
     update() {
         if (!this.gameStarted) return;
 
-        if (this.keys['f'] && this.localPlayer) {
+        if (this.keys[' '] && this.localPlayer) {
             this.localPlayer.tryAttack(this.enemies);
         }
         
