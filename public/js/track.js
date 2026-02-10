@@ -199,7 +199,7 @@ const ZONES = {
             { id: 'room_237_placeholder', x: 1340, y: 350, width: 60, height: 60, label: 'Room 237 (Locked)', locked: true }
         ],
         npcs: [
-            { x: 900, y: 400, name: 'The Curator', color: '#d4a745' }
+            { x: 900, y: 400, name: 'The Receptionist', color: '#d4a745' }
         ]
     },
     archive_entry: {
