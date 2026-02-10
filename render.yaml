@@ -1,7 +1,7 @@
 version: 1
 services:
   - type: web
-    name: strict-racing
+    name: strict-adventure
     env: node
     plan: free
     buildCommand: npm install

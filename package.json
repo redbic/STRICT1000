@@ -1,17 +1,17 @@
 {
-  "name": "strict-racing",
+  "name": "strict-adventure",
   "version": "1.0.0",
-  "description": "Web-based racing game inspired by SNES Super Mario Kart",
+  "description": "Web-based top-down adventure game inspired by Realm of the Mad God, Undertale, and Inscryption",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "nodemon server.js"
   },
   "keywords": [
-    "racing",
+    "adventure",
     "game",
     "multiplayer",
-    "kart"
+    "rpg"
   ],
   "author": "",
   "license": "MIT",
