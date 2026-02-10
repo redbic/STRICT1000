@@ -163,34 +163,6 @@ body {
     white-space: nowrap;
 }
 
-#gameResults {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.95);
-    padding: 40px;
-    border-radius: 20px;
-    z-index: 100;
-}
-
-#gameResults.hidden {
-    display: none;
-}
-
-.results-container {
-    text-align: center;
-}
-
-.results-container h2 {
-    font-size: 36px;
-    margin-bottom: 20px;
-}
-
-#resultsContent {
-    margin: 20px 0;
-    font-size: 20px;
-}
 
 #playersList {
     background: rgba(255, 255, 255, 0.1);

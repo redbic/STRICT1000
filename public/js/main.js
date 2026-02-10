@@ -100,13 +100,6 @@ function setupEventListeners() {
         showScreen('menu');
     });
     
-    // Game results
-    document.getElementById('returnToMenuBtn').addEventListener('click', () => {
-        if (game) {
-            game.stop();
-        }
-        showScreen('menu');
-    });
 }
 
 function setupNetworkHandlers() {

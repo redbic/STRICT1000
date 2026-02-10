@@ -134,10 +134,7 @@ class Game {
         // Handle portals
         this.handlePortalTransitions();
 
-        // Check game over (skip in hub)
-        if (!this.zone.isHub) {
-            this.checkGameOver();
-        }
+        // No end screen during exploration
     }
 
     handlePortalTransitions() {
@@ -265,34 +262,6 @@ class Game {
         }
     }
     
-    checkGameOver() {
-        // Check if player has explored all nodes and completed the zone
-        if (this.localPlayer && this.localPlayer.zoneLevel > this.zone.totalLevels) {
-            this.endGame();
-        }
-    }
-    
-    endGame() {
-        this.running = false;
-        
-        // Show results
-        const resultsEl = document.getElementById('resultsContent');
-        let html = '<div class="results-list">';
-        
-        html += `
-            <div class="result-item">
-                <span class="result-name">Areas Explored</span>
-                <span class="result-score">${this.localPlayer.zoneLevel - 1}</span>
-            </div>
-        `;
-        
-        html += '</div>';
-        resultsEl.innerHTML = html;
-        
-        document.getElementById('gameResults').classList.remove('hidden');
-        
-        // Results are local only for now.
-    }
     
     draw() {
         // Clear canvas
