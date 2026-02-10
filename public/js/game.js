@@ -3,8 +3,7 @@ class Game {
     constructor() {
         this.canvas = document.getElementById('gameCanvas');
         this.ctx = this.canvas.getContext('2d');
-        this.canvas.width = 1200;
-        this.canvas.height = 800;
+        this.resizeCanvas();
         
         this.players = [];
         this.localPlayer = null;
@@ -53,6 +52,15 @@ class Game {
             const key = normalizeKey(e);
             this.keys[key] = false;
         });
+
+        window.addEventListener('resize', () => {
+            this.resizeCanvas();
+        });
+    }
+
+    resizeCanvas() {
+        this.canvas.width = window.innerWidth;
+        this.canvas.height = window.innerHeight;
     }
     
     init(zoneName, playerName, isMultiplayer = false) {
