@@ -113,6 +113,11 @@ function setupEventListeners() {
             networkManager.disconnect();
             networkManager = null;
         }
+        if (playerUpdateInterval) {
+            clearInterval(playerUpdateInterval);
+            playerUpdateInterval = null;
+        }
+        stopEnemySyncInterval();
         currentHostId = null;
         showScreen('menu');
     });
@@ -364,7 +369,7 @@ function startGame(zoneName) {
     if (networkManager) {
         // Apply stored host status (room_update may have arrived before game was created)
         if (currentHostId) {
-            game.isHost = (networkManager.playerId === currentHostId);
+            updateHostStatus(currentHostId);
         }
         
         game.syncMultiplayerPlayers(currentRoomPlayers, networkManager.playerId);
@@ -378,11 +383,6 @@ function startGame(zoneName) {
                 networkManager.sendPlayerUpdate(game.localPlayer.getState());
             }
         }, 50); // 20 updates per second
-        
-        // Start enemy sync if we are the host
-        if (game.isHost) {
-            startEnemySyncInterval();
-        }
     }
 }
 
