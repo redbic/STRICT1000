@@ -31,6 +31,10 @@ class Game {
         this.onEnemyKilled = null; // Callback for when an enemy is killed
         this.isHost = false; // Whether this client is the host (authoritative for enemies)
         this.onEnemyDamage = null; // Callback for sending enemy damage to host (non-host players)
+        this.onPlayerDeath = null; // Callback for when the local player dies
+
+        // Screen flash effect for damage feedback
+        this.screenFlash = { active: false, timer: 0, color: 'rgba(255, 0, 0, 0.3)' };
         
         // Performance optimization: cache darkness overlay canvas
         this.darknessCanvas = null;
@@ -52,6 +56,19 @@ class Game {
         this.handleKeyDown = (e) => {
             const key = normalizeKey(e);
             this.keys[key] = true;
+
+            // Handle respawn when dead
+            if (key === ' ' && this.localPlayer && this.localPlayer.isDead) {
+                this.handleRespawn();
+                e.preventDefault();
+                return;
+            }
+
+            // Block other input when dead
+            if (this.localPlayer && this.localPlayer.isDead) {
+                return;
+            }
+
             if (key === 'i') {
                 this.toggleInventory();
                 e.preventDefault();
@@ -110,6 +127,9 @@ class Game {
                 return;
             }
             if (e.button !== 0 || !this.localPlayer) return;
+
+            // Block firing when dead
+            if (this.localPlayer.isDead) return;
 
             const worldX = this.lastMouse.x + this.cameraX;
             const worldY = this.lastMouse.y + this.cameraY;
@@ -201,10 +221,30 @@ class Game {
 
         const dt = this.deltaTime || 1/60;
 
+        // Update screen flash timer
+        if (this.screenFlash.active) {
+            this.screenFlash.timer -= dt;
+            if (this.screenFlash.timer <= 0) {
+                this.screenFlash.active = false;
+            }
+        }
+
+        // Track HP before all updates to detect damage
+        const hpBeforeUpdate = this.localPlayer ? this.localPlayer.hp : 0;
+
         // Update local player
         if (this.localPlayer) {
-            this.localPlayer.update(this.keys, this.zone, dt);
-            this.handlePickupCollision();
+            // Skip movement updates if dead
+            if (!this.localPlayer.isDead) {
+                this.localPlayer.update(this.keys, this.zone, dt);
+                this.handlePickupCollision();
+            } else {
+                // Still update gun/flash timers when dead
+                this.localPlayer.updateGun(dt);
+                if (this.localPlayer.damageFlashTimer > 0) {
+                    this.localPlayer.damageFlashTimer -= dt;
+                }
+            }
         }
 
         // Interpolate remote players toward their latest server state
@@ -241,7 +281,19 @@ class Game {
                 }
             });
         }
-        
+
+        // Check if local player took damage (from enemies or other sources)
+        if (this.localPlayer && !this.localPlayer.isDead) {
+            if (this.localPlayer.hp < hpBeforeUpdate) {
+                this.screenFlash = { active: true, timer: 0.1, color: 'rgba(255, 0, 0, 0.3)' };
+            }
+            // Check if player just died
+            if (this.localPlayer.hp <= 0) {
+                this.localPlayer.isDead = true;
+                this.handlePlayerDeath();
+            }
+        }
+
         // Update camera (follow local player)
         if (this.localPlayer) {
             this.cameraX = this.localPlayer.x - this.canvas.width / 2;
@@ -482,6 +534,39 @@ class Game {
         this.portalCooldown = 30;
     }
 
+    handlePlayerDeath() {
+        this.showDeathScreen();
+        if (this.onPlayerDeath) {
+            this.onPlayerDeath();
+        }
+    }
+
+    handleRespawn() {
+        this.hideDeathScreen();
+        this.localPlayer.respawn();
+
+        // Transition to hub
+        if (this.onPortalEnter) {
+            this.onPortalEnter('hub');
+        } else {
+            this.transitionZone('hub');
+        }
+    }
+
+    showDeathScreen() {
+        const deathScreen = document.getElementById('deathScreen');
+        if (deathScreen) {
+            deathScreen.classList.add('active');
+        }
+    }
+
+    hideDeathScreen() {
+        const deathScreen = document.getElementById('deathScreen');
+        if (deathScreen) {
+            deathScreen.classList.remove('active');
+        }
+    }
+
     transitionZone(zoneName, roster = [], localId = '') {
         const playerId = localId || (this.localPlayer ? this.localPlayer.id : '');
         this.init(zoneName, this.localPlayer ? this.localPlayer.username : 'Player', playerId);
@@ -583,6 +668,12 @@ class Game {
         // Apply darkness overlay for The Gallery (ruleset: darkness)
         if (this.zone && this.zone.ruleset === 'darkness' && this.localPlayer) {
             this.drawDarknessOverlay();
+        }
+
+        // Draw screen flash effect (damage feedback)
+        if (this.screenFlash.active) {
+            this.ctx.fillStyle = this.screenFlash.color;
+            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
     }
     

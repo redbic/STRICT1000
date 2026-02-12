@@ -74,6 +74,8 @@ class Player {
         // Status
         this.stunned = false;
         this.stunnedTime = 0;
+        this.isDead = false;
+        this.damageFlashTimer = 0;
 
         // Interpolation targets (used by remote players)
         this.targetX = undefined;
@@ -145,6 +147,11 @@ class Player {
         // Update gun cooldowns
         this.updateGun(dt);
 
+        // Update damage flash timer
+        if (this.damageFlashTimer > 0) {
+            this.damageFlashTimer -= dt;
+        }
+
         // Update speed for network sync (normalized to ~0-3 range for compatibility)
         this.speed = Math.hypot(this.velocityX, this.velocityY) / 60;
 
@@ -199,8 +206,9 @@ class Player {
         ctx.ellipse(screenX, screenY + 11, 9, 4, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Torso
-        ctx.fillStyle = this.stunned ? '#666' : this.color;
+        // Torso - flash red when taking damage
+        const bodyColor = this.damageFlashTimer > 0 ? '#ff4444' : (this.stunned ? '#666' : this.color);
+        ctx.fillStyle = bodyColor;
         ctx.beginPath();
         ctx.ellipse(screenX, bodyY + 1, 9, 7, 0, 0, Math.PI * 2);
         ctx.fill();
@@ -433,9 +441,26 @@ class Player {
     /**
      * Apply damage to player
      * @param {number} amount - Damage amount
+     * @returns {boolean} True if player died from this damage
      */
     takeDamage(amount) {
+        if (this.isDead) return false;
         this.hp = Math.max(0, this.hp - amount);
+        this.damageFlashTimer = 0.15; // 150ms red flash
+        if (this.hp <= 0) {
+            this.isDead = true;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Respawn player with full HP
+     */
+    respawn() {
+        this.hp = this.maxHp;
+        this.isDead = false;
+        this.damageFlashTimer = 0;
     }
     
     getState() {
@@ -447,10 +472,12 @@ class Player {
             speed: this.speed,
             zoneLevel: this.zoneLevel,
             username: this.username,
-            stunned: this.stunned
+            stunned: this.stunned,
+            hp: this.hp,
+            isDead: this.isDead
         };
     }
-    
+
     setState(state) {
         // Store target state for interpolation
         this.targetX = state.x;
@@ -459,6 +486,8 @@ class Player {
         this.speed = state.speed;
         this.zoneLevel = state.zoneLevel;
         this.stunned = state.stunned;
+        if (state.hp !== undefined) this.hp = state.hp;
+        if (state.isDead !== undefined) this.isDead = state.isDead;
     }
 
     interpolateRemote(dt) {

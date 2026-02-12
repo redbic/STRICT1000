@@ -7,7 +7,7 @@ const ROOM_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
 const PLAYER_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
 const USERNAME_PATTERN = /^[A-Za-z0-9]([A-Za-z0-9 _-]*[A-Za-z0-9])?$/;
 const ALLOWED_ZONE_IDS = new Set(['hub', 'training', 'gallery']);
-const PLAYER_STATE_KEYS = new Set(['id', 'x', 'y', 'angle', 'speed', 'zoneLevel', 'username', 'stunned']);
+const PLAYER_STATE_KEYS = new Set(['id', 'x', 'y', 'angle', 'speed', 'zoneLevel', 'username', 'stunned', 'hp', 'isDead']);
 const INVENTORY_MAX_ITEMS = 16;
 
 function normalizeSafeString(value) {
@@ -55,6 +55,10 @@ function isValidPlayerState(state) {
 
   if (state.id !== undefined && !isValidPlayerId(state.id)) return false;
   if (state.username !== undefined && !isValidUsername(state.username)) return false;
+
+  // Validate optional hp and isDead fields
+  if (state.hp !== undefined && !isFiniteNumberInRange(state.hp, 0, 10000)) return false;
+  if (state.isDead !== undefined && typeof state.isDead !== 'boolean') return false;
 
   return true;
 }

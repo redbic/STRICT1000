@@ -387,3 +387,50 @@ body {
     color: #f1c40f;
     opacity: 0.9;
 }
+
+/* Death Screen */
+.death-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.85);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 1000;
+}
+
+.death-screen.active {
+    display: flex;
+}
+
+.death-text {
+    font-size: 72px;
+    color: #8b0000;
+    font-family: 'Times New Roman', serif;
+    letter-spacing: 8px;
+    text-transform: uppercase;
+    animation: deathFadeIn 2s ease-in;
+}
+
+.death-subtext {
+    color: #666;
+    margin-top: 40px;
+    font-size: 18px;
+    animation: deathFadeIn 2.5s ease-in;
+}
+
+.death-penalty {
+    color: #555;
+    margin-top: 20px;
+    font-size: 14px;
+    animation: deathFadeIn 3s ease-in;
+}
+
+@keyframes deathFadeIn {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}

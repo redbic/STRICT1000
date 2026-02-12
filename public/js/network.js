@@ -179,6 +179,14 @@ class NetworkManager {
         if (!this.connected) return;
         this.send({ type: 'list_rooms' });
     }
+
+    sendPlayerDeath(zone) {
+        if (!this.connected) return;
+        this.send({
+            type: 'player_death',
+            zone: zone
+        });
+    }
     
     send(data) {
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {

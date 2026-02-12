@@ -28,6 +28,7 @@ const wss = new WebSocket.Server({
 
 const PORT = process.env.PORT || 3000;
 const ENEMY_KILL_REWARD = 5;
+const DEATH_PENALTY_COINS = 20;
 // Inbound WebSocket message types (client -> server)
 const WS_MESSAGE_TYPES = new Set([
   'join_room',
@@ -39,6 +40,7 @@ const WS_MESSAGE_TYPES = new Set([
   'enemy_sync',
   'enemy_damage',
   'list_rooms',
+  'player_death',
 ]);
 // Outbound message types (server -> client):
 // room_update, player_state, game_start, zone_enter, player_zone,
@@ -382,6 +384,7 @@ wss.on('connection', (ws, request) => {
       case 'enemy_sync':   handleEnemySync(ws, data); break;
       case 'enemy_damage': handleEnemyDamage(ws, data); break;
       case 'list_rooms':   handleListRooms(ws); break;
+      case 'player_death': handlePlayerDeath(ws, data); break;
       default: break;
     }
   });
@@ -632,6 +635,38 @@ function handleDisconnect(ws) {
 
 function handleListRooms(ws) {
   safeSend(ws, { type: 'room_list', rooms: rooms.getAvailableRooms() });
+}
+
+async function handlePlayerDeath(ws, data) {
+  if (!ws.username) return;
+
+  const zoneKey = (typeof data.zone === 'string' ? data.zone.trim().toLowerCase() : '') || 'unknown';
+
+  // Try to deduct coins (death penalty) - may return null if insufficient funds
+  let newBalance = await currency.deductBalance(
+    pool, ws.username, DEATH_PENALTY_COINS, 'death_penalty',
+    { game: 'strict1000', zone: zoneKey }
+  );
+
+  // If deduction failed (insufficient funds), get current balance
+  if (newBalance === null) {
+    newBalance = await currency.getBalance(pool, ws.username);
+  }
+
+  // Clear inventory in database
+  if (pool) {
+    try {
+      await pool.query(
+        'UPDATE players SET inventory_data = $1::jsonb WHERE name = $2',
+        ['[]', ws.username]
+      );
+    } catch (error) {
+      console.error('Failed to clear inventory on death:', error);
+    }
+  }
+
+  // Send updated balance
+  safeSend(ws, { type: 'balance_update', balance: newBalance !== null ? newBalance : 0 });
 }
 
 function shutdown(signal) {

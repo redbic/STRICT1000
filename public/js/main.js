@@ -550,6 +550,17 @@ function startGame(zoneName) {
         scheduleInventorySave(inventory);
     };
 
+    // Wire up death penalty callback
+    game.onPlayerDeath = () => {
+        // Clear local inventory
+        game.setInventory([]);
+
+        // Notify server to apply death penalty (coin deduction + clear DB inventory)
+        if (networkManager && networkManager.connected) {
+            networkManager.sendPlayerDeath(game.zoneId || 'unknown');
+        }
+    };
+
     if (currentProfile && Array.isArray(currentProfile.inventory)) {
         game.setInventory(currentProfile.inventory);
     }
@@ -603,7 +614,9 @@ function hasSignificantChange(oldState, newState) {
            dy > positionThreshold ||
            dAngle > angleThreshold ||
            oldState.stunned !== newState.stunned ||
-           oldState.zoneLevel !== newState.zoneLevel;
+           oldState.zoneLevel !== newState.zoneLevel ||
+           oldState.hp !== newState.hp ||
+           oldState.isDead !== newState.isDead;
 }
 
 function recallToHub() {
