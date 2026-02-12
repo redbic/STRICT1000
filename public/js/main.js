@@ -170,6 +170,10 @@ function setupNetworkHandlers() {
             if (player && player !== game.localPlayer) {
                 player.setState(data.state);
             }
+            // Debug: Check if local player is being found incorrectly
+            if (player === game.localPlayer) {
+                console.warn('WARNING: Received state update for local player!', data.playerId);
+            }
         }
     };
     
@@ -574,8 +578,9 @@ function startGame(zoneName) {
     if (!game) {
         game = new Game();
     }
-    
+
     const playerId = networkManager ? networkManager.playerId : 'player1';
+    console.log('Starting game:', { zoneName, playerId, isHost: currentHostId === playerId });
     game.init(zoneName, currentUsername, playerId);
     game.onPortalEnter = (targetZoneId) => {
         if (networkManager && networkManager.connected) {

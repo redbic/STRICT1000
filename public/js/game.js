@@ -255,6 +255,11 @@ class Game {
             }
         });
 
+        // Debug: Check for duplicate players or issues
+        if (this.players.filter(p => p.id === this.localPlayer?.id).length > 1) {
+            console.error('DUPLICATE LOCAL PLAYER DETECTED!');
+        }
+
         // Update projectiles
         this.updateProjectiles(dt);
 
