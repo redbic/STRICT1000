@@ -8,6 +8,7 @@ let playerUpdateInterval = null; // Track interval to prevent leaks
 let enemySyncInterval = null; // Track enemy sync interval
 let currentHostId = null; // Track the current host ID across game creation
 let browseManager = null; // Separate connection for browsing room list
+let inventorySaveTimeout = null;
 
 // Helper function to update balance display
 function updateBalanceDisplay(balance) {
@@ -392,9 +393,40 @@ async function loadProfile(username) {
         if (game && game.localPlayer) {
             game.localPlayer.setAvatar(avatarUrl);
         }
+        if (game) {
+            game.setInventory(data.inventory || []);
+        }
     } catch (error) {
         console.error('Failed to load profile:', error);
     }
+}
+
+function scheduleInventorySave(inventory) {
+    if (!currentUsername) return;
+    if (inventorySaveTimeout) {
+        clearTimeout(inventorySaveTimeout);
+    }
+
+    inventorySaveTimeout = setTimeout(async () => {
+        try {
+            const response = await fetch('/api/inventory', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    username: currentUsername,
+                    inventory
+                })
+            });
+            if (response.ok) {
+                const data = await response.json();
+                if (currentProfile) {
+                    currentProfile.inventory = Array.isArray(data.inventory) ? data.inventory : inventory;
+                }
+            }
+        } catch (error) {
+            console.error('Failed to save inventory:', error);
+        }
+    }, 300);
 }
 
 async function hydrateRoomAvatars(players) {
@@ -471,6 +503,13 @@ function startGame(zoneName) {
             networkManager.sendEnemyDamage(enemyId, damage);
         }
     };
+    game.onInventoryChanged = (inventory) => {
+        scheduleInventorySave(inventory);
+    };
+
+    if (currentProfile && Array.isArray(currentProfile.inventory)) {
+        game.setInventory(currentProfile.inventory);
+    }
     
     showScreen('game');
     game.start();
@@ -532,4 +571,3 @@ function recallToHub() {
         console.error('No network connection for recall');
     }
 }
-

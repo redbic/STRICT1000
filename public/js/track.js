@@ -11,6 +11,7 @@ class Zone {
         this.nodes = zoneData.nodes || [];
         this.walls = zoneData.walls || [];
         this.portals = zoneData.portals || [];
+        this.items = (zoneData.items || []).map(item => ({ ...item }));
         this.totalLevels = zoneData.totalLevels || 3;
         this.decorations = zoneData.decorations || null;
         this.ruleset = zoneData.ruleset || 'standard';
@@ -168,6 +169,25 @@ class Zone {
                 }
             }
         });
+
+        // Draw pickup items
+        this.items.forEach(item => {
+            if (!this.isVisible({ x: item.x - 12, y: item.y - 12, width: 24, height: 24 }, cameraX, cameraY, ctx.canvas.width, ctx.canvas.height)) {
+                return;
+            }
+
+            const itemX = item.x - cameraX;
+            const itemY = item.y - cameraY;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.beginPath();
+            ctx.arc(itemX, itemY, 12, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#fff';
+            ctx.font = '16px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText(item.icon || '📦', itemX, itemY + 5);
+        });
     }
     
     isVisible(rect, cameraX, cameraY, viewWidth, viewHeight) {
@@ -229,6 +249,12 @@ class Zone {
             }
         }
         return null;
+    }
+
+    popPickupAt(x, y, radius = 18) {
+        const idx = this.items.findIndex(item => Math.hypot(item.x - x, item.y - y) <= radius);
+        if (idx < 0) return null;
+        return this.items.splice(idx, 1)[0];
     }
     
     // Decorative drawing methods for lobby
@@ -416,6 +442,10 @@ const ZONES = {
         ],
         npcs: [
             { x: 900, y: 400, name: 'The Receptionist', color: '#d4a745' }
+        ],
+        items: [
+            { id: 'old-key', name: 'Old Key', icon: '🗝️', x: 820, y: 760 },
+            { id: 'energy-tonic', name: 'Energy Tonic', icon: '🧪', x: 1010, y: 760 }
         ]
     },
     training: {
@@ -439,6 +469,10 @@ const ZONES = {
         ],
         enemies: [
             { x: 500, y: 400, stationary: true, passive: true, hp: 100, maxHp: 100 }
+        ],
+        items: [
+            { id: 'practice-blade', name: 'Practice Blade', icon: '🗡️', x: 530, y: 520 },
+            { id: 'iron-ore', name: 'Iron Ore', icon: '⛓️', x: 420, y: 320 }
         ]
     },
     gallery: {
@@ -470,6 +504,10 @@ const ZONES = {
             { x: 400, y: 300, stationary: false, passive: false, hp: 40, maxHp: 40 },
             { x: 800, y: 500, stationary: false, passive: false, hp: 40, maxHp: 40 },
             { x: 300, y: 700, stationary: false, passive: false, hp: 40, maxHp: 40 }
+        ],
+        items: [
+            { id: 'gallery-shard', name: 'Gallery Shard', icon: '💠', x: 680, y: 260 },
+            { id: 'dim-lantern', name: 'Dim Lantern', icon: '🏮', x: 940, y: 760 }
         ]
     }
 };

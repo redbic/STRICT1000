@@ -43,7 +43,7 @@ app.use('/api/', apiLimiter);
 // API Routes
 app.post('/api/player', async (req, res) => {
   if (!pool) {
-    return res.json({ success: true, player: { name: req.body.username } });
+    return res.json({ success: true, player: { name: req.body.username, inventory_data: [] } });
   }
   
   const { username } = req.body;
@@ -54,7 +54,7 @@ app.post('/api/player', async (req, res) => {
       VALUES ($1) 
       ON CONFLICT (name) 
       DO UPDATE SET name = EXCLUDED.name
-      RETURNING id, name, balance, character_data
+      RETURNING id, name, balance, character_data, inventory_data
     `, [username]);
     
     res.json({ success: true, player: result.rows[0] });
@@ -66,7 +66,7 @@ app.post('/api/player', async (req, res) => {
 
 app.get('/api/profile', async (req, res) => {
   if (!pool) {
-    return res.json({ name: req.query.name || '', balance: null, character: null });
+    return res.json({ name: req.query.name || '', balance: null, character: null, inventory: [] });
   }
 
   const name = String(req.query.name || '').trim();
@@ -76,17 +76,18 @@ app.get('/api/profile', async (req, res) => {
 
   try {
     const result = await pool.query(
-      'SELECT name, balance, character_data FROM players WHERE name = $1 LIMIT 1',
+      'SELECT name, balance, character_data, inventory_data FROM players WHERE name = $1 LIMIT 1',
       [name]
     );
     if (result.rows.length === 0) {
-      return res.json({ name, balance: null, character: null });
+      return res.json({ name, balance: null, character: null, inventory: [] });
     }
     const row = result.rows[0];
     res.json({
       name: row.name,
       balance: row.balance !== null ? Number(row.balance) : null,
-      character: row.character_data || null
+      character: row.character_data || null,
+      inventory: sanitizeInventory(row.inventory_data)
     });
   } catch (error) {
     console.error('Profile lookup error:', error);
@@ -111,6 +112,38 @@ app.post('/api/balance/add', async (req, res) => {
   res.json({ success: true, balance: newBalance });
 });
 
+app.post('/api/inventory', async (req, res) => {
+  if (!pool) {
+    return res.json({ success: true, inventory: sanitizeInventory(req.body.inventory) });
+  }
+
+  const username = normalizeSafeString(req.body.username);
+  if (!username || !isValidUsername(username)) {
+    return res.status(400).json({ error: 'Invalid username' });
+  }
+
+  const sanitizedInventory = sanitizeInventory(req.body.inventory);
+
+  try {
+    const result = await pool.query(
+      `UPDATE players
+       SET inventory_data = $2::jsonb
+       WHERE name = $1
+       RETURNING inventory_data`,
+      [username, JSON.stringify(sanitizedInventory)]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({ error: 'Player not found' });
+    }
+
+    res.json({ success: true, inventory: sanitizeInventory(result.rows[0].inventory_data) });
+  } catch (error) {
+    console.error('Inventory save error:', error);
+    res.status(500).json({ error: 'Database error' });
+  }
+});
+
 // WebSocket game rooms
 const gameRooms = new Map();
 
@@ -125,6 +158,39 @@ const PLAYER_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
 const USERNAME_PATTERN = /^[A-Za-z0-9 _-]+$/;
 const ALLOWED_ZONE_IDS = new Set(['hub', 'training', 'gallery']);
 const PLAYER_STATE_KEYS = new Set(['id', 'x', 'y', 'angle', 'speed', 'zoneLevel', 'position', 'username', 'stunned']);
+const INVENTORY_MAX_ITEMS = 16;
+
+function sanitizeInventory(rawInventory) {
+  if (!Array.isArray(rawInventory)) return [];
+
+  const sanitized = [];
+  for (const rawItem of rawInventory) {
+    if (!rawItem || typeof rawItem !== 'object' || Array.isArray(rawItem)) continue;
+
+    const id = normalizeSafeString(rawItem.id).slice(0, 64);
+    const name = normalizeSafeString(rawItem.name).slice(0, 48);
+    const icon = normalizeSafeString(rawItem.icon || '📦').slice(0, 8);
+    if (!id || !name) continue;
+
+    sanitized.push({ id, name, icon: icon || '📦' });
+    if (sanitized.length >= INVENTORY_MAX_ITEMS) break;
+  }
+
+  return sanitized;
+}
+
+async function ensurePlayerSchema() {
+  if (!pool) return;
+
+  try {
+    await pool.query(`
+      ALTER TABLE players
+      ADD COLUMN IF NOT EXISTS inventory_data JSONB NOT NULL DEFAULT '[]'::jsonb
+    `);
+  } catch (error) {
+    console.error('Failed ensuring players inventory schema:', error);
+  }
+}
 
 function warnInvalidInput(type, reason) {
   console.warn(`Rejected ${type}: ${reason}`);
@@ -662,5 +728,6 @@ function broadcastToRoom(roomId, message, excludeWs = null) {
 
 // Start server
 server.listen(PORT, async () => {
+  await ensurePlayerSchema();
   console.log(`Server running on port ${PORT}`);
 });

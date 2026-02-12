@@ -9,9 +9,11 @@ A browser-based multiplayer top-down adventure game set in a mysterious hotel, i
 - **Click-to-Attack Combat**: Mouse-based melee system with attack animations
 - **Enemy AI**: Enemies aggro, chase, and deal damage in combat zones
 - **Server-side Currency**: Earn coins from enemy kills, persisted across sessions
+- **Pickupable Items**: Collect world pickups by walking over them
+- **Persistent Inventory**: 16-slot (4x4) inventory saved to the DB per username
 - **Player Profiles**: Username-based profiles with avatar, balance, and character data from shared DB
 - **Multiplayer Only**: Real-time WebSocket co-op — see other players with avatars above their heads
-- **Responsive Controls**: WASD or Arrow keys for movement, mouse click to attack
+- **Responsive Controls**: WASD/Arrow movement, mouse attack, `I` to toggle inventory
 
 ## Tech Stack
 
@@ -64,6 +66,7 @@ npm run dev
 
 - **Arrow Keys** or **WASD**: Movement
 - **Mouse Click**: Attack (melee, aimed toward cursor)
+- **I**: Toggle inventory panel (4x4); top row is mirrored in hotbar
 
 ### Flow
 
@@ -112,8 +115,9 @@ STRICT1000/
 |--------|----------|-------------|
 | `GET` | `/` | Serve the game |
 | `POST` | `/api/player` | Register or update a player |
-| `GET` | `/api/profile?name=` | Fetch player profile (name, balance, character) |
+| `GET` | `/api/profile?name=` | Fetch player profile (name, balance, character, inventory) |
 | `POST` | `/api/balance/add` | Add currency to a player's balance |
+| `POST` | `/api/inventory` | Save a player's inventory (max 16 items) |
 | `WS` | `/` | WebSocket — multiplayer room sync, state updates, kill events |
 
 ## Database Schema
@@ -123,6 +127,7 @@ STRICT1000/
 - `name`: Unique player name
 - `balance`: Currency balance (decimal)
 - `character_data`: JSON character customization data
+- `inventory_data`: JSON inventory payload (up to 16 items)
 - `created_at`: Timestamp
 
 ## Narrative & Design Direction

@@ -10,6 +10,9 @@ class Game {
         this.zone = null;
         this.zoneId = null;
         this.npcs = [];
+        this.inventory = [];
+        this.inventoryOpen = false;
+        this.inventoryMaxSlots = 16;
         
         this.keys = {};
         this.running = false;
@@ -45,6 +48,10 @@ class Game {
         this.handleKeyDown = (e) => {
             const key = normalizeKey(e);
             this.keys[key] = true;
+            if (key === 'i') {
+                this.toggleInventory();
+                e.preventDefault();
+            }
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
                 e.preventDefault();
             }
@@ -166,6 +173,7 @@ class Game {
             playerName
         );
         this.players.push(this.localPlayer);
+        this.renderInventoryUI();
         
         this.gameStarted = true;
     }
@@ -176,6 +184,7 @@ class Game {
         // Update local player
         if (this.localPlayer) {
             this.localPlayer.update(this.keys, this.zone);
+            this.handlePickupCollision();
         }
         
         // Only the host runs enemy AI; non-host clients receive synced state
@@ -213,6 +222,81 @@ class Game {
         this.handlePortalTransitions();
 
         // No end screen during exploration
+    }
+
+    handlePickupCollision() {
+        if (!this.zone || !this.localPlayer || !Array.isArray(this.zone.items) || this.zone.items.length === 0) return;
+        if (this.inventory.length >= this.inventoryMaxSlots) return;
+
+        const pickedItem = this.zone.popPickupAt(this.localPlayer.x, this.localPlayer.y, 18);
+        if (!pickedItem) return;
+
+        this.addInventoryItem({
+            id: pickedItem.id || `item-${Date.now()}`,
+            name: pickedItem.name || 'Unknown Item',
+            icon: pickedItem.icon || '📦'
+        });
+    }
+
+    setInventory(items) {
+        if (!Array.isArray(items)) {
+            this.inventory = [];
+            this.renderInventoryUI();
+            return;
+        }
+        this.inventory = items.slice(0, this.inventoryMaxSlots).map(item => ({
+            id: item.id,
+            name: item.name,
+            icon: item.icon || '📦'
+        }));
+        this.renderInventoryUI();
+    }
+
+    addInventoryItem(item) {
+        if (!item || this.inventory.length >= this.inventoryMaxSlots) return false;
+        this.inventory.push(item);
+        this.renderInventoryUI();
+        if (this.onInventoryChanged) {
+            this.onInventoryChanged(this.inventory.slice());
+        }
+        return true;
+    }
+
+    toggleInventory() {
+        this.inventoryOpen = !this.inventoryOpen;
+        const panel = document.getElementById('inventoryPanel');
+        if (panel) {
+            panel.classList.toggle('open', this.inventoryOpen);
+        }
+    }
+
+    renderInventoryUI() {
+        const grid = document.getElementById('inventoryGrid');
+        const hotbar = document.getElementById('hotbarSlots');
+        if (!grid || !hotbar) return;
+
+        grid.innerHTML = '';
+        hotbar.innerHTML = '';
+        for (let i = 0; i < this.inventoryMaxSlots; i++) {
+            const slot = document.createElement('div');
+            slot.className = 'inventory-slot';
+            const item = this.inventory[i];
+            if (item) {
+                slot.textContent = item.icon || '📦';
+                slot.title = item.name || 'Item';
+            }
+            grid.appendChild(slot);
+
+            if (i < 4) {
+                const hotbarSlot = document.createElement('div');
+                hotbarSlot.className = 'hotbar-slot';
+                if (item) {
+                    hotbarSlot.textContent = item.icon || '📦';
+                    hotbarSlot.title = item.name || 'Item';
+                }
+                hotbar.appendChild(hotbarSlot);
+            }
+        }
     }
 
     getNearestPlayer(enemy) {
