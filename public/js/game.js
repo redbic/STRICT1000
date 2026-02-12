@@ -252,7 +252,7 @@ class Game {
 
         this.localPlayer.attackAngle = attackAngle;
         this.localPlayer.angle = attackAngle;
-        this.localPlayer.attackCooldown = 25;
+        this.localPlayer.attackCooldown = this.localPlayer.attackCooldownFrames;
         this.localPlayer.attackAnimTimer = this.localPlayer.attackAnimTotal;
 
         let sentDamage = false;

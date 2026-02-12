@@ -53,6 +53,7 @@ class Player {
         this.attackRange = PLAYER_ATTACK_RANGE;
         this.attackArc = PLAYER_ATTACK_ARC;
         this.attackCooldown = 0;
+        this.attackCooldownFrames = PLAYER_ATTACK_COOLDOWN_FRAMES;
         this.attackAnimTimer = 0;
         this.attackAnimTotal = PLAYER_ATTACK_ANIM_FRAMES;
         this.attackAngle = 0;
@@ -303,7 +304,7 @@ class Player {
 
         this.attackAngle = attackAngle;
         this.angle = attackAngle;
-        this.attackCooldown = PLAYER_ATTACK_COOLDOWN_FRAMES;
+        this.attackCooldown = this.attackCooldownFrames;
         this.attackAnimTimer = this.attackAnimTotal;
 
         let hit = false;
