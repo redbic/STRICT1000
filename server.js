@@ -41,6 +41,7 @@ const WS_MESSAGE_TYPES = new Set([
   'enemy_damage',
   'list_rooms',
   'player_death',
+  'player_fire',
 ]);
 // Outbound message types (server -> client):
 // room_update, player_state, game_start, zone_enter, player_zone,
@@ -385,6 +386,7 @@ wss.on('connection', (ws, request) => {
       case 'enemy_damage': handleEnemyDamage(ws, data); break;
       case 'list_rooms':   handleListRooms(ws); break;
       case 'player_death': handlePlayerDeath(ws, data); break;
+      case 'player_fire':  handlePlayerFire(ws, data); break;
       default: break;
     }
   });
@@ -645,6 +647,33 @@ function handleEnemyDamage(ws, data) {
       attackerId: ws.playerId,
     });
   }
+}
+
+function handlePlayerFire(ws, data) {
+  if (!ws.roomId) return;
+  if (typeof data.x !== 'number' || typeof data.y !== 'number' || typeof data.angle !== 'number') return;
+  if (!Number.isFinite(data.x) || !Number.isFinite(data.y) || !Number.isFinite(data.angle)) return;
+
+  const room = rooms.getRoom(ws.roomId);
+  if (!room) return;
+
+  const sender = room.players.find(p => p.id === ws.playerId);
+  if (!sender) return;
+
+  // Broadcast to players in same zone
+  const payload = JSON.stringify({
+    type: 'player_fire',
+    playerId: ws.playerId,
+    x: data.x,
+    y: data.y,
+    angle: data.angle
+  });
+
+  room.players.forEach(player => {
+    if (player.ws !== ws && player.ws.readyState === WebSocket.OPEN && player.zone === sender.zone) {
+      player.ws.send(payload);
+    }
+  });
 }
 
 function handleDisconnect(ws) {

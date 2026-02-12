@@ -33,6 +33,7 @@ class Game {
         this.isZoneHost = false; // Whether this client is authoritative for enemies in current zone
         this.onEnemyDamage = null; // Callback for sending enemy damage to host (non-host players)
         this.onPlayerDeath = null; // Callback for when the local player dies
+        this.onPlayerFire = null; // Callback for when local player fires (to sync to others)
 
         // Screen flash effect for damage feedback
         this.screenFlash = { active: false, timer: 0, color: 'rgba(255, 0, 0, 0.3)' };
@@ -140,6 +141,10 @@ class Game {
             const proj = this.localPlayer.fireProjectile(angle);
             if (proj) {
                 this.projectiles.push(proj);
+                // Notify network to sync projectile to other players
+                if (this.onPlayerFire) {
+                    this.onPlayerFire(proj.x, proj.y, proj.angle);
+                }
             }
         };
 
@@ -479,6 +484,16 @@ class Game {
                 life: 0.3 + Math.random() * 0.2
             });
         }
+    }
+
+    // Spawn a visual-only projectile from another player (no damage, just rendering)
+    spawnRemoteProjectile(x, y, angle, ownerId) {
+        const proj = new Projectile(x, y, angle, ownerId, {
+            damage: 0,  // Visual only, no damage
+            maxBounces: 0
+        });
+        proj.isRemote = true;  // Mark as remote for potential future use
+        this.projectiles.push(proj);
     }
 
     updateHitSparks(dt) {

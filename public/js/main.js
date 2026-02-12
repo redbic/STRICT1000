@@ -292,6 +292,13 @@ function setupNetworkHandlers() {
         networkManager = null;
         showScreen('menu');
     };
+
+    networkManager.onPlayerFire = (data) => {
+        // Another player fired - spawn visual projectile
+        if (game && data.playerId && data.playerId !== networkManager.playerId) {
+            game.spawnRemoteProjectile(data.x, data.y, data.angle, data.playerId);
+        }
+    };
 }
 
 function updateHostStatus(hostId) {
@@ -634,6 +641,13 @@ function startGame(zoneName) {
         // Notify server to apply death penalty (coin deduction + clear DB inventory)
         if (networkManager && networkManager.connected) {
             networkManager.sendPlayerDeath(game.zoneId || 'unknown');
+        }
+    };
+
+    // Wire up projectile sync callback
+    game.onPlayerFire = (x, y, angle) => {
+        if (networkManager && networkManager.connected) {
+            networkManager.sendPlayerFire(x, y, angle);
         }
     };
 

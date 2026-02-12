@@ -18,6 +18,7 @@ class NetworkManager {
         this.onEnemyDamage = null; // Callback for enemy damage (received by host)
         this.onRoomList = null; // Callback for available room list
         this.onPlayerZoneChange = null; // Callback when OTHER player changes zone
+        this.onPlayerFire = null; // Callback when another player fires
     }
     
     connect() {
@@ -95,6 +96,9 @@ class NetworkManager {
             case 'player_zone':
                 // Another player changed zones - do NOT transition local player
                 if (this.onPlayerZoneChange) this.onPlayerZoneChange(data);
+                break;
+            case 'player_fire':
+                if (this.onPlayerFire) this.onPlayerFire(data);
                 break;
         }
     }
@@ -185,6 +189,16 @@ class NetworkManager {
         this.send({
             type: 'player_death',
             zone: zone
+        });
+    }
+
+    sendPlayerFire(x, y, angle) {
+        if (!this.connected) return;
+        this.send({
+            type: 'player_fire',
+            x: x,
+            y: y,
+            angle: angle
         });
     }
     
