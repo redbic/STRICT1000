@@ -67,10 +67,11 @@ if (process.env.DATABASE_URL) {
 // Room manager
 const rooms = new RoomManager();
 
-// Session store for WebSocket authentication
-const sessionStore = new Map();
+// Trust proxy (for deployments behind reverse proxy like Render, Railway, etc.)
+app.set('trust proxy', 1);
 
 // Session middleware
+const isProduction = process.env.NODE_ENV === 'production';
 const sessionMiddleware = session({
   secret: process.env.SESSION_SECRET || 'strict1000-dev-secret-' + Math.random(),
   resave: false,
@@ -78,10 +79,13 @@ const sessionMiddleware = session({
   cookie: {
     maxAge: 24 * 60 * 60 * 1000, // 24 hours
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict'
+    secure: isProduction,
+    sameSite: 'lax' // 'strict' can cause issues with redirects
   }
 });
+
+console.log('[Server] NODE_ENV:', process.env.NODE_ENV || 'development');
+console.log('[Server] Cookie secure:', isProduction);
 
 // Body parser for login (must come before auth routes)
 app.use(express.json({ limit: HTTP_BODY_SIZE_LIMIT }));

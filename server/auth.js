@@ -45,7 +45,15 @@ function createAuthRouter() {
       req.session.authenticated = true;
       console.log('[Auth] Login SUCCESS, session:', req.session.id);
       loginRateLimiter.delete(ip);
-      res.json({ success: true });
+      // Explicitly save session before responding to ensure cookie is set
+      req.session.save((err) => {
+        if (err) {
+          console.error('[Auth] Session save error:', err);
+          return res.status(500).json({ success: false, message: 'Session error' });
+        }
+        res.json({ success: true });
+      });
+      return;
     } else {
       console.log('[Auth] Login FAILED');
       res.status(401).json({ success: false, message: 'Incorrect password' });
