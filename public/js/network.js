@@ -17,6 +17,7 @@ class NetworkManager {
         this.onHostAssigned = null; // Callback for host assignment
         this.onEnemyDamage = null; // Callback for enemy damage (received by host)
         this.onRoomList = null; // Callback for available room list
+        this.onPlayerZoneChange = null; // Callback when OTHER player changes zone
     }
     
     connect() {
@@ -92,7 +93,8 @@ class NetworkManager {
                 if (this.onRoomList) this.onRoomList(data);
                 break;
             case 'player_zone':
-                if (this.onZoneEnter) this.onZoneEnter(data);
+                // Another player changed zones - do NOT transition local player
+                if (this.onPlayerZoneChange) this.onPlayerZoneChange(data);
                 break;
         }
     }

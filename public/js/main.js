@@ -178,9 +178,27 @@ function setupNetworkHandlers() {
     };
 
     networkManager.onZoneEnter = (data) => {
-        if (game && data.zoneId) {
+        // This is for the LOCAL player entering a zone
+        if (game && data.zoneId && data.playerId === networkManager.playerId) {
             const zonePlayers = data.zonePlayers || [];
             game.transitionZone(data.zoneId, zonePlayers, networkManager.playerId);
+        }
+    };
+
+    networkManager.onPlayerZoneChange = (data) => {
+        // Another player changed zones - update tracking, don't transition local player
+        if (!game || !data.playerId || !data.zoneId) return;
+
+        // Update the player's zone in currentRoomPlayers
+        const playerInfo = currentRoomPlayers.find(p => p.id === data.playerId);
+        if (playerInfo) {
+            playerInfo.zone = data.zoneId;
+        }
+
+        // If they left our zone, remove them from game.players
+        const localZoneId = game.zoneId || 'hub';
+        if (data.zoneId !== localZoneId) {
+            game.players = game.players.filter(p => p.id !== data.playerId);
         }
     };
     
