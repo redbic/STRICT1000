@@ -342,6 +342,8 @@ function handleZoneEnter(ws, data) {
 
 async function handleEnemyKilled(ws, data) {
   const { enemyId, zone } = data;
+  const normalizedZone = typeof zone === 'string' ? zone.trim().toLowerCase() : '';
+  const zoneKey = normalizedZone || 'unknown'; // Zone values are canonical zone keys, not display names.
   
   if (!ws.roomId || !ws.username || !enemyId) {
     return;
@@ -353,7 +355,7 @@ async function handleEnemyKilled(ws, data) {
   }
   
   // Check if this enemy has already been rewarded
-  const enemyKey = `${zone || 'unknown'}-${enemyId}`;
+  const enemyKey = `${zoneKey}-${enemyId}`;
   if (room.killedEnemies.has(enemyKey)) {
     console.log(`Enemy ${enemyKey} already rewarded, skipping`);
     return;
@@ -368,7 +370,7 @@ async function handleEnemyKilled(ws, data) {
     ws.username, 
     ENEMY_KILL_REWARD, 
     'enemy_kill',
-    { game: 'strict1000', enemy: enemyId, zone: zone || 'unknown' }
+    { game: 'strict1000', enemy: enemyId, zone: zoneKey }
   );
   
   if (newBalance !== null) {
@@ -380,7 +382,7 @@ async function handleEnemyKilled(ws, data) {
   }
   
   // Schedule enemy respawn for training dummies (10 second timer)
-  if (zone === 'Training') {
+  if (zoneKey === 'training') {
     const respawnDelay = 10000; // 10 seconds
     
     // Clear any existing timer for this enemy
@@ -401,7 +403,7 @@ async function handleEnemyKilled(ws, data) {
       broadcastToRoom(ws.roomId, {
         type: 'enemy_respawn',
         enemyId: enemyId,
-        zone: zone
+        zone: zoneKey
       });
       
       // Clean up timer reference
