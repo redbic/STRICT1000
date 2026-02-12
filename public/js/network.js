@@ -38,8 +38,9 @@ class NetworkManager {
                 reject(error);
             };
             
-            this.ws.onclose = () => {
-                console.log('WebSocket closed');
+            this.ws.onclose = (event) => {
+                console.log('WebSocket closed', { code: event.code, reason: event.reason, wasClean: event.wasClean });
+                console.trace('WebSocket close stack trace');
                 this.connected = false;
             };
             

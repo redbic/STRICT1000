@@ -184,7 +184,12 @@ function setupNetworkHandlers() {
         if (game && data.zoneId && data.playerId === networkManager.playerId) {
             const zonePlayers = data.zonePlayers || [];
             console.log('Transitioning to zone:', data.zoneId);
-            game.transitionZone(data.zoneId, zonePlayers, networkManager.playerId);
+            try {
+                game.transitionZone(data.zoneId, zonePlayers, networkManager.playerId);
+                console.log('Zone transition complete, connected:', networkManager.connected);
+            } catch (error) {
+                console.error('Zone transition error:', error);
+            }
         } else {
             console.log('Zone enter ignored:', { game: !!game, zoneId: data.zoneId, playerId: data.playerId, myPlayerId: networkManager.playerId });
         }
