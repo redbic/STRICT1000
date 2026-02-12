@@ -50,6 +50,7 @@ class Player {
         this.attackDamage = PLAYER_ATTACK_DAMAGE;
         this.attackRange = PLAYER_ATTACK_RANGE;
         this.attackCooldown = 0;
+        this.attackAnimTimer = 0;
         
         // Status
         this.stunned = false;
@@ -117,6 +118,10 @@ class Player {
         if (this.attackCooldown > 0) {
             this.attackCooldown--;
         }
+
+        if (this.attackAnimTimer > 0) {
+            this.attackAnimTimer--;
+        }
         
         // Update speed for compatibility
         this.speed = Math.hypot(this.velocityX, this.velocityY);
@@ -153,29 +158,71 @@ class Player {
         const screenX = this.x - cameraX;
         const screenY = this.y - cameraY;
         
-        // Draw character body (circle)
+        const now = performance.now() / 1000;
+        const moveIntensity = Math.min(1, this.speed / this.maxSpeed);
+        const bob = Math.sin(now * 10) * moveIntensity * 1.4;
+        const bodyY = screenY + bob;
+
+        // Body shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
         ctx.beginPath();
-        ctx.arc(screenX, screenY, this.width / 2, 0, Math.PI * 2);
-        
-        if (this.stunned) {
-            ctx.fillStyle = '#666';
-        } else {
-            ctx.fillStyle = this.color;
-        }
-        
+        ctx.ellipse(screenX, screenY + 11, 9, 4, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = '#fff';
-        ctx.lineWidth = 2;
+
+        // Torso
+        ctx.fillStyle = this.stunned ? '#666' : this.color;
+        ctx.beginPath();
+        ctx.ellipse(screenX, bodyY + 1, 9, 7, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
+        ctx.lineWidth = 1.5;
         ctx.stroke();
-        
-        // Draw direction indicator (small triangle)
-        const dirX = screenX + Math.cos(this.angle) * 14;
-        const dirY = screenY + Math.sin(this.angle) * 14;
+
+        // Head
+        ctx.fillStyle = this.stunned ? '#888' : '#f8d6c3';
         ctx.beginPath();
-        ctx.arc(dirX, dirY, 3, 0, Math.PI * 2);
-        ctx.fillStyle = '#fff';
+        ctx.arc(screenX, bodyY - 8, 5, 0, Math.PI * 2);
         ctx.fill();
-        
+
+        // Eyes
+        ctx.fillStyle = '#1f2d3d';
+        ctx.beginPath();
+        ctx.arc(screenX - 2, bodyY - 8, 0.8, 0, Math.PI * 2);
+        ctx.arc(screenX + 2, bodyY - 8, 0.8, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Facing indicator/nose
+        const dirX = screenX + Math.cos(this.angle) * 6;
+        const dirY = bodyY - 8 + Math.sin(this.angle) * 3;
+        ctx.fillStyle = '#f0bca0';
+        ctx.beginPath();
+        ctx.arc(dirX, dirY, 1.2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Feet (simple walk cycle)
+        const stride = Math.sin(now * 16) * moveIntensity * 2.4;
+        ctx.strokeStyle = '#f5f5f5';
+        ctx.lineWidth = 2;
+        ctx.lineCap = 'round';
+        ctx.beginPath();
+        ctx.moveTo(screenX - 3, bodyY + 6);
+        ctx.lineTo(screenX - 3 + stride, bodyY + 10);
+        ctx.moveTo(screenX + 3, bodyY + 6);
+        ctx.lineTo(screenX + 3 - stride, bodyY + 10);
+        ctx.stroke();
+
+        // Weapon hand poke during attack
+        if (this.attackAnimTimer > 0) {
+            const attackProgress = 1 - (this.attackAnimTimer / 10);
+            const handReach = 6 + Math.sin(attackProgress * Math.PI) * 6;
+            const handX = screenX + Math.cos(this.angle) * handReach;
+            const handY = bodyY + Math.sin(this.angle) * handReach;
+            ctx.fillStyle = '#ffe3d2';
+            ctx.beginPath();
+            ctx.arc(handX, handY, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
         ctx.restore();
         
         // Draw avatar + username above character
@@ -215,6 +262,7 @@ class Player {
     tryAttack(enemies) {
         if (this.attackCooldown > 0) return false;
         this.attackCooldown = PLAYER_ATTACK_COOLDOWN_FRAMES;
+        this.attackAnimTimer = 10;
 
         let hit = false;
         enemies.forEach(enemy => {

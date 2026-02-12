@@ -19,7 +19,7 @@ class Game {
         this.cameraY = 0;
         
         this.enemies = [];
-        this.attackFx = { active: false, timer: 0, angle: 0 };
+        this.attackFx = { active: false, timer: 0, angle: 0, hit: false, sparks: [] };
         this.lastMouse = { x: 0, y: 0 };
         this.onEnemyKilled = null; // Callback for when an enemy is killed
         this.isHost = false; // Whether this client is the host (authoritative for enemies)
@@ -93,12 +93,12 @@ class Game {
                 didAttack = this.attackEnemiesRemote();
             }
             
-            // Show attack effect only if attack was attempted
-            if (didAttack) {
-                this.attackFx.active = true;
-                this.attackFx.timer = 8;
-                this.attackFx.angle = angle;
-            }
+            // Show attack effect for every swing, with stronger effect on hit
+            this.attackFx.active = true;
+            this.attackFx.timer = 12;
+            this.attackFx.angle = angle;
+            this.attackFx.hit = didAttack;
+            this.attackFx.sparks = didAttack ? this.createAttackSparks(angle) : [];
         };
 
         this.handleResize = () => {
@@ -253,6 +253,7 @@ class Game {
         // Keep cooldown semantics aligned with host/local tryAttack: a swing attempt
         // consumes cooldown, but we only surface hit feedback when targets are in range.
         this.localPlayer.attackCooldown = 25;
+        this.localPlayer.attackAnimTimer = 10;
 
         let sentDamage = false;
         this.enemies.forEach(enemy => {
@@ -491,6 +492,27 @@ class Game {
         this.ctx.restore();
     }
 
+
+    createAttackSparks(angle) {
+        if (!this.localPlayer) return [];
+        const sparks = [];
+        const tipDistance = this.localPlayer.attackRange * 0.8;
+        const originX = this.localPlayer.x + Math.cos(angle) * tipDistance;
+        const originY = this.localPlayer.y + Math.sin(angle) * tipDistance;
+        for (let i = 0; i < 7; i++) {
+            const variance = (Math.random() - 0.5) * 0.8;
+            const speed = 1.8 + Math.random() * 2.4;
+            sparks.push({
+                x: originX,
+                y: originY,
+                vx: Math.cos(angle + variance) * speed,
+                vy: Math.sin(angle + variance) * speed,
+                life: 8 + Math.floor(Math.random() * 6)
+            });
+        }
+        return sparks;
+    }
+
     drawAttackFx() {
         if (!this.attackFx.active || !this.localPlayer) return;
         if (this.attackFx.timer <= 0) {
@@ -500,22 +522,55 @@ class Game {
 
         const centerX = this.localPlayer.x - this.cameraX;
         const centerY = this.localPlayer.y - this.cameraY;
-        const radius = 36;
-        const spread = Math.PI / 3;
-        const start = this.attackFx.angle - spread / 2;
-        const end = this.attackFx.angle + spread / 2;
+        const progress = 1 - (this.attackFx.timer / 12);
+        const baseRadius = 26;
+        const slashLength = this.localPlayer.attackRange * 0.9;
+        const spread = Math.PI / 2.4;
+        const leadAngle = this.attackFx.angle - spread / 2 + spread * progress;
 
         this.ctx.save();
-        this.ctx.strokeStyle = 'rgba(255, 220, 180, 0.9)';
-        this.ctx.lineWidth = 4;
+
+        // Motion blur trail
+        for (let i = 0; i < 4; i++) {
+            const t = i / 4;
+            const radius = baseRadius + (slashLength - baseRadius) * (progress - t * 0.12);
+            const clampedRadius = Math.max(baseRadius, radius);
+            this.ctx.strokeStyle = `rgba(255, ${220 - i * 20}, ${150 - i * 10}, ${0.35 - i * 0.07})`;
+            this.ctx.lineWidth = 7 - i;
+            this.ctx.beginPath();
+            this.ctx.arc(centerX, centerY, clampedRadius, leadAngle - 0.35, leadAngle + 0.2);
+            this.ctx.stroke();
+        }
+
+        // Bright slash edge
+        this.ctx.strokeStyle = this.attackFx.hit ? 'rgba(255, 255, 245, 0.95)' : 'rgba(255, 230, 210, 0.9)';
+        this.ctx.lineWidth = 2.2;
         this.ctx.beginPath();
-        this.ctx.arc(centerX, centerY, radius, start, end);
+        this.ctx.arc(centerX, centerY, baseRadius + slashLength * progress, leadAngle - 0.25, leadAngle + 0.12);
         this.ctx.stroke();
+
+        // Hit sparks
+        this.attackFx.sparks = (this.attackFx.sparks || []).filter((spark) => spark.life > 0);
+        this.attackFx.sparks.forEach((spark) => {
+            spark.x += spark.vx;
+            spark.y += spark.vy;
+            spark.vx *= 0.92;
+            spark.vy *= 0.92;
+            spark.life--;
+
+            const sx = spark.x - this.cameraX;
+            const sy = spark.y - this.cameraY;
+            this.ctx.fillStyle = `rgba(255, 245, 200, ${Math.max(0, spark.life / 14)})`;
+            this.ctx.beginPath();
+            this.ctx.arc(sx, sy, 1.8, 0, Math.PI * 2);
+            this.ctx.fill();
+        });
+
         this.ctx.restore();
 
         this.attackFx.timer--;
     }
-    
+
     gameLoop() {
         if (this.running) {
             try {
