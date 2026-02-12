@@ -16,7 +16,7 @@ class Player {
         this.velocityY = 0;
         this.angle = 0;
         this.speed = 0;
-        this.maxSpeed = 2.5;
+        this.maxSpeed = 2.2;
         this.acceleration = 0.2;
         this.friction = 0.85;
         
