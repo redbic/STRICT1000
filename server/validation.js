@@ -55,7 +55,7 @@ function isValidPlayerState(state) {
     y: isFiniteNumberInRange(state.y, -10000, 10000),
     angle: isFiniteNumberInRange(state.angle, -Math.PI * 4, Math.PI * 4),
     speed: isFiniteNumberInRange(state.speed, 0, 10),
-    zoneLevel: Number.isInteger(state.zoneLevel) && state.zoneLevel >= 1 && state.zoneLevel <= 100,
+    zoneLevel: Number.isInteger(state.zoneLevel) && state.zoneLevel >= 1 && state.zoneLevel <= 10000,
     stunned: typeof state.stunned === 'boolean',
   };
 
