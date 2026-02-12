@@ -312,3 +312,9 @@ body {
     color: #f5576c;
 }
 
+.room-status {
+    font-size: 12px;
+    color: #f1c40f;
+    opacity: 0.9;
+}
+

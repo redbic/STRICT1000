@@ -184,7 +184,8 @@ function handleJoinRoom(ws, data) {
     id: playerId,
     username: username,
     ws: ws,
-    ready: false
+    ready: false,
+    zone: 'hub' // Track which zone each player is in
   };
   
   room.players.push(player);
@@ -200,10 +201,18 @@ function handleJoinRoom(ws, data) {
   // Notify all players in room
   broadcastToRoom(roomId, {
     type: 'room_update',
-    players: room.players.map(p => ({ id: p.id, username: p.username, ready: p.ready })),
+    players: room.players.map(p => ({ id: p.id, username: p.username, ready: p.ready, zone: p.zone })),
     roomId: roomId,
     hostId: room.hostId
   });
+  
+  // If game already started, tell the new player to start immediately
+  if (room.started) {
+    ws.send(JSON.stringify({
+      type: 'game_start',
+      timestamp: Date.now()
+    }));
+  }
   
   // Notify unjoined clients about updated room list
   broadcastRoomList();
@@ -229,7 +238,7 @@ function handleLeaveRoom(ws, data) {
         
         broadcastToRoom(ws.roomId, {
           type: 'room_update',
-          players: room.players.map(p => ({ id: p.id, username: p.username, ready: p.ready })),
+          players: room.players.map(p => ({ id: p.id, username: p.username, ready: p.ready, zone: p.zone })),
           hostId: room.hostId
         });
       }
@@ -242,11 +251,23 @@ function handleLeaveRoom(ws, data) {
 
 function handlePlayerUpdate(ws, data) {
   if (ws.roomId) {
-    broadcastToRoom(ws.roomId, {
-      type: 'player_state',
-      playerId: ws.playerId,
-      state: data.state
-    }, ws);
+    const room = gameRooms.get(ws.roomId);
+    if (!room) return;
+
+    // Find the sending player to determine their zone
+    const sender = room.players.find(p => p.id === ws.playerId);
+    const senderZone = sender ? sender.zone : null;
+
+    // Only send player state to other players in the same zone
+    room.players.forEach(player => {
+      if (player.ws !== ws && player.ws.readyState === WebSocket.OPEN && player.zone === senderZone) {
+        player.ws.send(JSON.stringify({
+          type: 'player_state',
+          playerId: ws.playerId,
+          state: data.state
+        }));
+      }
+    });
   }
 }
 
@@ -260,7 +281,7 @@ function handleGameStart(ws, data) {
         timestamp: Date.now()
       });
       
-      // Room no longer available for joining
+      // Update room list to reflect started status
       broadcastRoomList();
     }
   }
@@ -268,11 +289,27 @@ function handleGameStart(ws, data) {
 
 function handleZoneEnter(ws, data) {
   if (ws.roomId && data.zoneId) {
-    broadcastToRoom(ws.roomId, {
-      type: 'zone_enter',
-      zoneId: data.zoneId,
-      playerId: ws.playerId
-    });
+    const room = gameRooms.get(ws.roomId);
+    if (room) {
+      // Update this player's zone on the server
+      const player = room.players.find(p => p.id === ws.playerId);
+      if (player) {
+        player.zone = data.zoneId;
+      }
+
+      // Collect players already in the target zone (excluding the transitioning player)
+      const zoneMates = room.players
+        .filter(p => p.zone === data.zoneId && p.id !== ws.playerId)
+        .map(p => ({ id: p.id, username: p.username }));
+
+      // Only send the zone transition back to the player who entered the portal
+      ws.send(JSON.stringify({
+        type: 'zone_enter',
+        zoneId: data.zoneId,
+        playerId: ws.playerId,
+        zonePlayers: zoneMates
+      }));
+    }
   }
 }
 
@@ -352,12 +389,20 @@ function handleEnemySync(ws, data) {
   
   // Only accept enemy sync from the host
   if (ws.playerId !== room.hostId) return;
+
+  // Find the host's zone
+  const host = room.players.find(p => p.id === room.hostId);
+  const hostZone = host ? host.zone : null;
   
-  // Broadcast enemy state to all non-host players
-  broadcastToRoom(ws.roomId, {
-    type: 'enemy_sync',
-    enemies: data.enemies
-  }, ws);
+  // Broadcast enemy state only to non-host players in the same zone
+  room.players.forEach(player => {
+    if (player.ws !== ws && player.ws.readyState === WebSocket.OPEN && player.zone === hostZone) {
+      player.ws.send(JSON.stringify({
+        type: 'enemy_sync',
+        enemies: data.enemies
+      }));
+    }
+  });
 }
 
 function handleEnemyDamage(ws, data) {
@@ -365,6 +410,11 @@ function handleEnemyDamage(ws, data) {
   
   const room = gameRooms.get(ws.roomId);
   if (!room || !room.hostId) return;
+
+  // Only forward damage if the sender is in the same zone as the host
+  const sender = room.players.find(p => p.id === ws.playerId);
+  const host = room.players.find(p => p.id === room.hostId);
+  if (!sender || !host || sender.zone !== host.zone) return;
   
   // Forward damage to the host player
   const hostPlayer = room.players.find(p => p.id === room.hostId);
@@ -419,12 +469,13 @@ function handleListRooms(ws) {
 function getAvailableRooms() {
   const rooms = [];
   for (const [roomId, room] of gameRooms) {
-    if (!room.started && room.players.length < MAX_PARTY_SIZE) {
+    if (room.players.length < MAX_PARTY_SIZE) {
       rooms.push({
         roomId: roomId,
         playerCount: room.players.length,
         maxPlayers: MAX_PARTY_SIZE,
-        players: room.players.map(p => p.username)
+        players: room.players.map(p => p.username),
+        started: room.started
       });
     }
   }

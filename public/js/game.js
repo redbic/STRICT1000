@@ -8,6 +8,7 @@ class Game {
         this.players = [];
         this.localPlayer = null;
         this.zone = null;
+        this.zoneId = null;
         this.npcs = [];
         
         this.keys = {};
@@ -111,6 +112,7 @@ class Game {
         }
         
         this.zone = new Zone(zoneData);
+        this.zoneId = zoneName; // Store the zone key for network matching
         this.players = [];
         this.enemies = [];
         this.npcs = (zoneData.npcs || []).map(n => new NPC(n.x, n.y, n.name, n.color));

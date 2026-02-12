@@ -135,8 +135,13 @@ function setupNetworkHandlers() {
         updatePlayersList(data.players);
         currentRoomPlayers = data.players || [];
         if (game && networkManager) {
-            game.syncMultiplayerPlayers(currentRoomPlayers, networkManager.playerId);
-            hydrateRoomAvatars(currentRoomPlayers);
+            // Only sync players that are in the same zone as the local player
+            const localZoneId = game.zoneId || null;
+            const zonePlayers = localZoneId
+                ? currentRoomPlayers.filter(p => p.zone === localZoneId)
+                : currentRoomPlayers;
+            game.syncMultiplayerPlayers(zonePlayers, networkManager.playerId);
+            hydrateRoomAvatars(zonePlayers);
         }
         // Update host status from room_update
         if (data.hostId && networkManager) {
@@ -159,7 +164,8 @@ function setupNetworkHandlers() {
 
     networkManager.onZoneEnter = (data) => {
         if (game && data.zoneId) {
-            game.transitionZone(data.zoneId, currentRoomPlayers, networkManager.playerId);
+            const zonePlayers = data.zonePlayers || [];
+            game.transitionZone(data.zoneId, zonePlayers, networkManager.playerId);
         }
     };
     
@@ -308,9 +314,10 @@ function renderRoomList(rooms) {
     rooms.forEach(room => {
         const item = document.createElement('div');
         item.className = 'room-list-item';
+        const statusLabel = room.started ? ' <span class="room-status">(In Progress)</span>' : '';
         item.innerHTML = `
             <div class="room-info">
-                <div>${room.players.join(', ')}</div>
+                <div>${room.players.join(', ')}${statusLabel}</div>
                 <div class="room-players">${room.playerCount}/${room.maxPlayers} players</div>
             </div>
             <span class="join-label">Join ▸</span>
@@ -460,7 +467,10 @@ function startGame(zoneName) {
             updateHostStatus(currentHostId);
         }
         
-        game.syncMultiplayerPlayers(currentRoomPlayers, networkManager.playerId);
+        // Only sync players in the same zone (hub for initial game start)
+        const localZoneId = game.zoneId || 'hub';
+        const zonePlayers = currentRoomPlayers.filter(p => p.zone === localZoneId);
+        game.syncMultiplayerPlayers(zonePlayers, networkManager.playerId);
         
         // Clear previous interval to prevent leaks
         if (playerUpdateInterval) {
