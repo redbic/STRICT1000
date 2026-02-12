@@ -1,6 +1,6 @@
 # HANDOFF.md — STRICT Adventure ⚔️
 
-> Last updated: 2026-02-10
+> Last updated: 2026-02-12
 
 ## Current State
 
@@ -11,11 +11,17 @@ STRICT1000 is a **multiplayer-only** top-down 2D adventure game (browser-based) 
 - **Multiplayer**: WebSocket-based real-time co-op. Players confirm a username, auto-connect, join a room, and see each other in-game with avatars rendered above their heads.
 - **Movement**: WASD / Arrow keys, fullscreen canvas, camera follows the local player.
 - **Combat**: Click-to-attack melee system. Enemies aggro, chase, and deal damage. Players can kill enemies and earn currency.
-- **Zones**: Hub (hallway, no enemies) → Archive Entry (enemies spawn). Portal-based zone transitions.
+- **Zones**: 
+  - **Hotel Lobby** (hub) — Redesigned with 1920s atmosphere: burgundy carpet, grandfather clock, chandelier glow, portraits, elevator doors, enhanced portals with brass frames
+  - **The Gallery** — Experimental darkness room with limited visibility (150px radius), co-op partner glow indicators, validates "rule instability" concept
+  - **Archive Entry** — Standard combat room with enemies
+  - **Training** — Practice room
+  - Portal-based zone transitions between all zones
 - **Server-side currency**: Kills award coins (`ENEMY_KILL_REWARD = 5`). Balance is persisted in PostgreSQL (Neon.tech) via `server/currency.js` and the `/api/balance/add` endpoint.
 - **Player profiles**: Loaded from shared DB on name confirm — portrait, balance, and character data. Balance displayed in HUD.
 - **Input fixes**: Sticky keys cleared on blur/visibility change. Context menu disabled on canvas.
 - **Deployment**: Render.com + Neon.tech PostgreSQL. `render.yaml` included.
+- **Performance**: All decorative elements pre-rendered to cached canvases (chandelier, darkness overlay, player glows) for 60fps performance.
 
 ### What Was Removed
 
@@ -28,24 +34,30 @@ STRICT1000 is a **multiplayer-only** top-down 2D adventure game (browser-based) 
 
 ```
 STRICT1000/
-├── server.js                # Express + WebSocket server, API routes, game rooms
+├── server.js                         # Express + WebSocket server, API routes, game rooms
 ├── server/
-│   └── currency.js          # Server-side currency module (add/get balance, transactions)
+│   └── currency.js                   # Server-side currency module (add/get balance, transactions)
 ├── public/
-│   ├── index.html           # Main HTML — screens (menu, lobby, game), HUD
+│   ├── index.html                    # Main HTML — screens (menu, lobby, game), HUD
 │   ├── css/
-│   │   └── style.css        # Game styling
+│   │   └── style.css                 # Game styling
 │   └── js/
-│       ├── main.js          # App logic: screen management, profile loading, network setup, game start
-│       ├── game.js          # Game class: canvas, game loop, camera, enemies, attack FX, zone transitions
-│       ├── player.js        # Player class: movement, collision, combat (tryAttack, takeDamage), drawing
-│       ├── enemy.js         # Enemy class: aggro AI, chase, melee attack, HP, drawing
-│       ├── track.js         # Zone class + ZONES data: walls, portals, nodes, floor/wall colors
-│       └── network.js       # NetworkManager: WebSocket client, room join/leave, state sync, enemy kill events
+│       ├── main.js                   # App logic: screen management, profile loading, network setup, game start
+│       ├── game.js                   # Game class: canvas, game loop, camera, enemies, attack FX, zone transitions, darkness overlay
+│       ├── player.js                 # Player class: movement, collision, combat (tryAttack, takeDamage), drawing
+│       ├── enemy.js                  # Enemy class: aggro AI, chase, melee attack, HP, drawing
+│       ├── track.js                  # Zone class + ZONES data: walls, portals, nodes, decorations, rulesets
+│       └── network.js                # NetworkManager: WebSocket client, room join/leave, state sync, enemy kill events
 ├── package.json
 ├── render.yaml
 ├── DEPLOYMENT.md
-└── README.md
+├── README.md
+├── PLANNING_INDEX.md                 # Navigation guide for planning documents
+├── GAME_DESIGN_PLAN.md               # Complete 5-phase development strategy
+├── NEXT_STEPS_SUMMARY.md             # Quick reference for priorities
+├── VISUAL_DESIGN_REFERENCE.md        # Mockups and implementation guide
+├── TECHNICAL_FEASIBILITY_ASSESSMENT.md  # Technical analysis and timeline
+└── IMPLEMENTATION_SUMMARY.md         # Completed work documentation
 ```
 
 ### Key data flow
@@ -72,29 +84,39 @@ The game is shifting toward an **Inscryption-inspired three-act structure** set 
 
 ## Next Steps (Priority Order)
 
-### High Priority
-- [ ] **Update README.md** — still references single-player mode, Space for abilities, and an outdated project structure. Needs to match the current multiplayer-only, click-to-attack reality.
-- [ ] **Hotel lobby hub** — redesign the current hallway hub into the hotel lobby described in the narrative direction. Add visual identity (reception desk, doors to rooms, elevator?).
-- [ ] **Curator NPC** — an unreliable narrator character in the lobby who gives context, hints, and misdirection.
+### ✅ Recently Completed (2026-02-12)
+- [x] **Planning review** — Comprehensive technical feasibility assessment completed
+- [x] **Hotel lobby redesign** — Transformed into 1920s hotel with burgundy carpet, clock, chandelier, portraits, elevator, enhanced portals
+- [x] **The Gallery** — First experimental room with darkness ruleset and limited visibility (validates "rule instability" pillar)
+- [x] **Performance optimization** — All decorative elements pre-rendered to cached canvases
 
-### Medium Priority
-- [ ] **Room-based rule variation** — each zone/room gets a distinct ruleset (e.g., no melee, limited visibility, reversed controls). This is the "rule instability" pillar.
-- [ ] **Ranged combat / projectiles** — Wii Play Tanks-style: add projectile enemies, maybe reflective walls.
-- [ ] **Remaining abilities** — Shield Block, Dash, Fireball are documented in README but not implemented.
-- [ ] **Currency shop** — an NPC or UI in the lobby where players spend earned coins on abilities, cosmetics, or upgrades.
+### High Priority (Next 1-2 Weeks)
+- [ ] **Projectile system** — Implement `Projectile` class for Wii Play Tanks-style combat (3-4 days)
+- [ ] **The Ballroom** — Ranged combat room with ricocheting projectiles (2 days)
+- [ ] **Receptionist dialogue system** — Click-to-interact with unreliable narrator (3-4 days)
 
-### Lower Priority
-- [ ] **More zones** — expand beyond hub + archive entry. Each new room = new ruleset.
-- [ ] **Sound / music** — retro atmosphere audio.
-- [ ] **Visual polish** — sprite-based characters, tile maps, lighting effects.
-- [ ] **Cross-game integration** — the shared DB with `blusaccount/stricthotel` (profile portrait, balance).
+### Medium Priority (Weeks 3-4)
+- [ ] **More experimental rooms** — The Kitchen (reversed controls), The Library (permadeath zone)
+- [ ] **Currency shop** — Start with cosmetics, add abilities incrementally
+- [ ] **Visual juice** — Screen shake, damage numbers, particle effects
+- [ ] **Lobby evolution** — Server-tracked state changes (deaths → darker lobby)
+
+### Lower Priority (Post-MVP)
+- [ ] **Room 237** — Meta-narrative reveal (high complexity, defer to post-launch)
+- [ ] **More zones** — Expand beyond current 4 rooms
+- [ ] **Sound / music** — Retro atmosphere audio
+- [ ] **Visual polish** — Sprite-based characters, tile maps
+- [ ] **Cross-game integration** — Enhanced shared DB with `blusaccount/stricthotel`
+
+### Documentation Updates Needed
+- [ ] **Update README.md** — Update roadmap checklist, add references to new docs
 
 ## Known Issues
 
-- README.md is out of date (mentions single-player, Space key attack, old project structure).
-- No `.github/copilot-instructions.md` exists yet.
-- No automated tests.
-- Room joining always creates a new random room — no way to join a friend's room by code yet (the room code is displayed but there's no join-by-code UI).
+- README.md roadmap section needs updating with completed items
+- No automated tests (acceptable for prototype phase)
+- Room joining always creates a new random room — no join-by-code UI yet
+- Mobile touch controls not implemented
 
 ## Related Repositories
 

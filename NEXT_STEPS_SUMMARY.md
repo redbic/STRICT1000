@@ -1,7 +1,8 @@
 # STRICT1000 — Quick Reference: Next Steps
 
 > **TL;DR for the Fullstack Lead**  
-> See `GAME_DESIGN_PLAN.md` for full details. This is the executive summary.
+> See `GAME_DESIGN_PLAN.md` for full details. This is the executive summary.  
+> **Last updated:** 2026-02-12
 
 ---
 
@@ -11,78 +12,137 @@
 - Zone transitions (hub ↔ combat rooms via portals)
 - Server-side currency (persisted in PostgreSQL)
 - Basic NPC system ("The Receptionist" exists)
+- **NEW: Atmospheric hotel lobby** — 1920s redesign with burgundy carpet, clock, chandelier, portraits, elevator, enhanced portals
+- **NEW: The Gallery experimental room** — Darkness ruleset with limited visibility (150px), co-op glow indicators
+- **NEW: Room ruleset system** — Extensible architecture for room-specific gameplay mechanics
+- **NEW: Performance optimization** — All decorative elements cached for 60fps
 
 ## What We Need 🎯
-**The game works, but it's not memorable yet.**
+**The game has atmosphere and one innovative room, but needs more content.**
 
 We need to add:
-1. **Soul** — The hotel should feel alive and unsettling
-2. **Surprise** — Every room should break expectations
-3. **Tension** — Currency and co-op should create drama
-4. **Juice** — Combat should feel **satisfying**
+1. **More experimental rooms** — Validate the "rule instability" concept with 3-4 more rooms
+2. **Projectile combat** — Wii Play Tanks-style for The Ballroom
+3. **Tension** — Currency shop to give spending decisions weight
+4. **Juice** — Screen shake, particles, sound effects
 
 ---
 
-## Immediate Priorities (Pick One to Start)
+## ✅ What Just Got Completed (2026-02-12)
 
-### Option A: Lobby Redesign (Visual Impact)
-**Time:** 1-2 weeks  
-**Files:** `public/js/track.js`, `public/css/style.css`
+### Planning & Assessment
+- [x] **Technical Feasibility Assessment** — 15-page analysis covering all 5 phases
+- [x] **Starting point decision** — Selected Option C (Lobby + Gallery)
+- [x] **Timeline validation** — 9-12 weeks to v1.0 confirmed achievable
 
-**Goal:** Transform the bland hallway into a 1920s hotel lobby.
+### Phase 1: The Hotel Wakes Up (Weeks 1-3) — 40% Complete
+- [x] Redesign lobby layout (reception desk, clock, elevator, chandelier, portraits)
+- [ ] Add Receptionist dialogue system (unreliable narrator)
+- [ ] Implement lobby evolution (server-tracked state changes)
 
-**What to Add:**
+### Phase 2: Rule Instability (Weeks 4-6) — 15% Complete
+- [x] The Gallery (darkness, limited visibility) — **VALIDATED concept works!**
+- [ ] Implement projectile system
+- [ ] The Ballroom (ranged combat, ricocheting projectiles)
+- [ ] The Kitchen (reversed controls)
+- [ ] The Library (permadeath zone, high rewards)
+
+---
+
+## Immediate Priorities (Next 1-2 Weeks)
+
+### ✅ COMPLETED: Lobby Redesign (Visual Impact)
+**Status:** ✅ Done (2026-02-12)  
+**Time taken:** 1 day  
+**Files:** `public/js/track.js`
+
+**What was added:**
 - Reception desk (visual landmark)
-- Grandfather clock (ticking animation)
+- Grandfather clock (real-time display)
 - Elevator doors (locked, ominous)
-- Ornate carpet patterns (CSS or canvas)
-- Ambient lighting effects (chandelier glow)
+- Burgundy carpet pattern
+- Chandelier glow lighting
+- Wall portraits
+- Brass-framed portals with room plaques
 
-**Why First:** Players see this immediately. First impressions matter.
+**Result:** Lobby now feels like a 1920s hotel. First impressions significantly improved.
 
 ---
 
-### Option B: One Experimental Room (Gameplay Innovation)
-**Time:** 1-2 weeks  
+### ✅ COMPLETED: One Experimental Room (Gameplay Innovation)
+**Status:** ✅ Done (2026-02-12)  
+**Time taken:** 1 day  
 **Files:** `public/js/track.js`, `public/js/game.js`
 
-**Goal:** Prove that "different rooms = different rules" works.
-
-**Suggested Room: The Gallery (Darkness + Co-op)**
-- Limited visibility (only see 100px radius around player)
-- Co-op partner is only visible as glowing dot
+**Room: The Gallery (Darkness + Co-op)**
+- Limited visibility (150px radius around player)
+- Co-op partner visible as glowing dot
 - Communication becomes essential
-- Implementation: Canvas shader overlay (darken everything outside radius)
+- Implementation: Cached canvas shader overlay
 
-**Why First:** Tests the core "rule instability" concept. If this is fun, we have a formula.
+**Result:** "Rule instability" concept validated. Players will experience surprise and tension.
+
+---
+
+### 🔄 NEXT: Projectile Combat System
+**Time estimate:** 3-4 days  
+**Files:** `public/js/game.js`, new `public/js/projectile.js`
+
+**Goal:** Add Wii Play Tanks-style projectile system for ranged combat rooms.
+
+**What to Add:**
+- `Projectile` class (position, velocity, owner, damage)
+- Collision detection (walls, entities)
+- Bounce physics for mirrors
+- Visual: glowing projectile sprites with trails
+
+**Why Next:** Required for The Ballroom (next experimental room).
+
+---
+
+### 📋 AFTER THAT: The Ballroom (Ranged Combat Room)
+**Time estimate:** 2 days  
+**Files:** `public/js/track.js`
+
+**Goal:** Second experimental room to expand "rule instability" concept.
+
+**What to Add:**
+- Disable melee attacks, enable projectile firing
+- Mirror walls that reflect projectiles
+- Friendly fire enabled
+- Challenging but fun chaos
+
+**Why Next:** Tests projectile system, adds variety to room experiences.
 
 ---
 
 ## Phase-by-Phase Roadmap
 
-### Phase 1: The Hotel Wakes Up (Weeks 1-3)
+### Phase 1: The Hotel Wakes Up (Weeks 1-3) — ✅ 40% Complete
 **Goal:** Make the lobby feel like a living space.
 
-- [ ] Redesign lobby layout (reception desk, clock, elevator)
+- [x] Redesign lobby layout (reception desk, clock, elevator) — ✅ **DONE 2026-02-12**
 - [ ] Add Receptionist dialogue system (unreliable narrator)
 - [ ] Implement lobby evolution (server-tracked state changes)
 
-**Deliverable:** Players return to the lobby and say *"Something feels different…"*
+**Deliverable:** Players return to the lobby and say *"Something feels different…"*  
+**Status:** Visual identity complete. Dialogue and evolution systems remain.
 
 ---
 
-### Phase 2: Rule Instability (Weeks 4-6)
+### Phase 2: Rule Instability (Weeks 4-6) — ✅ 15% Complete
 **Goal:** Every room is a unique experience.
 
-- [ ] Implement room-specific rulesets (`track.js` → `ruleset` field)
+- [x] Implement room-specific rulesets (`track.js` → `ruleset` field) — ✅ **DONE 2026-02-12**
 - [ ] Create 3-4 experimental rooms:
-  - **The Gallery** (darkness, limited visibility)
-  - **The Ballroom** (ranged combat, ricocheting projectiles)
-  - **The Kitchen** (reversed controls)
-  - **The Library** (permadeath zone, high rewards)
+  - [x] **The Gallery** (darkness, limited visibility) — ✅ **DONE 2026-02-12**
+  - [ ] **The Ballroom** (ranged combat, ricocheting projectiles)
+  - [ ] **The Kitchen** (reversed controls)
+  - [ ] **The Library** (permadeath zone, high rewards)
 - [ ] Add projectile combat system (Wii Play Tanks homage)
 
-**Deliverable:** Players say *"No way, this room is completely different!"*
+**Deliverable:** Players say *"No way, this room is completely different!"*  
+**Status:** Concept validated with Gallery. Projectile system and 3 more rooms needed.
 
 ---
 

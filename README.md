@@ -158,22 +158,33 @@ Three-act, Inscryption-inspired structure:
 
 **📋 For detailed development plans, see [PLANNING_INDEX.md](./PLANNING_INDEX.md)**
 
-### High Priority
-- [ ] Redesign hub as hotel lobby with visual identity
-- [ ] Curator NPC — unreliable narrator in the lobby
-- [ ] Room-based rule variation (different rules per zone)
-- [ ] Ranged combat / projectiles (Wii Play Tanks-style)
+### ✅ Recently Completed (2026-02-12)
+- [x] Planning review and technical feasibility assessment
+- [x] Hotel lobby redesigned with 1920s atmosphere (burgundy carpet, clock, chandelier, portraits, elevator)
+- [x] The Gallery experimental room (darkness ruleset, limited visibility)
+- [x] Room ruleset system implemented and validated
+- [x] Performance optimization (cached rendering for all decorative elements)
 
-### Medium Priority
-- [ ] Shield Block, Dash, Fireball abilities
+### High Priority (Next 1-2 Weeks)
+- [ ] Projectile combat system (Wii Play Tanks-style)
+- [ ] The Ballroom room (ranged combat, ricocheting projectiles)
+- [ ] Receptionist dialogue system (unreliable narrator in lobby)
+
+### Medium Priority (Weeks 3-4)
+- [ ] More experimental rooms (Kitchen with reversed controls, Library with permadeath)
 - [ ] Currency shop for upgrades and cosmetics
-- [ ] More zones / hotel rooms
+- [ ] Visual juice (screen shake, damage numbers, particles)
+- [ ] Lobby evolution system (server-tracked state changes)
 
-### Lower Priority
+### Lower Priority (Post-MVP)
+- [ ] Room 237 meta-narrative reveal
 - [ ] Sound effects and music
 - [ ] Mobile touch controls
+- [ ] Leaderboards and daily challenges
 
 See the full strategic vision in:
+- **[TECHNICAL_FEASIBILITY_ASSESSMENT.md](./TECHNICAL_FEASIBILITY_ASSESSMENT.md)** — Technical analysis and 9-12 week timeline
+- **[IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)** — Documentation of completed prototype work
 - **[GAME_DESIGN_PLAN.md](./GAME_DESIGN_PLAN.md)** — Complete 5-phase development strategy
 - **[NEXT_STEPS_SUMMARY.md](./NEXT_STEPS_SUMMARY.md)** — Quick reference for immediate priorities
 - **[VISUAL_DESIGN_REFERENCE.md](./VISUAL_DESIGN_REFERENCE.md)** — Mockups and implementation guide for lobby redesign
