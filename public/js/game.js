@@ -267,7 +267,8 @@ class Game {
     }
 
     transitionZone(zoneName, roster = [], localId = '') {
-        this.init(zoneName, this.localPlayer ? this.localPlayer.username : 'Player', localId || (this.localPlayer ? this.localPlayer.id : ''));
+        const playerId = localId || (this.localPlayer ? this.localPlayer.id : '');
+        this.init(zoneName, this.localPlayer ? this.localPlayer.username : 'Player', playerId);
         this.syncMultiplayerPlayers(roster, localId);
     }
 
