@@ -5,13 +5,14 @@ const PLAYER_MAX_SPEED = 132;           // pixels per second (was 2.2 per frame 
 const PLAYER_ACCELERATION = 800;        // pixels per second squared
 const PLAYER_FRICTION = 8;              // friction factor (higher = more friction)
 const PLAYER_DEFAULT_HP = 100;
-const PLAYER_ATTACK_DAMAGE = 20;
-const PLAYER_ATTACK_RANGE = 76;
-const PLAYER_ATTACK_ARC = Math.PI * 0.9;
-const PLAYER_ATTACK_COOLDOWN = 0.417;   // seconds (was 25 frames / 60)
-const PLAYER_ATTACK_ANIM_DURATION = 0.2; // seconds (was 12 frames / 60)
 const PLAYER_SIZE = 20;
 const PLAYER_STUN_FRICTION = 12;        // higher friction when stunned
+
+// Gun constants
+const PLAYER_GUN_FIRE_RATE = 1.5;       // shots per second
+const PLAYER_GUN_MAGAZINE_SIZE = 5;     // shots before reload
+const PLAYER_GUN_RELOAD_TIME = 1.5;     // seconds to reload
+const PLAYER_GUN_BARREL_LENGTH = 20;    // visual barrel offset
 
 class Player {
     /**
@@ -49,20 +50,24 @@ class Player {
         // Combat
         this.maxHp = PLAYER_DEFAULT_HP;
         this.hp = PLAYER_DEFAULT_HP;
-        this.attackDamage = PLAYER_ATTACK_DAMAGE;
-        this.attackRange = PLAYER_ATTACK_RANGE;
-        this.attackArc = PLAYER_ATTACK_ARC;
-        this.attackCooldown = 0;
-        this.attackCooldownDuration = PLAYER_ATTACK_COOLDOWN;  // seconds
-        this.attackAnimTimer = 0;
-        this.attackAnimDuration = PLAYER_ATTACK_ANIM_DURATION; // seconds
-        this.attackAngle = 0;
 
-        // Simple weapon model: handle + blade rendered from hand pivot.
-        this.weapon = {
-            gripOffset: 7,
-            bladeLength: 40,
-            bladeWidth: 5
+        // Gun weapon system
+        this.gun = {
+            fireRate: PLAYER_GUN_FIRE_RATE,
+            fireCooldown: 0,
+            barrelLength: PLAYER_GUN_BARREL_LENGTH,
+            magazineSize: PLAYER_GUN_MAGAZINE_SIZE,
+            ammo: PLAYER_GUN_MAGAZINE_SIZE,
+            reloadTime: PLAYER_GUN_RELOAD_TIME,
+            reloading: false,
+            reloadTimer: 0
+        };
+
+        // Muzzle flash effect
+        this.muzzleFlash = {
+            active: false,
+            timer: 0,
+            duration: 0.08  // seconds
         };
         
         // Status
@@ -136,14 +141,8 @@ class Player {
             }
         }
 
-        // Update cooldowns (time-based)
-        if (this.attackCooldown > 0) {
-            this.attackCooldown -= dt;
-        }
-
-        if (this.attackAnimTimer > 0) {
-            this.attackAnimTimer -= dt;
-        }
+        // Update gun cooldowns
+        this.updateGun(dt);
 
         // Update speed for network sync (normalized to ~0-3 range for compatibility)
         this.speed = Math.hypot(this.velocityX, this.velocityY) / 60;
@@ -241,44 +240,93 @@ class Player {
         ctx.lineTo(screenX + 3 - stride, bodyY + 10);
         ctx.stroke();
 
-        const activeAngle = this.getCurrentAttackAngle();
-        const handX = screenX + Math.cos(activeAngle) * this.weapon.gripOffset;
-        const handY = bodyY + Math.sin(activeAngle) * this.weapon.gripOffset;
+        // Gun rendering
+        const gunAngle = this.angle;
+        const gripOffset = 7;
+        const handX = screenX + Math.cos(gunAngle) * gripOffset;
+        const handY = bodyY + Math.sin(gunAngle) * gripOffset;
 
-        // Back hand for readability
-        const offHandAngle = activeAngle + Math.PI * 0.65;
+        // Off-hand for stability
+        const offHandAngle = gunAngle + Math.PI * 0.5;
         ctx.fillStyle = '#ffd9c3';
         ctx.beginPath();
-        ctx.arc(screenX + Math.cos(offHandAngle) * 5, bodyY + Math.sin(offHandAngle) * 4, 2, 0, Math.PI * 2);
+        ctx.arc(screenX + Math.cos(offHandAngle) * 4, bodyY + Math.sin(offHandAngle) * 3, 2, 0, Math.PI * 2);
         ctx.fill();
 
-        // Weapon handle
-        const pommelX = handX - Math.cos(activeAngle) * 4;
-        const pommelY = handY - Math.sin(activeAngle) * 4;
-        const bladeTipX = handX + Math.cos(activeAngle) * this.weapon.bladeLength;
-        const bladeTipY = handY + Math.sin(activeAngle) * this.weapon.bladeLength;
+        // Gun body (rectangle along angle)
+        const gunLength = 22;
+        const gunWidth = 5;
+        const barrelTipX = handX + Math.cos(gunAngle) * gunLength;
+        const barrelTipY = handY + Math.sin(gunAngle) * gunLength;
 
-        ctx.strokeStyle = '#6e4a2e';
-        ctx.lineWidth = 3;
+        // Gun body
+        ctx.strokeStyle = this.gun.reloading ? '#666' : '#444';
+        ctx.lineWidth = gunWidth;
         ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.moveTo(pommelX, pommelY);
-        ctx.lineTo(handX + Math.cos(activeAngle) * 7, handY + Math.sin(activeAngle) * 7);
+        ctx.moveTo(handX, handY);
+        ctx.lineTo(barrelTipX, barrelTipY);
         ctx.stroke();
 
-        // Weapon blade
-        ctx.strokeStyle = this.attackAnimTimer > 0 ? '#dff5ff' : '#b8c7d4';
-        ctx.lineWidth = this.weapon.bladeWidth;
+        // Gun barrel highlight
+        ctx.strokeStyle = '#888';
+        ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(handX + Math.cos(activeAngle) * 7, handY + Math.sin(activeAngle) * 7);
-        ctx.lineTo(bladeTipX, bladeTipY);
+        ctx.moveTo(handX + Math.cos(gunAngle) * 8, handY + Math.sin(gunAngle) * 8);
+        ctx.lineTo(barrelTipX, barrelTipY);
         ctx.stroke();
 
-        // Hand on top of grip
+        // Hand on grip
         ctx.fillStyle = '#ffe3d2';
         ctx.beginPath();
         ctx.arc(handX, handY, 2.2, 0, Math.PI * 2);
         ctx.fill();
+
+        // Muzzle flash effect
+        if (this.muzzleFlash.active && this.muzzleFlash.timer > 0) {
+            const flashX = barrelTipX + Math.cos(gunAngle) * 5;
+            const flashY = barrelTipY + Math.sin(gunAngle) * 5;
+            const flashProgress = this.muzzleFlash.timer / this.muzzleFlash.duration;
+            const flashSize = 8 * flashProgress;
+
+            ctx.fillStyle = `rgba(255, 220, 100, ${flashProgress})`;
+            ctx.beginPath();
+            ctx.arc(flashX, flashY, flashSize, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = `rgba(255, 255, 200, ${flashProgress * 0.8})`;
+            ctx.beginPath();
+            ctx.arc(flashX, flashY, flashSize * 0.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Ammo indicator (small dots above player when low)
+        if (this.gun.ammo <= 2 && !this.gun.reloading) {
+            const indicatorY = screenY - 40;
+            for (let i = 0; i < this.gun.ammo; i++) {
+                ctx.fillStyle = '#f1c40f';
+                ctx.beginPath();
+                ctx.arc(screenX - 4 + i * 6, indicatorY, 2, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        // Reload indicator
+        if (this.gun.reloading) {
+            const reloadProgress = 1 - (this.gun.reloadTimer / this.gun.reloadTime);
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+            ctx.font = '10px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('RELOADING', screenX, screenY - 40);
+
+            // Progress bar
+            const barWidth = 30;
+            const barHeight = 3;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
+            ctx.fillRect(screenX - barWidth / 2, screenY - 36, barWidth, barHeight);
+            ctx.fillStyle = '#f1c40f';
+            ctx.fillRect(screenX - barWidth / 2, screenY - 36, barWidth * reloadProgress, barHeight);
+        }
 
         ctx.restore();
         
@@ -312,53 +360,73 @@ class Player {
         this.avatarImg.src = url;
     }
     /**
-     * Attempt to attack enemies in range
-     * @param {Array<Enemy>} enemies - Array of enemies to check
-     * @returns {boolean} True if an enemy was hit
+     * Update gun cooldowns and reload state
+     * @param {number} dt - Delta time in seconds
      */
-    tryAttack(enemies, attackAngle = this.angle) {
-        if (this.attackCooldown > 0) return false;
-
-        this.attackAngle = attackAngle;
-        this.angle = attackAngle;
-        this.attackCooldown = this.attackCooldownDuration;
-        this.attackAnimTimer = this.attackAnimDuration;
-
-        let hit = false;
-        enemies.forEach(enemy => {
-            const dx = enemy.x - this.x;
-            const dy = enemy.y - this.y;
-            const dist = Math.hypot(dx, dy);
-            const enemyRadius = (enemy.width || 20) / 2;
-            if (dist > this.attackRange + enemyRadius) {
-                return;
+    updateGun(dt) {
+        if (this.gun.fireCooldown > 0) {
+            this.gun.fireCooldown -= dt;
+        }
+        if (this.gun.reloading) {
+            this.gun.reloadTimer -= dt;
+            if (this.gun.reloadTimer <= 0) {
+                this.gun.ammo = this.gun.magazineSize;
+                this.gun.reloading = false;
             }
-
-            const targetAngle = Math.atan2(dy, dx);
-            const angleDelta = Math.abs(this.normalizeAngle(targetAngle - attackAngle));
-            if (angleDelta <= this.attackArc / 2) {
-                enemy.takeDamage(this.attackDamage);
-                hit = true;
+        }
+        // Update muzzle flash
+        if (this.muzzleFlash.active) {
+            this.muzzleFlash.timer -= dt;
+            if (this.muzzleFlash.timer <= 0) {
+                this.muzzleFlash.active = false;
             }
-        });
-        return hit;
+        }
     }
 
-    getCurrentAttackAngle() {
-        if (this.attackAnimTimer <= 0) {
-            return this.angle;
+    /**
+     * Start reloading the gun
+     */
+    reload() {
+        if (this.gun.reloading || this.gun.ammo === this.gun.magazineSize) return;
+        this.gun.reloading = true;
+        this.gun.reloadTimer = this.gun.reloadTime;
+    }
+
+    /**
+     * Attempt to fire a projectile
+     * @param {number} angle - Angle to fire at
+     * @returns {Projectile|null} The fired projectile or null if cannot fire
+     */
+    fireProjectile(angle) {
+        if (this.gun.fireCooldown > 0 || this.gun.reloading) return null;
+        if (this.gun.ammo <= 0) {
+            this.reload();
+            return null;
         }
 
-        const progress = 1 - (this.attackAnimTimer / this.attackAnimDuration);
-        const startAngle = this.attackAngle - (this.attackArc * 0.55);
-        return startAngle + (this.attackArc * progress);
+        this.gun.ammo--;
+        this.gun.fireCooldown = 1 / this.gun.fireRate;
+        this.angle = angle;
+
+        // Trigger muzzle flash
+        this.muzzleFlash.active = true;
+        this.muzzleFlash.timer = this.muzzleFlash.duration;
+
+        // Spawn projectile at barrel tip
+        const spawnX = this.x + Math.cos(angle) * this.gun.barrelLength;
+        const spawnY = this.y + Math.sin(angle) * this.gun.barrelLength;
+
+        return new Projectile(spawnX, spawnY, angle, this.id, {
+            maxBounces: 0  // Default weapon: no bounces
+        });
     }
 
-    normalizeAngle(angle) {
-        let normalized = angle;
-        while (normalized > Math.PI) normalized -= Math.PI * 2;
-        while (normalized < -Math.PI) normalized += Math.PI * 2;
-        return normalized;
+    /**
+     * Check if player can fire
+     * @returns {boolean}
+     */
+    canFire() {
+        return this.gun.fireCooldown <= 0 && !this.gun.reloading && this.gun.ammo > 0;
     }
     /**
      * Apply damage to player

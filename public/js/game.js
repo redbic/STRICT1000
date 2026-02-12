@@ -25,7 +25,8 @@ class Game {
         this.cameraY = 0;
         
         this.enemies = [];
-        this.attackFx = { active: false, timer: 0, angle: 0, hit: false, sparks: [] };
+        this.projectiles = []; // Projectile weapon system
+        this.hitSparks = []; // Visual effects for projectile hits
         this.lastMouse = { x: 0, y: 0 };
         this.onEnemyKilled = null; // Callback for when an enemy is killed
         this.isHost = false; // Whether this client is the host (authoritative for enemies)
@@ -53,6 +54,10 @@ class Game {
             this.keys[key] = true;
             if (key === 'i') {
                 this.toggleInventory();
+                e.preventDefault();
+            }
+            if (key === 'r' && this.localPlayer) {
+                this.localPlayer.reload();
                 e.preventDefault();
             }
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
@@ -86,29 +91,16 @@ class Game {
                 return;
             }
             if (e.button !== 0 || !this.localPlayer) return;
-            
-            // Only show attack visual if not on cooldown
-            if (this.localPlayer.attackCooldown > 0) return;
 
             const worldX = this.lastMouse.x + this.cameraX;
             const worldY = this.lastMouse.y + this.cameraY;
             const angle = Math.atan2(worldY - this.localPlayer.y, worldX - this.localPlayer.x);
-            
-            let didAttack = false;
-            if (this.isHost) {
-                // Host applies damage directly
-                didAttack = this.localPlayer.tryAttack(this.enemies, angle);
-            } else {
-                // Non-host sends damage to host via network
-                didAttack = this.attackEnemiesRemote(angle);
+
+            // Fire projectile
+            const proj = this.localPlayer.fireProjectile(angle);
+            if (proj) {
+                this.projectiles.push(proj);
             }
-            
-            // Show attack effect for every swing, with stronger effect on hit
-            this.attackFx.active = true;
-            this.attackFx.timer = 12;
-            this.attackFx.angle = angle;
-            this.attackFx.hit = didAttack;
-            this.attackFx.sparks = didAttack ? this.createAttackSparks(angle) : [];
         };
 
         this.handleResize = () => {
@@ -148,6 +140,8 @@ class Game {
         this.zoneId = zoneName; // Store the zone key for network matching
         this.players = [];
         this.enemies = [];
+        this.projectiles = []; // Clear projectiles on zone change
+        this.hitSparks = []; // Clear hit sparks
         this.npcs = (zoneData.npcs || []).map(n => new NPC(n.x, n.y, n.name, n.color));
         this.lastPortalId = null;
         this.portalCooldown = 0;
@@ -200,6 +194,12 @@ class Game {
             }
         });
 
+        // Update projectiles
+        this.updateProjectiles(dt);
+
+        // Update hit sparks
+        this.updateHitSparks(dt);
+
         // Only the host runs enemy AI; non-host clients receive synced state
         if (this.isHost) {
             // Find the nearest player for each enemy to chase (all players, not just local)
@@ -208,11 +208,11 @@ class Game {
                 enemy.update(this.zone, nearestPlayer, dt);
             });
         }
-        
+
         // Check enemy defeats
         const newlyDead = this.enemies.filter(enemy => enemy.hp <= 0);
         this.enemies = this.enemies.filter(enemy => enemy.hp > 0);
-        
+
         // Notify about kills (only host reports kills to prevent double rewards)
         if (this.isHost) {
             newlyDead.forEach(enemy => {
@@ -344,31 +344,91 @@ class Game {
         this.enemies = this.enemies.filter(e => e.hp > 0);
     }
 
-    attackEnemiesRemote(attackAngle) {
-        if (!this.localPlayer || this.localPlayer.attackCooldown > 0) return false;
+    updateProjectiles(dt) {
+        for (let i = this.projectiles.length - 1; i >= 0; i--) {
+            const proj = this.projectiles[i];
+            proj.update(dt, this.zone);
 
-        this.localPlayer.attackAngle = attackAngle;
-        this.localPlayer.angle = attackAngle;
-        this.localPlayer.attackCooldown = this.localPlayer.attackCooldownDuration;
-        this.localPlayer.attackAnimTimer = this.localPlayer.attackAnimDuration;
+            // Check enemy collisions
+            if (proj.alive) {
+                for (const enemy of this.enemies) {
+                    if (this.checkProjectileHit(proj, enemy)) {
+                        // Create hit spark effect
+                        this.createHitSpark(proj.x, proj.y);
 
-        let sentDamage = false;
-        this.enemies.forEach(enemy => {
-            const dx = enemy.x - this.localPlayer.x;
-            const dy = enemy.y - this.localPlayer.y;
-            const dist = Math.hypot(dx, dy);
-            const enemyRadius = (enemy.width || 20) / 2;
-            if (dist > this.localPlayer.attackRange + enemyRadius) return;
-
-            const targetAngle = Math.atan2(dy, dx);
-            const angleDelta = Math.abs(this.localPlayer.normalizeAngle(targetAngle - attackAngle));
-            if (angleDelta <= this.localPlayer.attackArc / 2 && this.onEnemyDamage) {
-                this.onEnemyDamage(enemy.id, this.localPlayer.attackDamage);
-                sentDamage = true;
+                        if (this.isHost) {
+                            // Host applies damage directly
+                            enemy.takeDamage(proj.damage);
+                        } else if (this.onEnemyDamage) {
+                            // Non-host sends damage to host via network
+                            this.onEnemyDamage(enemy.id, proj.damage);
+                        }
+                        proj.alive = false;
+                        break;
+                    }
+                }
             }
-        });
 
-        return sentDamage;
+            if (!proj.alive) {
+                this.projectiles.splice(i, 1);
+            }
+        }
+    }
+
+    checkProjectileHit(proj, enemy) {
+        const dx = enemy.x - proj.x;
+        const dy = enemy.y - proj.y;
+        const dist = Math.hypot(dx, dy);
+        const enemyRadius = (enemy.width || 20) / 2;
+        return dist < proj.radius + enemyRadius;
+    }
+
+    createHitSpark(x, y) {
+        const sparkCount = 6;
+        for (let i = 0; i < sparkCount; i++) {
+            const angle = (Math.PI * 2 * i) / sparkCount + Math.random() * 0.5;
+            const speed = 50 + Math.random() * 80;
+            this.hitSparks.push({
+                x: x,
+                y: y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                life: 0.3 + Math.random() * 0.2
+            });
+        }
+    }
+
+    updateHitSparks(dt) {
+        for (let i = this.hitSparks.length - 1; i >= 0; i--) {
+            const spark = this.hitSparks[i];
+            spark.x += spark.vx * dt;
+            spark.y += spark.vy * dt;
+            spark.vx *= 0.95;
+            spark.vy *= 0.95;
+            spark.life -= dt;
+            if (spark.life <= 0) {
+                this.hitSparks.splice(i, 1);
+            }
+        }
+    }
+
+    drawProjectiles() {
+        for (const proj of this.projectiles) {
+            proj.draw(this.ctx, this.cameraX, this.cameraY);
+        }
+    }
+
+    drawHitSparks() {
+        for (const spark of this.hitSparks) {
+            const screenX = spark.x - this.cameraX;
+            const screenY = spark.y - this.cameraY;
+            const alpha = Math.min(1, spark.life * 3);
+
+            this.ctx.fillStyle = `rgba(255, 220, 100, ${alpha})`;
+            this.ctx.beginPath();
+            this.ctx.arc(screenX, screenY, 2, 0, Math.PI * 2);
+            this.ctx.fill();
+        }
     }
 
     handlePortalTransitions() {
@@ -496,7 +556,9 @@ class Game {
             }
         });
 
-        this.drawAttackFx();
+        // Draw projectiles and effects
+        this.drawProjectiles();
+        this.drawHitSparks();
         
         // Apply darkness overlay for The Gallery (ruleset: darkness)
         if (this.zone && this.zone.ruleset === 'darkness' && this.localPlayer) {
@@ -606,83 +668,6 @@ class Game {
     }
 
 
-    createAttackSparks(angle) {
-        if (!this.localPlayer) return [];
-        const sparks = [];
-        const tipDistance = this.localPlayer.attackRange * 0.8;
-        const originX = this.localPlayer.x + Math.cos(angle) * tipDistance;
-        const originY = this.localPlayer.y + Math.sin(angle) * tipDistance;
-        for (let i = 0; i < 7; i++) {
-            const variance = (Math.random() - 0.5) * 0.8;
-            const speed = 1.8 + Math.random() * 2.4;
-            sparks.push({
-                x: originX,
-                y: originY,
-                vx: Math.cos(angle + variance) * speed,
-                vy: Math.sin(angle + variance) * speed,
-                life: 8 + Math.floor(Math.random() * 6)
-            });
-        }
-        return sparks;
-    }
-
-    drawAttackFx() {
-        if (!this.attackFx.active || !this.localPlayer) return;
-        if (this.attackFx.timer <= 0) {
-            this.attackFx.active = false;
-            return;
-        }
-
-        const centerX = this.localPlayer.x - this.cameraX;
-        const centerY = this.localPlayer.y - this.cameraY;
-        const progress = 1 - (this.attackFx.timer / 12);
-        const baseRadius = 26;
-        const slashLength = this.localPlayer.attackRange * 0.9;
-        const spread = Math.PI / 2.4;
-        const leadAngle = this.attackFx.angle - spread / 2 + spread * progress;
-
-        this.ctx.save();
-
-        // Motion blur trail
-        for (let i = 0; i < 4; i++) {
-            const t = i / 4;
-            const radius = baseRadius + (slashLength - baseRadius) * (progress - t * 0.12);
-            const clampedRadius = Math.max(baseRadius, radius);
-            this.ctx.strokeStyle = `rgba(255, ${220 - i * 20}, ${150 - i * 10}, ${0.35 - i * 0.07})`;
-            this.ctx.lineWidth = 7 - i;
-            this.ctx.beginPath();
-            this.ctx.arc(centerX, centerY, clampedRadius, leadAngle - 0.35, leadAngle + 0.2);
-            this.ctx.stroke();
-        }
-
-        // Bright slash edge
-        this.ctx.strokeStyle = this.attackFx.hit ? 'rgba(255, 255, 245, 0.95)' : 'rgba(255, 230, 210, 0.9)';
-        this.ctx.lineWidth = 2.2;
-        this.ctx.beginPath();
-        this.ctx.arc(centerX, centerY, baseRadius + slashLength * progress, leadAngle - 0.25, leadAngle + 0.12);
-        this.ctx.stroke();
-
-        // Hit sparks
-        this.attackFx.sparks = (this.attackFx.sparks || []).filter((spark) => spark.life > 0);
-        this.attackFx.sparks.forEach((spark) => {
-            spark.x += spark.vx;
-            spark.y += spark.vy;
-            spark.vx *= 0.92;
-            spark.vy *= 0.92;
-            spark.life--;
-
-            const sx = spark.x - this.cameraX;
-            const sy = spark.y - this.cameraY;
-            this.ctx.fillStyle = `rgba(255, 245, 200, ${Math.max(0, spark.life / 14)})`;
-            this.ctx.beginPath();
-            this.ctx.arc(sx, sy, 1.8, 0, Math.PI * 2);
-            this.ctx.fill();
-        });
-
-        this.ctx.restore();
-
-        this.attackFx.timer--;
-    }
 
     gameLoop(timestamp) {
         if (this.running) {
