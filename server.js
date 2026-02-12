@@ -140,6 +140,12 @@ wss.on('connection', (ws) => {
         case 'enemy_killed':
           handleEnemyKilled(ws, data);
           break;
+        case 'enemy_sync':
+          handleEnemySync(ws, data);
+          break;
+        case 'enemy_damage':
+          handleEnemyDamage(ws, data);
+          break;
       }
     } catch (error) {
       console.error('WebSocket message error:', error);
@@ -159,7 +165,8 @@ function handleJoinRoom(ws, data) {
       players: [],
       started: false,
       killedEnemies: new Set(), // Track killed enemies to prevent double-rewards
-      respawnTimers: new Map() // Track respawn timers for enemies
+      respawnTimers: new Map(), // Track respawn timers for enemies
+      hostId: null // Track the host player for enemy sync
     });
   }
   
@@ -182,11 +189,17 @@ function handleJoinRoom(ws, data) {
   ws.playerId = playerId;
   ws.username = username; // Store username on WebSocket object
   
+  // Assign host if none exists (first player becomes host)
+  if (!room.hostId) {
+    room.hostId = playerId;
+  }
+  
   // Notify all players in room
   broadcastToRoom(roomId, {
     type: 'room_update',
     players: room.players.map(p => ({ id: p.id, username: p.username, ready: p.ready })),
-    roomId: roomId
+    roomId: roomId,
+    hostId: room.hostId
   });
 }
 
@@ -199,9 +212,19 @@ function handleLeaveRoom(ws, data) {
       if (room.players.length === 0) {
         gameRooms.delete(ws.roomId);
       } else {
+        // Reassign host if the leaving player was the host
+        if (room.hostId === ws.playerId) {
+          room.hostId = room.players[0].id;
+          broadcastToRoom(ws.roomId, {
+            type: 'host_assigned',
+            hostId: room.hostId
+          });
+        }
+        
         broadcastToRoom(ws.roomId, {
           type: 'room_update',
-          players: room.players.map(p => ({ id: p.id, username: p.username, ready: p.ready }))
+          players: room.players.map(p => ({ id: p.id, username: p.username, ready: p.ready })),
+          hostId: room.hostId
         });
       }
     }
@@ -309,6 +332,40 @@ async function handleEnemyKilled(ws, data) {
   }
 }
 
+function handleEnemySync(ws, data) {
+  if (!ws.roomId || !Array.isArray(data.enemies)) return;
+  
+  const room = gameRooms.get(ws.roomId);
+  if (!room) return;
+  
+  // Only accept enemy sync from the host
+  if (ws.playerId !== room.hostId) return;
+  
+  // Broadcast enemy state to all non-host players
+  broadcastToRoom(ws.roomId, {
+    type: 'enemy_sync',
+    enemies: data.enemies
+  }, ws);
+}
+
+function handleEnemyDamage(ws, data) {
+  if (!ws.roomId || !data.enemyId || typeof data.damage !== 'number') return;
+  
+  const room = gameRooms.get(ws.roomId);
+  if (!room || !room.hostId) return;
+  
+  // Forward damage to the host player
+  const hostPlayer = room.players.find(p => p.id === room.hostId);
+  if (hostPlayer && hostPlayer.ws.readyState === WebSocket.OPEN) {
+    hostPlayer.ws.send(JSON.stringify({
+      type: 'enemy_damage',
+      enemyId: data.enemyId,
+      damage: data.damage,
+      attackerId: ws.playerId
+    }));
+  }
+}
+
 function handleDisconnect(ws) {
   if (ws.roomId) {
     const room = gameRooms.get(ws.roomId);
@@ -318,6 +375,16 @@ function handleDisconnect(ws) {
       if (room.players.length === 0) {
         gameRooms.delete(ws.roomId);
       } else {
+        // Reassign host if the disconnected player was the host
+        if (room.hostId === ws.playerId) {
+          room.hostId = room.players[0].id;
+          // Notify all remaining players about new host
+          broadcastToRoom(ws.roomId, {
+            type: 'host_assigned',
+            hostId: room.hostId
+          });
+        }
+        
         broadcastToRoom(ws.roomId, {
           type: 'player_left',
           playerId: ws.playerId

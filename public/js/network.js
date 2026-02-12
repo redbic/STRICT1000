@@ -13,6 +13,9 @@ class NetworkManager {
         this.onZoneEnter = null;
         this.onBalanceUpdate = null; // Callback for balance updates
         this.onEnemyRespawn = null; // Callback for enemy respawns
+        this.onEnemySync = null; // Callback for enemy state sync
+        this.onHostAssigned = null; // Callback for host assignment
+        this.onEnemyDamage = null; // Callback for enemy damage (received by host)
     }
     
     connect() {
@@ -75,6 +78,15 @@ class NetworkManager {
             case 'enemy_respawn':
                 if (this.onEnemyRespawn) this.onEnemyRespawn(data);
                 break;
+            case 'enemy_sync':
+                if (this.onEnemySync) this.onEnemySync(data);
+                break;
+            case 'host_assigned':
+                if (this.onHostAssigned) this.onHostAssigned(data);
+                break;
+            case 'enemy_damage':
+                if (this.onEnemyDamage) this.onEnemyDamage(data);
+                break;
         }
     }
     
@@ -134,6 +146,23 @@ class NetworkManager {
             type: 'enemy_killed',
             enemyId: enemyId,
             zone: zone
+        });
+    }
+    
+    sendEnemySync(enemies) {
+        if (!this.connected) return;
+        this.send({
+            type: 'enemy_sync',
+            enemies: enemies
+        });
+    }
+    
+    sendEnemyDamage(enemyId, damage) {
+        if (!this.connected) return;
+        this.send({
+            type: 'enemy_damage',
+            enemyId: enemyId,
+            damage: damage
         });
     }
     
