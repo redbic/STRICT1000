@@ -174,6 +174,7 @@ function setupNetworkHandlers() {
     networkManager.onEnemyRespawn = (data) => {
         if (game && data.enemyId && data.zone) {
             // Re-add the enemy to the game
+            // Note: Zone IDs are lowercase keys (e.g., 'hub', 'training')
             const zoneData = ZONES[data.zone];
             if (zoneData && zoneData.enemies) {
                 // Find the enemy config - enemyId format: "zonename-enemy-index"
@@ -494,12 +495,14 @@ function startGame(zoneName) {
 // Helper function to check if player state has changed significantly
 function hasSignificantChange(oldState, newState) {
     const positionThreshold = 2; // pixels
+    const angleThreshold = 0.1; // radians (~5.7 degrees)
     const dx = Math.abs(newState.x - oldState.x);
     const dy = Math.abs(newState.y - oldState.y);
+    const dAngle = Math.abs(newState.angle - oldState.angle);
     return dx > positionThreshold || 
            dy > positionThreshold || 
-           oldState.stunned !== newState.stunned ||
-           oldState.angle !== newState.angle;
+           dAngle > angleThreshold ||
+           oldState.stunned !== newState.stunned;
 }
 
 function recallToHub() {

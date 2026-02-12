@@ -1,7 +1,7 @@
 // Enemy class for adventure combat
 
 // Constants
-const ENEMY_DEFAULT_SPEED = 1.8;  // Slower than player max speed (2.2) for tactical gameplay
+const ENEMY_DEFAULT_SPEED = 1.8;  // Slower than player max speed for tactical gameplay
 const ENEMY_DEFAULT_HP = 50;
 const ENEMY_DEFAULT_DAMAGE = 8;
 const ENEMY_ATTACK_RANGE = 28;

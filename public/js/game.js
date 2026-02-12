@@ -331,7 +331,8 @@ class Game {
     
     
     draw() {
-        // Note: No clearRect needed - zone draws full background
+        // Clear canvas (defensive programming in case zone doesn't fill entire canvas)
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
         // Draw zone
         if (this.zone) {
