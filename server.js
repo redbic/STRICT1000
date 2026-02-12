@@ -22,14 +22,13 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({
   server,
   maxPayload: 64 * 1024, // 64 KB max message size
-  verifyClient: ({ origin }, cb) => {
+  verifyClient: ({ origin, req }, cb) => {
     if (!origin) {
       cb(true);
       return;
     }
 
-    const allowedOrigins = getAllowedOrigins();
-    cb(allowedOrigins.has(origin));
+    cb(isAllowedWsOrigin(origin, req));
   },
 });
 
@@ -216,6 +215,25 @@ function getAllowedOrigins() {
   const origins = new Set();
   if (configuredOrigin) origins.add(configuredOrigin);
   return origins;
+}
+
+function isAllowedWsOrigin(origin, request) {
+  const allowedOrigins = getAllowedOrigins();
+  if (allowedOrigins.size > 0) {
+    return allowedOrigins.has(origin);
+  }
+
+  const requestHost = normalizeSafeString(request?.headers?.host || '');
+  if (!requestHost) {
+    return false;
+  }
+
+  try {
+    const parsedOrigin = new URL(origin);
+    return parsedOrigin.host === requestHost;
+  } catch (_error) {
+    return false;
+  }
 }
 
 function validateEnvironment() {
