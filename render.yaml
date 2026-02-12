@@ -6,8 +6,11 @@ services:
     plan: free
     buildCommand: npm ci
     startCommand: npm start
+    healthCheckPath: /health
     envVars:
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
+        sync: false
+      - key: APP_ORIGIN
         sync: false

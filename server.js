@@ -22,14 +22,40 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({
   server,
   maxPayload: 64 * 1024, // 64 KB max message size
+  verifyClient: ({ origin }, cb) => {
+    if (!origin) {
+      cb(true);
+      return;
+    }
+
+    const allowedOrigins = getAllowedOrigins();
+    cb(allowedOrigins.has(origin));
+  },
 });
 
 const PORT = process.env.PORT || 3000;
 const ENEMY_KILL_REWARD = 5;
+const WS_MESSAGE_TYPES = new Set([
+  'join_room',
+  'leave_room',
+  'player_update',
+  'game_start',
+  'zone_enter',
+  'enemy_killed',
+  'enemy_sync',
+  'enemy_damage',
+  'list_rooms',
+]);
+const HTTP_BODY_SIZE_LIMIT = '16kb';
+const WS_MAX_ENEMY_SYNC_COUNT = 64;
+const WS_MAX_CONNECTIONS_PER_IP = 5;
 
 // WebSocket rate limiting
 const WS_RATE_LIMIT_WINDOW_MS = 10000;
 const WS_RATE_LIMIT_MAX_MESSAGES = 100;
+const wsConnectionsByIp = new Map();
+
+validateEnvironment();
 
 // PostgreSQL connection pool
 let pool = null;
@@ -45,7 +71,14 @@ const rooms = new RoomManager();
 
 // Middleware
 app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json({ limit: '16kb' }));
+app.use(express.json({ limit: HTTP_BODY_SIZE_LIMIT }));
+app.use((_req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Cross-Origin-Resource-Policy', 'same-origin');
+  next();
+});
 
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -178,44 +211,109 @@ function broadcastRoomList() {
   });
 }
 
-wss.on('connection', (ws) => {
+function getAllowedOrigins() {
+  const configuredOrigin = normalizeSafeString(process.env.APP_ORIGIN || '');
+  const origins = new Set();
+  if (configuredOrigin) origins.add(configuredOrigin);
+  return origins;
+}
+
+function validateEnvironment() {
+  const nodeEnv = process.env.NODE_ENV || 'development';
+  if (nodeEnv === 'production' && !process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is required in production');
+  }
+}
+
+function getClientIp(request) {
+  const forwarded = normalizeSafeString(request.headers['x-forwarded-for'] || '');
+  if (forwarded) {
+    return forwarded.split(',')[0].trim();
+  }
+
+  return request.socket?.remoteAddress || 'unknown';
+}
+
+function registerWsConnection(ip) {
+  const count = wsConnectionsByIp.get(ip) || 0;
+  if (count >= WS_MAX_CONNECTIONS_PER_IP) {
+    return false;
+  }
+
+  wsConnectionsByIp.set(ip, count + 1);
+  return true;
+}
+
+function unregisterWsConnection(ip) {
+  const count = wsConnectionsByIp.get(ip) || 0;
+  if (count <= 1) {
+    wsConnectionsByIp.delete(ip);
+    return;
+  }
+
+  wsConnectionsByIp.set(ip, count - 1);
+}
+
+function parseWsPayload(message) {
+  if (typeof message !== 'string') return null;
+
+  let data;
+  try {
+    data = JSON.parse(message);
+  } catch {
+    return null;
+  }
+
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return null;
+  if (!WS_MESSAGE_TYPES.has(data.type)) return null;
+
+  return data;
+}
+
+wss.on('connection', (ws, request) => {
+  const clientIp = getClientIp(request);
+  if (!registerWsConnection(clientIp)) {
+    ws.close(1008, 'Too many connections');
+    return;
+  }
+
+  ws.clientIp = clientIp;
   ws.messageCount = 0;
   ws.lastReset = Date.now();
 
   ws.on('message', (message) => {
-    try {
-      // Rate limiting
-      const now = Date.now();
-      if (now - ws.lastReset > WS_RATE_LIMIT_WINDOW_MS) {
-        ws.messageCount = 0;
-        ws.lastReset = now;
-      }
-      ws.messageCount++;
-      if (ws.messageCount > WS_RATE_LIMIT_MAX_MESSAGES) {
-        console.warn('Rate limit exceeded for connection, closing');
-        ws.close(1008, 'Rate limit exceeded');
-        return;
-      }
+    // Rate limiting
+    const now = Date.now();
+    if (now - ws.lastReset > WS_RATE_LIMIT_WINDOW_MS) {
+      ws.messageCount = 0;
+      ws.lastReset = now;
+    }
+    ws.messageCount++;
+    if (ws.messageCount > WS_RATE_LIMIT_MAX_MESSAGES) {
+      console.warn('Rate limit exceeded for connection, closing');
+      ws.close(1008, 'Rate limit exceeded');
+      return;
+    }
 
-      const data = JSON.parse(message);
+    const data = parseWsPayload(message.toString());
+    if (!data) return;
 
-      switch (data.type) {
-        case 'join_room':    handleJoinRoom(ws, data);    break;
-        case 'leave_room':   handleLeaveRoom(ws);         break;
-        case 'player_update': handlePlayerUpdate(ws, data); break;
-        case 'game_start':   handleGameStart(ws);          break;
-        case 'zone_enter':   handleZoneEnter(ws, data);   break;
-        case 'enemy_killed': handleEnemyKilled(ws, data); break;
-        case 'enemy_sync':   handleEnemySync(ws, data);   break;
-        case 'enemy_damage': handleEnemyDamage(ws, data); break;
-        case 'list_rooms':   handleListRooms(ws);         break;
-      }
-    } catch (error) {
-      console.error('WebSocket message error:', error);
+    switch (data.type) {
+      case 'join_room':    handleJoinRoom(ws, data); break;
+      case 'leave_room':   handleLeaveRoom(ws); break;
+      case 'player_update': handlePlayerUpdate(ws, data); break;
+      case 'game_start':   handleGameStart(ws); break;
+      case 'zone_enter':   handleZoneEnter(ws, data); break;
+      case 'enemy_killed': handleEnemyKilled(ws, data); break;
+      case 'enemy_sync':   handleEnemySync(ws, data); break;
+      case 'enemy_damage': handleEnemyDamage(ws, data); break;
+      case 'list_rooms':   handleListRooms(ws); break;
+      default: break;
     }
   });
 
   ws.on('close', () => {
+    unregisterWsConnection(ws.clientIp || 'unknown');
     handleDisconnect(ws);
   });
 });
@@ -319,6 +417,7 @@ function handleGameStart(ws) {
   if (!ws.roomId) return;
   const room = rooms.getRoom(ws.roomId);
   if (!room) return;
+  if (room.hostId !== ws.playerId) return;
 
   room.started = true;
   rooms.broadcastToRoom(ws.roomId, { type: 'game_start', timestamp: Date.now() });
@@ -336,6 +435,12 @@ function handleZoneEnter(ws, data) {
   const player = room.players.find(p => p.id === ws.playerId);
   if (player) player.zone = zoneId;
 
+  rooms.broadcastToRoom(ws.roomId, {
+    type: 'player_zone',
+    playerId: ws.playerId,
+    zoneId,
+  }, ws);
+
   const zoneMates = room.players
     .filter(p => p.zone === zoneId && p.id !== ws.playerId)
     .map(p => ({ id: p.id, username: p.username, zone: p.zone }));
@@ -352,7 +457,7 @@ async function handleEnemyKilled(ws, data) {
   const { enemyId, zone } = data;
   const zoneKey = (typeof zone === 'string' ? zone.trim().toLowerCase() : '') || 'unknown';
 
-  if (!ws.roomId || !ws.username || !enemyId) return;
+  if (!ws.roomId || !ws.username || !enemyId || typeof enemyId !== 'string') return;
 
   const room = rooms.getRoom(ws.roomId);
   if (!room) return;
@@ -398,6 +503,7 @@ async function handleEnemyKilled(ws, data) {
 
 function handleEnemySync(ws, data) {
   if (!ws.roomId || !Array.isArray(data.enemies)) return;
+  if (data.enemies.length > WS_MAX_ENEMY_SYNC_COUNT) return;
 
   const room = rooms.getRoom(ws.roomId);
   if (!room || ws.playerId !== room.hostId) return;
@@ -458,6 +564,22 @@ function handleDisconnect(ws) {
 function handleListRooms(ws) {
   ws.send(JSON.stringify({ type: 'room_list', rooms: rooms.getAvailableRooms() }));
 }
+
+function shutdown(signal) {
+  console.log(`${signal} received, shutting down...`);
+  server.close(() => {
+    if (pool) {
+      pool.end()
+        .then(() => process.exit(0))
+        .catch(() => process.exit(1));
+      return;
+    }
+    process.exit(0);
+  });
+}
+
+process.on('SIGINT', () => shutdown('SIGINT'));
+process.on('SIGTERM', () => shutdown('SIGTERM'));
 
 // Start server
 server.listen(PORT, async () => {
