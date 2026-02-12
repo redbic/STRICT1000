@@ -203,9 +203,25 @@ function setupNetworkHandlers() {
         }
 
         // If they left our zone, remove them from game.players
+        // If they entered our zone, add them
         const localZoneId = game.zoneId || 'hub';
         if (data.zoneId !== localZoneId) {
             game.players = game.players.filter(p => p.id !== data.playerId);
+        } else if (data.zoneId === localZoneId) {
+            // Player entered our zone - add them if not already present
+            const existingPlayer = game.players.find(p => p.id === data.playerId);
+            if (!existingPlayer && playerInfo) {
+                const colors = ['#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c'];
+                const color = colors[game.players.length % colors.length];
+                const newPlayer = new Player(
+                    game.zone.startX,
+                    game.zone.startY,
+                    color,
+                    data.playerId,
+                    playerInfo.username
+                );
+                game.players.push(newPlayer);
+            }
         }
     };
     
