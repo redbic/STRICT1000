@@ -60,6 +60,21 @@ class Game {
                 this.localPlayer.reload();
                 e.preventDefault();
             }
+            // Debug: Press F3 to log player stats
+            if (e.code === 'F3' && this.localPlayer) {
+                const p = this.localPlayer;
+                console.log('Player Debug:', {
+                    maxSpeed: p.maxSpeed,
+                    acceleration: p.acceleration,
+                    friction: p.friction,
+                    velocityX: p.velocityX,
+                    velocityY: p.velocityY,
+                    stunned: p.stunned,
+                    deltaTime: this.deltaTime,
+                    fps: Math.round(1 / this.deltaTime)
+                });
+                e.preventDefault();
+            }
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
                 e.preventDefault();
             }
