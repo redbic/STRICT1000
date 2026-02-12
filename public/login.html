@@ -142,6 +142,7 @@
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({ password }),
+                    credentials: 'same-origin', // Required to receive session cookie
                 });
 
                 if (response.ok) {
