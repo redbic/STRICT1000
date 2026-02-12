@@ -156,15 +156,27 @@ Three-act, Inscryption-inspired structure:
 
 ## Roadmap
 
+**📋 For detailed development plans, see [PLANNING_INDEX.md](./PLANNING_INDEX.md)**
+
+### High Priority
 - [ ] Redesign hub as hotel lobby with visual identity
 - [ ] Curator NPC — unreliable narrator in the lobby
 - [ ] Room-based rule variation (different rules per zone)
 - [ ] Ranged combat / projectiles (Wii Play Tanks-style)
+
+### Medium Priority
 - [ ] Shield Block, Dash, Fireball abilities
 - [ ] Currency shop for upgrades and cosmetics
 - [ ] More zones / hotel rooms
+
+### Lower Priority
 - [ ] Sound effects and music
 - [ ] Mobile touch controls
+
+See the full strategic vision in:
+- **[GAME_DESIGN_PLAN.md](./GAME_DESIGN_PLAN.md)** — Complete 5-phase development strategy
+- **[NEXT_STEPS_SUMMARY.md](./NEXT_STEPS_SUMMARY.md)** — Quick reference for immediate priorities
+- **[VISUAL_DESIGN_REFERENCE.md](./VISUAL_DESIGN_REFERENCE.md)** — Mockups and implementation guide for lobby redesign
 
 ## Related
 
