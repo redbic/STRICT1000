@@ -1,10 +1,29 @@
 // Player class for adventure character
+
+// Constants
+const PLAYER_MAX_SPEED = 2.2;
+const PLAYER_ACCELERATION = 0.2;
+const PLAYER_FRICTION = 0.85;
+const PLAYER_DEFAULT_HP = 100;
+const PLAYER_ATTACK_DAMAGE = 20;
+const PLAYER_ATTACK_RANGE = 40;
+const PLAYER_ATTACK_COOLDOWN_FRAMES = 25;
+const PLAYER_SIZE = 20;
+
 class Player {
+    /**
+     * Create a new player
+     * @param {number} x - Initial x position
+     * @param {number} y - Initial y position  
+     * @param {string} color - Hex color code for player
+     * @param {string} id - Unique player identifier
+     * @param {string} username - Display name for player
+     */
     constructor(x, y, color, id, username) {
         this.x = x;
         this.y = y;
-        this.width = 20;
-        this.height = 20;
+        this.width = PLAYER_SIZE;
+        this.height = PLAYER_SIZE;
         this.color = color || '#3498db';
         this.id = id;
         this.username = username || 'Player';
@@ -16,9 +35,9 @@ class Player {
         this.velocityY = 0;
         this.angle = 0;
         this.speed = 0;
-        this.maxSpeed = 2.2;
-        this.acceleration = 0.2;
-        this.friction = 0.85;
+        this.maxSpeed = PLAYER_MAX_SPEED;
+        this.acceleration = PLAYER_ACCELERATION;
+        this.friction = PLAYER_FRICTION;
         
         // Game stats
         this.zoneLevel = 1;
@@ -26,10 +45,10 @@ class Player {
         this.position = 1;
 
         // Combat
-        this.maxHp = 100;
-        this.hp = 100;
-        this.attackDamage = 20;
-        this.attackRange = 40;
+        this.maxHp = PLAYER_DEFAULT_HP;
+        this.hp = PLAYER_DEFAULT_HP;
+        this.attackDamage = PLAYER_ATTACK_DAMAGE;
+        this.attackRange = PLAYER_ATTACK_RANGE;
         this.attackCooldown = 0;
         
         // Status
@@ -37,6 +56,11 @@ class Player {
         this.stunnedTime = 0;
     }
     
+    /**
+     * Update player physics and state
+     * @param {Object} keys - Current keyboard state
+     * @param {Zone} zone - Current zone for collision detection
+     */
     update(keys, zone) {
         // Handle stun effect
         if (this.stunned) {
@@ -70,13 +94,24 @@ class Player {
                 moveY *= 0.707;
             }
             
-            // Update facing angle
+            // Update facing angle and apply physics
             if (moveX !== 0 || moveY !== 0) {
                 this.angle = Math.atan2(moveY, moveX);
+                // Apply acceleration in movement direction
+                this.velocityX += moveX * this.acceleration;
+                this.velocityY += moveY * this.acceleration;
+            } else {
+                // Apply friction when not moving
+                this.velocityX *= this.friction;
+                this.velocityY *= this.friction;
             }
             
-            this.velocityX = moveX * this.maxSpeed;
-            this.velocityY = moveY * this.maxSpeed;
+            // Cap velocity at maxSpeed
+            const currentSpeed = Math.hypot(this.velocityX, this.velocityY);
+            if (currentSpeed > this.maxSpeed) {
+                this.velocityX = (this.velocityX / currentSpeed) * this.maxSpeed;
+                this.velocityY = (this.velocityY / currentSpeed) * this.maxSpeed;
+            }
         }
         
         if (this.attackCooldown > 0) {
@@ -106,6 +141,12 @@ class Player {
         }
     }
     
+    /**
+     * Draw player on canvas
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     * @param {number} cameraX - Camera x offset
+     * @param {number} cameraY - Camera y offset
+     */
     draw(ctx, cameraX, cameraY) {
         ctx.save();
         
@@ -156,17 +197,24 @@ class Player {
         ctx.fillText(this.username, screenX, labelY + 12);
         
     }
-
+    /**
+     * Set player avatar image
+     * @param {string} url - Avatar image URL
+     */
     setAvatar(url) {
         if (!url || this.avatarUrl === url) return;
         this.avatarUrl = url;
         this.avatarImg = new Image();
         this.avatarImg.src = url;
     }
-
+    /**
+     * Attempt to attack enemies in range
+     * @param {Array<Enemy>} enemies - Array of enemies to check
+     * @returns {boolean} True if an enemy was hit
+     */
     tryAttack(enemies) {
         if (this.attackCooldown > 0) return false;
-        this.attackCooldown = 25;
+        this.attackCooldown = PLAYER_ATTACK_COOLDOWN_FRAMES;
 
         let hit = false;
         enemies.forEach(enemy => {
@@ -178,7 +226,10 @@ class Player {
         });
         return hit;
     }
-
+    /**
+     * Apply damage to player
+     * @param {number} amount - Damage amount
+     */
     takeDamage(amount) {
         this.hp = Math.max(0, this.hp - amount);
     }

@@ -1,18 +1,41 @@
 // Enemy class for adventure combat
+
+// Constants
+const ENEMY_DEFAULT_SPEED = 1.8;  // Slower than player max speed for tactical gameplay
+const ENEMY_DEFAULT_HP = 50;
+const ENEMY_DEFAULT_DAMAGE = 8;
+const ENEMY_ATTACK_RANGE = 28;
+const ENEMY_AGGRO_RANGE = 320;
+const ENEMY_ATTACK_COOLDOWN_FRAMES = 45;
+const ENEMY_SIZE = 22;
+
 class Enemy {
+    /**
+     * Create a new enemy
+     * @param {number} x - Initial x position
+     * @param {number} y - Initial y position
+     * @param {string} id - Unique enemy identifier
+     * @param {Object} options - Enemy configuration options
+     * @param {number} [options.speed] - Movement speed (default: ENEMY_DEFAULT_SPEED)
+     * @param {number} [options.hp] - Current hit points (default: ENEMY_DEFAULT_HP)
+     * @param {number} [options.maxHp] - Maximum hit points (default: ENEMY_DEFAULT_HP)
+     * @param {number} [options.damage] - Attack damage (default: ENEMY_DEFAULT_DAMAGE)
+     * @param {boolean} [options.stationary] - Whether enemy cannot move (default: false)
+     * @param {boolean} [options.passive] - Whether enemy cannot attack (default: false)
+     */
     constructor(x, y, id, options = {}) {
         this.x = x;
         this.y = y;
-        this.width = 22;
-        this.height = 22;
+        this.width = ENEMY_SIZE;
+        this.height = ENEMY_SIZE;
         this.id = id;
 
-        this.speed = options.speed !== undefined ? options.speed : 2.2;
-        this.hp = options.hp !== undefined ? options.hp : 50;
-        this.maxHp = options.maxHp !== undefined ? options.maxHp : 50;
-        this.damage = options.damage !== undefined ? options.damage : 8;
-        this.attackRange = 28;
-        this.aggroRange = 320;
+        this.speed = options.speed !== undefined ? options.speed : ENEMY_DEFAULT_SPEED;
+        this.hp = options.hp !== undefined ? options.hp : ENEMY_DEFAULT_HP;
+        this.maxHp = options.maxHp !== undefined ? options.maxHp : ENEMY_DEFAULT_HP;
+        this.damage = options.damage !== undefined ? options.damage : ENEMY_DEFAULT_DAMAGE;
+        this.attackRange = ENEMY_ATTACK_RANGE;
+        this.aggroRange = ENEMY_AGGRO_RANGE;
         this.attackCooldown = 0;
         this.stunned = false;
         this.stunnedTime = 0;
@@ -22,7 +45,11 @@ class Enemy {
         this.stationary = options.stationary || false;
         this.passive = options.passive || false;
     }
-
+    /**
+     * Update enemy AI - chase and attack target
+     * @param {Zone} zone - Current zone for collision detection
+     * @param {Player} target - Player to chase and attack
+     */
     update(zone, target) {
         if (!target) return;
         
@@ -58,7 +85,7 @@ class Enemy {
                 }
             } else if (this.attackCooldown <= 0 && !this.passive) {
                 target.takeDamage(this.damage);
-                this.attackCooldown = 45;
+                this.attackCooldown = ENEMY_ATTACK_COOLDOWN_FRAMES;
             }
         }
 
@@ -66,11 +93,19 @@ class Enemy {
             this.attackCooldown--;
         }
     }
-
+    /**
+     * Apply damage to enemy
+     * @param {number} amount - Damage amount
+     */
     takeDamage(amount) {
         this.hp = Math.max(0, this.hp - amount);
     }
-
+    /**
+     * Draw enemy on canvas
+     * @param {CanvasRenderingContext2D} ctx - Canvas context
+     * @param {number} cameraX - Camera x offset
+     * @param {number} cameraY - Camera y offset
+     */
     draw(ctx, cameraX, cameraY) {
         const screenX = this.x - cameraX;
         const screenY = this.y - cameraY;

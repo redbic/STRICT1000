@@ -114,11 +114,33 @@ app.post('/api/balance/add', async (req, res) => {
 // WebSocket game rooms
 const gameRooms = new Map();
 
+// Rate limiting constants for WebSocket
+const WS_RATE_LIMIT_WINDOW_MS = 10000; // 10 seconds
+const WS_RATE_LIMIT_MAX_MESSAGES = 100; // Max messages per window
+
 wss.on('connection', (ws) => {
   console.log('New WebSocket connection');
   
+  // Initialize rate limiting for this connection
+  ws.messageCount = 0;
+  ws.lastReset = Date.now();
+  
   ws.on('message', (message) => {
     try {
+      // Rate limiting check
+      const now = Date.now();
+      if (now - ws.lastReset > WS_RATE_LIMIT_WINDOW_MS) {
+        ws.messageCount = 0;
+        ws.lastReset = now;
+      }
+      
+      ws.messageCount++;
+      if (ws.messageCount > WS_RATE_LIMIT_MAX_MESSAGES) {
+        console.warn(`Rate limit exceeded for connection, closing`);
+        ws.close(1008, 'Rate limit exceeded');
+        return;
+      }
+      
       const data = JSON.parse(message);
       
       switch (data.type) {
@@ -225,6 +247,10 @@ function handleLeaveRoom(ws, data) {
       room.players = room.players.filter(p => p.id !== ws.playerId);
       
       if (room.players.length === 0) {
+        // Clear all respawn timers before deleting the room
+        if (room.respawnTimers) {
+          room.respawnTimers.forEach(timer => clearTimeout(timer));
+        }
         gameRooms.delete(ws.roomId);
       } else {
         // Reassign host if the leaving player was the host
@@ -364,6 +390,10 @@ async function handleEnemyKilled(ws, data) {
     
     // Schedule respawn
     const timerId = setTimeout(() => {
+      // Check if room still exists
+      const room = gameRooms.get(ws.roomId);
+      if (!room) return;
+      
       // Remove from killed enemies so it can be killed again
       room.killedEnemies.delete(enemyKey);
       
@@ -409,6 +439,12 @@ function handleEnemySync(ws, data) {
 function handleEnemyDamage(ws, data) {
   if (!ws.roomId || !data.enemyId || typeof data.damage !== 'number') return;
   
+  // Validate damage is within reasonable bounds (prevent cheating)
+  if (data.damage < 0 || data.damage > 100) {
+    console.warn(`Invalid damage amount from ${ws.playerId}: ${data.damage}`);
+    return;
+  }
+  
   const room = gameRooms.get(ws.roomId);
   if (!room || !room.hostId) return;
 
@@ -436,6 +472,10 @@ function handleDisconnect(ws) {
       room.players = room.players.filter(p => p.ws !== ws);
       
       if (room.players.length === 0) {
+        // Clear all respawn timers before deleting the room
+        if (room.respawnTimers) {
+          room.respawnTimers.forEach(timer => clearTimeout(timer));
+        }
         gameRooms.delete(ws.roomId);
       } else {
         // Reassign host if the disconnected player was the host

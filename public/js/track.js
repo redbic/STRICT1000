@@ -167,7 +167,6 @@ const ZONES = {
         startX: 900,
         startY: 700,
         isHub: true,
-        enemyCount: 0,
         wallColor: '#2e2420',
         floorColor: '#1a1510',
         totalLevels: 1,
@@ -213,7 +212,6 @@ const ZONES = {
         wallColor: '#2f2b38',
         floorColor: '#17151c',
         totalLevels: 2,
-        enemyCount: 1,
         walls: [
             // Outer boundary
             { x: 0, y: 0, width: 1600, height: 40 },
@@ -242,7 +240,6 @@ const ZONES = {
         wallColor: '#3a3a3a',
         floorColor: '#2a2a2a',
         totalLevels: 1,
-        enemyCount: 1,
         walls: [
             // Outer boundary
             { x: 0, y: 0, width: 1000, height: 40 },

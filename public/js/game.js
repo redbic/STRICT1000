@@ -36,66 +36,84 @@ class Game {
             return event.key;
         };
 
-        window.addEventListener('keydown', (e) => {
+        // Store bound event handlers for cleanup
+        this.handleKeyDown = (e) => {
             const key = normalizeKey(e);
             this.keys[key] = true;
             if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
                 e.preventDefault();
             }
-        });
+        };
         
-        window.addEventListener('keyup', (e) => {
+        this.handleKeyUp = (e) => {
             const key = normalizeKey(e);
             this.keys[key] = false;
-        });
+        };
 
-        // Clear all pressed keys when the window loses focus to prevent
-        // keys from getting "stuck" (e.g. when clicking while moving)
-        window.addEventListener('blur', () => {
+        this.handleBlur = () => {
             this.keys = {};
-        });
+        };
 
-        document.addEventListener('visibilitychange', () => {
+        this.handleVisibilityChange = () => {
             if (document.hidden) {
                 this.keys = {};
             }
-        });
+        };
 
-        window.addEventListener('mousemove', (e) => {
+        this.handleMouseMove = (e) => {
             this.lastMouse.x = e.clientX;
             this.lastMouse.y = e.clientY;
-        });
+        };
 
-        window.addEventListener('mousedown', (e) => {
+        this.handleMouseDown = (e) => {
             if (e.button === 2) {
                 e.preventDefault();
                 return;
             }
             if (e.button !== 0 || !this.localPlayer) return;
+            
+            // Only show attack visual if not on cooldown
+            if (this.localPlayer.attackCooldown > 0) return;
 
             const worldX = this.lastMouse.x + this.cameraX;
             const worldY = this.lastMouse.y + this.cameraY;
             const angle = Math.atan2(worldY - this.localPlayer.y, worldX - this.localPlayer.x);
-            this.attackFx.active = true;
-            this.attackFx.timer = 8;
-            this.attackFx.angle = angle;
             
+            let didAttack = false;
             if (this.isHost) {
                 // Host applies damage directly
-                this.localPlayer.tryAttack(this.enemies);
+                didAttack = this.localPlayer.tryAttack(this.enemies);
             } else {
                 // Non-host sends damage to host via network
                 this.attackEnemiesRemote();
+                didAttack = true; // Assume success for visual feedback
             }
-        });
+            
+            // Show attack effect only if attack was attempted
+            if (didAttack) {
+                this.attackFx.active = true;
+                this.attackFx.timer = 8;
+                this.attackFx.angle = angle;
+            }
+        };
 
-        window.addEventListener('resize', () => {
+        this.handleResize = () => {
             this.resizeCanvas();
-        });
+        };
 
-        this.canvas.addEventListener('contextmenu', (e) => {
+        this.handleContextMenu = (e) => {
             e.preventDefault();
-        });
+        };
+
+        // Attach event listeners
+        window.addEventListener('keydown', this.handleKeyDown);
+        window.addEventListener('keyup', this.handleKeyUp);
+        window.addEventListener('blur', this.handleBlur);
+        document.addEventListener('visibilitychange', this.handleVisibilityChange);
+        window.addEventListener('mousemove', this.handleMouseMove);
+        window.addEventListener('mousedown', this.handleMouseDown);
+        window.addEventListener('resize', this.handleResize);
+        this.canvas.addEventListener('contextmenu', this.handleContextMenu);
     }
 
     resizeCanvas() {
@@ -173,7 +191,7 @@ class Game {
         if (this.isHost) {
             newlyDead.forEach(enemy => {
                 if (this.onEnemyKilled) {
-                    this.onEnemyKilled(enemy.id, this.zone ? this.zone.name : 'unknown');
+                    this.onEnemyKilled(enemy.id, this.zoneId || 'unknown');
                 }
             });
         }
@@ -313,7 +331,7 @@ class Game {
     
     
     draw() {
-        // Clear canvas
+        // Clear canvas (defensive programming in case zone doesn't fill entire canvas)
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         
         // Draw zone
@@ -321,13 +339,31 @@ class Game {
             this.zone.draw(this.ctx, this.cameraX, this.cameraY);
         }
         
-        // Draw players and enemies
+        // Draw players and enemies with visibility culling
         this.players.forEach(player => {
-            player.draw(this.ctx, this.cameraX, this.cameraY);
+            const playerRect = {
+                x: player.x - player.width/2,
+                y: player.y - player.height/2,
+                width: player.width,
+                height: player.height
+            };
+            if (!this.zone || this.zone.isVisible(playerRect, this.cameraX, this.cameraY, 
+                                                   this.canvas.width, this.canvas.height)) {
+                player.draw(this.ctx, this.cameraX, this.cameraY);
+            }
         });
 
         this.enemies.forEach(enemy => {
-            enemy.draw(this.ctx, this.cameraX, this.cameraY);
+            const enemyRect = {
+                x: enemy.x - enemy.width/2,
+                y: enemy.y - enemy.height/2,
+                width: enemy.width,
+                height: enemy.height
+            };
+            if (!this.zone || this.zone.isVisible(enemyRect, this.cameraX, this.cameraY,
+                                                   this.canvas.width, this.canvas.height)) {
+                enemy.draw(this.ctx, this.cameraX, this.cameraY);
+            }
         });
 
         // Draw NPCs
@@ -365,8 +401,13 @@ class Game {
     
     gameLoop() {
         if (this.running) {
-            this.update();
-            this.draw();
+            try {
+                this.update();
+                this.draw();
+            } catch (error) {
+                console.error('Game loop error:', error);
+                // Continue running to prevent total freeze
+            }
             requestAnimationFrame(() => this.gameLoop());
         }
     }
@@ -378,5 +419,20 @@ class Game {
     
     stop() {
         this.running = false;
+    }
+    
+    destroy() {
+        // Stop game loop
+        this.stop();
+        
+        // Remove all event listeners
+        window.removeEventListener('keydown', this.handleKeyDown);
+        window.removeEventListener('keyup', this.handleKeyUp);
+        window.removeEventListener('blur', this.handleBlur);
+        document.removeEventListener('visibilitychange', this.handleVisibilityChange);
+        window.removeEventListener('mousemove', this.handleMouseMove);
+        window.removeEventListener('mousedown', this.handleMouseDown);
+        window.removeEventListener('resize', this.handleResize);
+        this.canvas.removeEventListener('contextmenu', this.handleContextMenu);
     }
 }

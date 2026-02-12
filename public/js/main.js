@@ -174,8 +174,8 @@ function setupNetworkHandlers() {
     networkManager.onEnemyRespawn = (data) => {
         if (game && data.enemyId && data.zone) {
             // Re-add the enemy to the game
-            // Zone names from server use Title Case, but ZONES keys use lowercase
-            const zoneData = ZONES[data.zone.toLowerCase()];
+            // Note: Zone IDs are lowercase keys (e.g., 'hub', 'training')
+            const zoneData = ZONES[data.zone];
             if (zoneData && zoneData.enemies) {
                 // Find the enemy config - enemyId format: "zonename-enemy-index"
                 const enemyIndex = parseInt(data.enemyId.split('-').pop());
@@ -474,12 +474,35 @@ function startGame(zoneName) {
         if (playerUpdateInterval) {
             clearInterval(playerUpdateInterval);
         }
+        
+        // Track last sent state to avoid redundant updates
+        let lastSentState = null;
+        
         playerUpdateInterval = setInterval(() => {
             if (game.localPlayer && game.running) {
-                networkManager.sendPlayerUpdate(game.localPlayer.getState());
+                const currentState = game.localPlayer.getState();
+                
+                // Only send if state has changed significantly
+                if (!lastSentState || hasSignificantChange(lastSentState, currentState)) {
+                    networkManager.sendPlayerUpdate(currentState);
+                    lastSentState = currentState;
+                }
             }
-        }, 50); // 20 updates per second
+        }, 100); // 10 updates per second (reduced from 20)
     }
+}
+
+// Helper function to check if player state has changed significantly
+function hasSignificantChange(oldState, newState) {
+    const positionThreshold = 2; // pixels
+    const angleThreshold = 0.1; // radians (~5.7 degrees)
+    const dx = Math.abs(newState.x - oldState.x);
+    const dy = Math.abs(newState.y - oldState.y);
+    const dAngle = Math.abs(newState.angle - oldState.angle);
+    return dx > positionThreshold || 
+           dy > positionThreshold || 
+           dAngle > angleThreshold ||
+           oldState.stunned !== newState.stunned;
 }
 
 function recallToHub() {
