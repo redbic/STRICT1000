@@ -28,6 +28,15 @@ Browser-based multiplayer top-down adventure game set in a hostile, shifting hot
 - `NODE_ENV` (`development` or `production`)
 - `DATABASE_URL` (required in production)
 - `APP_ORIGIN` (required for strict WebSocket origin allowlist in production)
+- `APP_PASSWORD` (required in all environments for HTTP + WebSocket basic auth)
+
+
+## Access Authentication
+STRICT1000 is protected with HTTP Basic authentication. Set `APP_PASSWORD` and sign in with:
+- Username: `strict1000`
+- Password: value of `APP_PASSWORD`
+
+Authentication applies to both HTTP requests and WebSocket connections.
 
 ## Multiplayer Model (Current)
 - Room host is authoritative for enemy simulation broadcast (`enemy_sync`).

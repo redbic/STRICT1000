@@ -48,6 +48,7 @@ const WS_MESSAGE_TYPES = new Set([
 const HTTP_BODY_SIZE_LIMIT = '16kb';
 const WS_MAX_ENEMY_SYNC_COUNT = 64;
 const WS_MAX_CONNECTIONS_PER_IP = 5;
+const APP_AUTH_USERNAME = 'strict1000';
 
 // WebSocket rate limiting
 const WS_RATE_LIMIT_WINDOW_MS = 10000;
@@ -69,6 +70,19 @@ if (process.env.DATABASE_URL) {
 const rooms = new RoomManager();
 
 // Middleware
+app.use((req, res, next) => {
+  if (req.path === '/health') {
+    return next();
+  }
+
+  if (isAuthorizedRequest(req.headers.authorization)) {
+    return next();
+  }
+
+  res.setHeader('WWW-Authenticate', 'Basic realm="STRICT1000", charset="UTF-8"');
+  return res.status(401).send('Authentication required.');
+});
+
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json({ limit: HTTP_BODY_SIZE_LIMIT }));
 app.use((_req, res, next) => {
@@ -236,8 +250,35 @@ function isAllowedWsOrigin(origin, request) {
   }
 }
 
+function isAuthorizedRequest(authorizationHeader) {
+  const password = normalizeSafeString(process.env.APP_PASSWORD || '');
+  if (!password || !authorizationHeader || !authorizationHeader.startsWith('Basic ')) {
+    return false;
+  }
+
+  try {
+    const encodedCredentials = authorizationHeader.slice('Basic '.length);
+    const credentials = Buffer.from(encodedCredentials, 'base64').toString('utf8');
+    const separatorIndex = credentials.indexOf(':');
+    if (separatorIndex < 0) {
+      return false;
+    }
+
+    const username = credentials.slice(0, separatorIndex);
+    const providedPassword = credentials.slice(separatorIndex + 1);
+
+    return username === APP_AUTH_USERNAME && providedPassword === password;
+  } catch (_error) {
+    return false;
+  }
+}
+
 function validateEnvironment() {
   const nodeEnv = process.env.NODE_ENV || 'development';
+  if (!normalizeSafeString(process.env.APP_PASSWORD || '')) {
+    throw new Error('APP_PASSWORD is required to password protect STRICT1000');
+  }
+
   if (nodeEnv === 'production' && !process.env.DATABASE_URL) {
     throw new Error('DATABASE_URL is required in production');
   }
@@ -289,6 +330,11 @@ function parseWsPayload(message) {
 }
 
 wss.on('connection', (ws, request) => {
+  if (!isAuthorizedRequest(request.headers.authorization)) {
+    ws.close(1008, 'Unauthorized');
+    return;
+  }
+
   const clientIp = getClientIp(request);
   if (!registerWsConnection(clientIp)) {
     ws.close(1008, 'Too many connections');
