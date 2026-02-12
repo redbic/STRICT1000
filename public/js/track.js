@@ -251,8 +251,11 @@ class Zone {
         const now = Date.now();
         if (now - this.lastClockUpdate > 1000) {
             const time = new Date();
-            this.cachedClockAngles.hour = (time.getHours() % 12) * (Math.PI / 6);
-            this.cachedClockAngles.minute = time.getMinutes() * (Math.PI / 30);
+            const hours = time.getHours() % 12;
+            const minutes = time.getMinutes();
+            // Hour hand accounts for minutes for smooth movement
+            this.cachedClockAngles.hour = (hours + minutes / 60) * (Math.PI / 6);
+            this.cachedClockAngles.minute = minutes * (Math.PI / 30);
             this.lastClockUpdate = now;
         }
         
