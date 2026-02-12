@@ -409,46 +409,13 @@ const ZONES = {
             { x: 860, y: 660, width: 80, height: 80 }
         ],
         portals: [
-            { id: 'archive_entry', x: 870, y: 610, width: 60, height: 60, label: 'The Archive' },
-            // Room 102 also points to archive_entry since it's the only combat zone currently
-            { id: 'archive_entry', x: 400, y: 350, width: 60, height: 60, label: 'Room 102' },
             // Training room portal
             { id: 'training', x: 400, y: 900, width: 60, height: 60, label: 'Training' },
             // The Gallery - new experimental room
-            { id: 'gallery', x: 900, y: 1150, width: 60, height: 60, label: 'The Gallery' },
-            // Placeholder portal for future content - locked to prevent entry
-            { id: 'room_237_placeholder', x: 1340, y: 350, width: 60, height: 60, label: 'Room 237', locked: true }
+            { id: 'gallery', x: 900, y: 1150, width: 60, height: 60, label: 'The Gallery' }
         ],
         npcs: [
             { x: 900, y: 400, name: 'The Receptionist', color: '#d4a745' }
-        ]
-    },
-    archive_entry: {
-        name: 'The Archive',
-        width: 1600,
-        height: 1200,
-        startX: 800,
-        startY: 1050,
-        wallColor: '#2f2b38',
-        floorColor: '#17151c',
-        totalLevels: 2,
-        walls: [
-            // Outer boundary
-            { x: 0, y: 0, width: 1600, height: 40 },
-            { x: 0, y: 0, width: 40, height: 1200 },
-            { x: 0, y: 1160, width: 1600, height: 40 },
-            { x: 1560, y: 0, width: 40, height: 1200 }
-        ],
-        nodes: [
-            { x: 760, y: 120, width: 80, height: 80 },
-            { x: 200, y: 520, width: 80, height: 80 },
-            { x: 1320, y: 520, width: 80, height: 80 }
-        ],
-        portals: [
-            { id: 'hub', x: 770, y: 1080, width: 60, height: 60, label: 'Return to Lobby' }
-        ],
-        enemies: [
-            { x: 800, y: 400, stationary: false, passive: false, hp: 50, maxHp: 50 }
         ]
     },
     training: {
