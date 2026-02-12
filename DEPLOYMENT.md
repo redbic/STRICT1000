@@ -30,7 +30,7 @@
    - **Environment**: Node
    - **Region**: Choose closest to your audience
    - **Branch**: Select your main branch
-   - **Build Command**: `npm install`
+   - **Build Command**: `npm ci`
    - **Start Command**: `npm start`
    - **Plan**: Free
 5. Add Environment Variables:
@@ -57,14 +57,12 @@
 ## Step 3: Verify Deployment
 
 1. Once deployed, Render will provide a URL (e.g., `https://strict-adventure.onrender.com`)
-2. Open the URL in your browser
-3. You should see the STRICT Adventure game menu
+2. Verify the server is running: visit `https://your-domain/health` — should return `{"status":"ok"}`
+3. Open the URL in your browser
 4. Test the following:
-   - Enter a username
-   - Click "Single Player"
-   - Select an area
-   - Play the adventure
-   - Check the leaderboard
+   - Enter a username and click **Confirm**
+   - Create a lobby or join an existing one
+   - Start adventure and explore zones
 
 ## Step 4: Database Initialization
 

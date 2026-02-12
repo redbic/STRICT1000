@@ -68,6 +68,10 @@ class Player {
         // Status
         this.stunned = false;
         this.stunnedTime = 0;
+
+        // Interpolation targets (used by remote players)
+        this.targetX = undefined;
+        this.targetY = undefined;
     }
     
     /**
@@ -374,12 +378,20 @@ class Player {
     }
     
     setState(state) {
-        this.x = state.x;
-        this.y = state.y;
+        // Store target state for interpolation
+        this.targetX = state.x;
+        this.targetY = state.y;
         this.angle = state.angle;
         this.speed = state.speed;
         this.zoneLevel = state.zoneLevel;
         this.position = state.position;
         this.stunned = state.stunned;
+    }
+
+    interpolateRemote() {
+        if (this.targetX === undefined) return;
+        const lerpFactor = 0.3;
+        this.x += (this.targetX - this.x) * lerpFactor;
+        this.y += (this.targetY - this.y) * lerpFactor;
     }
 }

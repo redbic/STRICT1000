@@ -188,6 +188,13 @@ class Game {
             this.localPlayer.update(this.keys, this.zone);
             this.handlePickupCollision();
         }
+
+        // Interpolate remote players toward their latest server state
+        this.players.forEach(player => {
+            if (player !== this.localPlayer) {
+                player.interpolateRemote();
+            }
+        });
         
         // Only the host runs enemy AI; non-host clients receive synced state
         if (this.isHost) {

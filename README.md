@@ -4,23 +4,22 @@ A browser-based multiplayer top-down adventure game set in a mysterious hotel, i
 
 ## Features
 
-- **Top-down 2D Exploration**: Realm of the Mad God-style perspective with fullscreen canvas
-- **Hotel Hub**: A central gathering hallway for players (no enemies)
-- **Click-to-Attack Combat**: Mouse-based melee system with attack animations
-- **Enemy AI**: Enemies aggro, chase, and deal damage in combat zones
+- **Top-down 2D Exploration**: Fullscreen canvas with camera following the local player
+- **Hotel Hub**: 1920s-styled lobby with clock, chandelier, portraits, and elevator
+- **Zone System**: Multiple rooms with unique rulesets (darkness in The Gallery)
+- **Click-to-Attack Combat**: Mouse-aimed melee with attack animations and hit sparks
+- **Enemy AI**: Aggro, chase, and attack with host-authoritative sync
 - **Server-side Currency**: Earn coins from enemy kills, persisted across sessions
-- **Pickupable Items**: Collect world pickups by walking over them
-- **Persistent Inventory**: 16-slot (4x4) inventory saved to the DB per username
-- **Player Profiles**: Username-based profiles with avatar, balance, and character data from shared DB
-- **Multiplayer Only**: Real-time WebSocket co-op — see other players with avatars above their heads
-- **Responsive Controls**: WASD/Arrow movement, mouse attack, `I` to toggle inventory
+- **Persistent Inventory**: 16-slot (4x4) grid saved per player
+- **Multiplayer**: Real-time WebSocket co-op with interpolated remote players
+- **Responsive Controls**: WASD/Arrow movement, mouse attack, `I` for inventory
 
 ## Tech Stack
 
-- **Frontend**: Vanilla JavaScript with HTML5 Canvas
+- **Frontend**: Vanilla JavaScript + HTML5 Canvas
 - **Backend**: Node.js + Express
 - **Real-time**: WebSocket (ws library)
-- **Database**: PostgreSQL (Neon.tech) — shared with [stricthotel](https://github.com/blusaccount/stricthotel)
+- **Database**: PostgreSQL (Neon.tech)
 - **Hosting**: Render.com
 
 ## Local Development
@@ -30,178 +29,88 @@ A browser-based multiplayer top-down adventure game set in a mysterious hotel, i
 - Node.js 18+
 - PostgreSQL (optional — game works without DB, but profiles/currency won't persist)
 
-### Installation
+### Setup
 
-1. Clone the repository:
 ```bash
 git clone https://github.com/redbic/STRICT1000.git
 cd STRICT1000
-```
-
-2. Install dependencies:
-```bash
 npm ci
-```
-
-3. Configure environment variables:
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and set your database URL (optional):
-```
-DATABASE_URL=postgresql://user:password@host/dbname
-```
-
-4. Start the development server:
-```bash
+cp .env.example .env   # Edit .env to set DATABASE_URL if needed
 npm run dev
 ```
 
-5. Open your browser to `http://localhost:3000`
+Open `http://localhost:3000` in your browser.
 
 ## How to Play
 
-### Controls
+| Key | Action |
+|-----|--------|
+| WASD / Arrow Keys | Move |
+| Mouse Click | Attack toward cursor |
+| I | Toggle inventory |
 
-- **Arrow Keys** or **WASD**: Movement
-- **Mouse Click**: Attack (melee, aimed toward cursor)
-- **I**: Toggle inventory panel (4x4); top row is mirrored in hotbar
-
-### Flow
-
-1. Enter your name and click **Confirm** — your profile loads from the shared DB
-2. You auto-connect to a multiplayer room via WebSocket
+1. Enter your name and click **Confirm**
+2. Create or join a multiplayer lobby
 3. Click **Start Adventure** to enter the hotel hub
 4. Walk into portals to transition between zones
-5. Kill enemies in combat zones to earn coins
-6. Use the **Recall** button to return to the hub
-
-### Tips
-
-- The hub (hallway) is a safe zone — no enemies spawn here
-- Enemies only appear in specific zones like the Archive Entry
-- Your coin balance persists across sessions via the server
-- Other players appear in real-time with their avatars
+5. Kill enemies to earn coins
+6. Use **Recall** to return to the hub
 
 ## Project Structure
 
 ```
 STRICT1000/
 ├── public/
-│   ├── css/
-│   │   └── style.css          # Game styling
+│   ├── css/style.css          # Game styling
 │   ├── js/
-│   │   ├── main.js            # App logic: screens, profile loading, network setup
-│   │   ├── game.js            # Game class: canvas, loop, camera, combat FX, zone transitions
-│   │   ├── player.js          # Player class: movement, collision, melee attack, HP
-│   │   ├── enemy.js           # Enemy class: aggro AI, chase, melee attack, HP
-│   │   ├── track.js           # Zone class + ZONES data: walls, portals, floor/wall colors
-│   │   └── network.js         # NetworkManager: WebSocket client, room sync, kill events
-│   └── index.html             # Main HTML — screens (menu, lobby, game), HUD
+│   │   ├── main.js            # App logic, screens, profile, network setup
+│   │   ├── game.js            # Game loop, canvas, camera, combat FX
+│   │   ├── player.js          # Player movement, collision, melee, interpolation
+│   │   ├── enemy.js           # Enemy AI: aggro, chase, attack
+│   │   ├── track.js           # Zone class + ZONES data (walls, portals, rulesets)
+│   │   ├── npc.js             # NPC rendering
+│   │   └── network.js         # WebSocket client wrapper
+│   └── index.html             # Screens (menu, lobby, game), HUD
 ├── server/
-│   └── currency.js            # Server-side currency module (balance, transactions)
-├── server.js                  # Express + WebSocket server, API routes, game rooms
-├── package.json               # Dependencies
+│   ├── currency.js            # Balance transactions with DB or in-memory fallback
+│   ├── rooms.js               # Room lifecycle and player management
+│   └── validation.js          # Input validation and sanitization utilities
+├── server.js                  # Express + WebSocket server, API routes
 ├── render.yaml                # Render.com deployment config
-├── HANDOFF.md                 # Project state and session handoff notes
-├── DEPLOYMENT.md              # Detailed deployment guide
-└── README.md                  # This file
+└── package.json
 ```
 
 ## API Endpoints
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `GET` | `/` | Serve the game |
+| `GET` | `/health` | Health check |
 | `POST` | `/api/player` | Register or update a player |
-| `GET` | `/api/profile?name=` | Fetch player profile (name, balance, character, inventory) |
-| `POST` | `/api/balance/add` | Add currency to a player's balance |
-| `POST` | `/api/inventory` | Save a player's inventory (max 16 items) |
-| `WS` | `/` | WebSocket — multiplayer room sync, state updates, kill events |
+| `GET` | `/api/profile?name=` | Fetch player profile |
+| `POST` | `/api/inventory` | Save player inventory (max 16 items) |
+| `WS` | `/` | Multiplayer sync (rooms, state, kills) |
 
-## Database Schema
+## Architecture
 
-### Players Table
-- `id`: Serial primary key
-- `name`: Unique player name
-- `balance`: Currency balance (decimal)
-- `character_data`: JSON character customization data
-- `inventory_data`: JSON inventory payload (up to 16 items)
-- `created_at`: Timestamp
+**Multiplayer sync** uses a host-authoritative model:
+- The first player in a room is the **host** and runs enemy AI
+- Non-host players send damage to the host via WebSocket
+- Enemy state is synced from host to all players in the same zone
+- Player state uses **interpolation** for smooth remote movement
 
-## Narrative & Design Direction
+**Server modules** are separated for maintainability:
+- `server/validation.js` — reusable input validation
+- `server/rooms.js` — room lifecycle, broadcast helpers
+- `server/currency.js` — transactional balance operations
 
-### Core Pillars
+## Deployment
 
-- **Uneasy intimacy**: The game should feel like it is watching or listening to the player.
-- **Tactile strategy**: Movement and interactions should feel physical and consequential (Wii Play Tanks-inspired combat).
-- **Rule instability**: Players should gradually learn that the rules are not fixed — different rooms, different rules.
-- **Meta-layer mystery**: There is always a hidden game behind the visible one.
+See [DEPLOYMENT.md](./DEPLOYMENT.md) for Render.com + Neon.tech setup.
 
-### Structure
+## Design Vision
 
-Three-act, Inscryption-inspired structure:
-- **Act 1**: A contained ritual-like loop.
-- **Act 2**: A reframing where prior assumptions are challenged.
-- **Act 3**: Systemic collapse/recombination where story and mechanics converge.
-
-### World Hook
-
-- The central hub is a **hotel lobby**.
-- Each room in the hotel is a self-contained ruleset/game variant.
-- The host/curator role is unreliable and deceptive.
-- The player slowly realizes the narrator is intentionally preventing access to the hotel's presidential suite.
-
-### Prototype Focus
-
-- Real-time strategic combat (instead of card combat)
-- Room-based ruleset variation
-- Early narrative manipulation from the narrator
-
-## Roadmap
-
-**📋 For detailed development plans, see [PLANNING_INDEX.md](./PLANNING_INDEX.md)**
-
-### ✅ Recently Completed (2026-02-12)
-- [x] Planning review and technical feasibility assessment
-- [x] Hotel lobby redesigned with 1920s atmosphere (burgundy carpet, clock, chandelier, portraits, elevator)
-- [x] The Gallery experimental room (darkness ruleset, limited visibility)
-- [x] Room ruleset system implemented and validated
-- [x] Performance optimization (cached rendering for all decorative elements)
-
-### High Priority (Next 1-2 Weeks)
-- [ ] Projectile combat system (Wii Play Tanks-style)
-- [ ] The Ballroom room (ranged combat, ricocheting projectiles)
-- [ ] Receptionist dialogue system (unreliable narrator in lobby)
-
-### Medium Priority (Weeks 3-4)
-- [ ] More experimental rooms (Kitchen with reversed controls, Library with permadeath)
-- [ ] Currency shop for upgrades and cosmetics
-- [ ] Visual juice (screen shake, damage numbers, particles)
-- [ ] Lobby evolution system (server-tracked state changes)
-
-### Lower Priority (Post-MVP)
-- [ ] Room 237 meta-narrative reveal
-- [ ] Sound effects and music
-- [ ] Mobile touch controls
-- [ ] Leaderboards and daily challenges
-
-See the full strategic vision in:
-- **[TECHNICAL_FEASIBILITY_ASSESSMENT.md](./TECHNICAL_FEASIBILITY_ASSESSMENT.md)** — Technical analysis and 9-12 week timeline
-- **[IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md)** — Documentation of completed prototype work
-- **[GAME_DESIGN_PLAN.md](./GAME_DESIGN_PLAN.md)** — Complete 5-phase development strategy
-- **[NEXT_STEPS_SUMMARY.md](./NEXT_STEPS_SUMMARY.md)** — Quick reference for immediate priorities
-- **[VISUAL_DESIGN_REFERENCE.md](./VISUAL_DESIGN_REFERENCE.md)** — Mockups and implementation guide for lobby redesign
-
-## Related
-
-- [`blusaccount/stricthotel`](https://github.com/blusaccount/stricthotel) — shared universe: playable website with multiplayer minigames, social interaction, retro atmosphere. Shares the player profile DB.
+See [GAME_DESIGN_PLAN.md](./GAME_DESIGN_PLAN.md) for the full 5-phase design strategy.
 
 ## License
 
 MIT
-
-## Credits
-
-Inspired by Realm of the Mad God, Inscryption, and Wii Play Tanks.
