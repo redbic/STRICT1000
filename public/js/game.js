@@ -21,6 +21,8 @@ class Game {
         this.attackFx = { active: false, timer: 0, angle: 0 };
         this.lastMouse = { x: 0, y: 0 };
         this.onEnemyKilled = null; // Callback for when an enemy is killed
+        this.isHost = false; // Whether this client is the host (authoritative for enemies)
+        this.onEnemyDamage = null; // Callback for sending enemy damage to host (non-host players)
         
         // Bind keyboard events
         const normalizeKey = (event) => {
@@ -76,7 +78,14 @@ class Game {
             this.attackFx.active = true;
             this.attackFx.timer = 8;
             this.attackFx.angle = angle;
-            this.localPlayer.tryAttack(this.enemies);
+            
+            if (this.isHost) {
+                // Host applies damage directly
+                this.localPlayer.tryAttack(this.enemies);
+            } else {
+                // Non-host sends damage to host via network
+                this.attackEnemiesRemote();
+            }
         });
 
         window.addEventListener('resize', () => {
@@ -93,7 +102,7 @@ class Game {
         this.canvas.height = window.innerHeight;
     }
     
-    init(zoneName, playerName) {
+    init(zoneName, playerName, playerId) {
         // Load zone
         const zoneData = ZONES[zoneName];
         if (!zoneData) {
@@ -123,13 +132,13 @@ class Game {
             });
         }
         
-        // Create local player
+        // Create local player with network-assigned ID
         const colors = ['#3498db', '#e74c3c', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c'];
         this.localPlayer = new Player(
             this.zone.startX,
             this.zone.startY,
             colors[0],
-            'player1',
+            playerId || 'player1',
             playerName
         );
         this.players.push(this.localPlayer);
@@ -145,23 +154,27 @@ class Game {
             this.localPlayer.update(this.keys, this.zone);
         }
         
-        // Update enemies
-        this.enemies.forEach(enemy => {
-            enemy.update(this.zone, this.localPlayer);
-        });
-        
-        // No abilities or pickups for now
+        // Only the host runs enemy AI; non-host clients receive synced state
+        if (this.isHost) {
+            // Find the nearest player for each enemy to chase (all players, not just local)
+            this.enemies.forEach(enemy => {
+                const nearestPlayer = this.getNearestPlayer(enemy);
+                enemy.update(this.zone, nearestPlayer);
+            });
+        }
         
         // Check enemy defeats
         const newlyDead = this.enemies.filter(enemy => enemy.hp <= 0);
         this.enemies = this.enemies.filter(enemy => enemy.hp > 0);
         
-        // Notify about kills
-        newlyDead.forEach(enemy => {
-            if (this.onEnemyKilled) {
-                this.onEnemyKilled(enemy.id, this.zone ? this.zone.name : 'unknown');
-            }
-        });
+        // Notify about kills (only host reports kills to prevent double rewards)
+        if (this.isHost) {
+            newlyDead.forEach(enemy => {
+                if (this.onEnemyKilled) {
+                    this.onEnemyKilled(enemy.id, this.zone ? this.zone.name : 'unknown');
+                }
+            });
+        }
         
         // Update camera (follow local player)
         if (this.localPlayer) {
@@ -176,6 +189,50 @@ class Game {
         this.handlePortalTransitions();
 
         // No end screen during exploration
+    }
+
+    getNearestPlayer(enemy) {
+        let nearest = null;
+        let minDist = Infinity;
+        this.players.forEach(player => {
+            if (player.hp <= 0) return;
+            const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
+            if (dist < minDist) {
+                minDist = dist;
+                nearest = player;
+            }
+        });
+        return nearest;
+    }
+
+    applyEnemySync(enemyStates) {
+        if (!Array.isArray(enemyStates)) return;
+        enemyStates.forEach(state => {
+            const enemy = this.enemies.find(e => e.id === state.id);
+            if (enemy) {
+                enemy.x = state.x;
+                enemy.y = state.y;
+                enemy.hp = state.hp;
+                enemy.maxHp = state.maxHp;
+                enemy.stunned = state.stunned;
+                enemy.stunnedTime = state.stunnedTime;
+                enemy.attackCooldown = state.attackCooldown;
+            }
+        });
+        // Remove enemies that are dead according to host
+        this.enemies = this.enemies.filter(e => e.hp > 0);
+    }
+
+    attackEnemiesRemote() {
+        if (!this.localPlayer || this.localPlayer.attackCooldown > 0) return;
+        this.localPlayer.attackCooldown = 25;
+        
+        this.enemies.forEach(enemy => {
+            const dist = Math.hypot(enemy.x - this.localPlayer.x, enemy.y - this.localPlayer.y);
+            if (dist <= this.localPlayer.attackRange && this.onEnemyDamage) {
+                this.onEnemyDamage(enemy.id, this.localPlayer.attackDamage);
+            }
+        });
     }
 
     handlePortalTransitions() {
@@ -210,7 +267,8 @@ class Game {
     }
 
     transitionZone(zoneName, roster = [], localId = '') {
-        this.init(zoneName, this.localPlayer ? this.localPlayer.username : 'Player');
+        const playerId = localId || (this.localPlayer ? this.localPlayer.id : '');
+        this.init(zoneName, this.localPlayer ? this.localPlayer.username : 'Player', playerId);
         this.syncMultiplayerPlayers(roster, localId);
     }
 

@@ -4,6 +4,8 @@ let networkManager = null;
 let currentUsername = '';
 let currentRoomPlayers = [];
 let currentProfile = null;
+let playerUpdateInterval = null; // Track interval to prevent leaks
+let enemySyncInterval = null; // Track enemy sync interval
 
 // Helper function to update balance display
 function updateBalanceDisplay(balance) {
@@ -119,6 +121,10 @@ function setupNetworkHandlers() {
             game.syncMultiplayerPlayers(currentRoomPlayers, networkManager.playerId);
             hydrateRoomAvatars(currentRoomPlayers);
         }
+        // Update host status from room_update
+        if (data.hostId && networkManager) {
+            updateHostStatus(data.hostId);
+        }
     };
     
     networkManager.onPlayerState = (data) => {
@@ -166,6 +172,28 @@ function setupNetworkHandlers() {
         }
     };
     
+    networkManager.onEnemySync = (data) => {
+        if (game && !game.isHost) {
+            game.applyEnemySync(data.enemies);
+        }
+    };
+    
+    networkManager.onHostAssigned = (data) => {
+        if (data.hostId && networkManager) {
+            updateHostStatus(data.hostId);
+        }
+    };
+    
+    networkManager.onEnemyDamage = (data) => {
+        // Host receives damage reports from other players
+        if (game && game.isHost && data.enemyId && typeof data.damage === 'number') {
+            const enemy = game.enemies.find(e => e.id === data.enemyId);
+            if (enemy) {
+                enemy.takeDamage(data.damage);
+            }
+        }
+    };
+    
     networkManager.onPlayerLeft = (data) => {
         if (game) {
             game.players = game.players.filter(p => p.id !== data.playerId);
@@ -178,6 +206,47 @@ function setupNetworkHandlers() {
         networkManager = null;
         showScreen('menu');
     };
+}
+
+function updateHostStatus(hostId) {
+    if (!game || !networkManager) return;
+    const wasHost = game.isHost;
+    game.isHost = (networkManager.playerId === hostId);
+    
+    if (game.isHost && !wasHost) {
+        // Start enemy sync interval when becoming host
+        startEnemySyncInterval();
+    } else if (!game.isHost && wasHost) {
+        // Stop enemy sync interval when losing host status
+        stopEnemySyncInterval();
+    }
+}
+
+function startEnemySyncInterval() {
+    stopEnemySyncInterval();
+    enemySyncInterval = setInterval(() => {
+        if (game && game.running && game.isHost && networkManager && networkManager.connected) {
+            if (game.enemies.length > 0) {
+                networkManager.sendEnemySync(game.enemies.map(e => ({
+                    id: e.id,
+                    x: e.x,
+                    y: e.y,
+                    hp: e.hp,
+                    maxHp: e.maxHp,
+                    stunned: e.stunned,
+                    stunnedTime: e.stunnedTime,
+                    attackCooldown: e.attackCooldown
+                })));
+            }
+        }
+    }, 100); // 10 sync updates per second for enemies
+}
+
+function stopEnemySyncInterval() {
+    if (enemySyncInterval) {
+        clearInterval(enemySyncInterval);
+        enemySyncInterval = null;
+    }
 }
 
 async function loadProfile(username) {
@@ -257,7 +326,8 @@ function startGame(zoneName) {
         game = new Game();
     }
     
-    game.init(zoneName, currentUsername);
+    const playerId = networkManager ? networkManager.playerId : 'player1';
+    game.init(zoneName, currentUsername, playerId);
     game.onPortalEnter = (targetZoneId) => {
         if (networkManager) {
             networkManager.enterZone(targetZoneId);
@@ -273,17 +343,34 @@ function startGame(zoneName) {
         }
     };
     
+    // Wire up enemy damage callback for non-host players
+    game.onEnemyDamage = (enemyId, damage) => {
+        if (networkManager && networkManager.connected) {
+            networkManager.sendEnemyDamage(enemyId, damage);
+        }
+    };
+    
     showScreen('game');
     game.start();
     
     // Send updates to server
     if (networkManager) {
         game.syncMultiplayerPlayers(currentRoomPlayers, networkManager.playerId);
-        setInterval(() => {
+        
+        // Clear previous interval to prevent leaks
+        if (playerUpdateInterval) {
+            clearInterval(playerUpdateInterval);
+        }
+        playerUpdateInterval = setInterval(() => {
             if (game.localPlayer && game.running) {
                 networkManager.sendPlayerUpdate(game.localPlayer.getState());
             }
         }, 50); // 20 updates per second
+        
+        // Start enemy sync if we are the host
+        if (game.isHost) {
+            startEnemySyncInterval();
+        }
     }
 }
 
