@@ -117,6 +117,80 @@ const gameRooms = new Map();
 // Rate limiting constants for WebSocket
 const WS_RATE_LIMIT_WINDOW_MS = 10000; // 10 seconds
 const WS_RATE_LIMIT_MAX_MESSAGES = 100; // Max messages per window
+const MAX_ROOM_ID_LENGTH = 64;
+const MAX_PLAYER_ID_LENGTH = 64;
+const MAX_USERNAME_LENGTH = 32;
+const ROOM_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
+const PLAYER_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
+const USERNAME_PATTERN = /^[A-Za-z0-9 _-]+$/;
+const ALLOWED_ZONE_IDS = new Set(['hub', 'training', 'gallery']);
+const PLAYER_STATE_KEYS = new Set(['id', 'x', 'y', 'angle', 'speed', 'zoneLevel', 'position', 'username', 'stunned']);
+
+function warnInvalidInput(type, reason) {
+  console.warn(`Rejected ${type}: ${reason}`);
+}
+
+function normalizeSafeString(value) {
+  return typeof value === 'string' ? value.trim() : '';
+}
+
+function isSafeString(value, { minLength = 1, maxLength = 64, pattern = null } = {}) {
+  const normalized = normalizeSafeString(value);
+  if (normalized.length < minLength || normalized.length > maxLength) return false;
+  return pattern ? pattern.test(normalized) : true;
+}
+
+function isValidRoomId(roomId) {
+  return isSafeString(roomId, {
+    maxLength: MAX_ROOM_ID_LENGTH,
+    pattern: ROOM_ID_PATTERN
+  });
+}
+
+function isValidPlayerId(playerId) {
+  return isSafeString(playerId, {
+    maxLength: MAX_PLAYER_ID_LENGTH,
+    pattern: PLAYER_ID_PATTERN
+  });
+}
+
+function isValidUsername(username) {
+  return isSafeString(username, {
+    maxLength: MAX_USERNAME_LENGTH,
+    pattern: USERNAME_PATTERN
+  });
+}
+
+function isFiniteNumberInRange(value, min, max) {
+  return typeof value === 'number' && Number.isFinite(value) && value >= min && value <= max;
+}
+
+function isValidPlayerState(state) {
+  if (!state || typeof state !== 'object' || Array.isArray(state)) return false;
+
+  const stateKeys = Object.keys(state);
+  if (stateKeys.some(key => !PLAYER_STATE_KEYS.has(key))) return false;
+
+  const validCoreFields =
+    isFiniteNumberInRange(state.x, -10000, 10000) &&
+    isFiniteNumberInRange(state.y, -10000, 10000) &&
+    isFiniteNumberInRange(state.angle, -Math.PI * 4, Math.PI * 4) &&
+    isFiniteNumberInRange(state.speed, 0, 100) &&
+    Number.isInteger(state.zoneLevel) && state.zoneLevel >= 1 && state.zoneLevel <= 100;
+
+  if (!validCoreFields) return false;
+  if (typeof state.stunned !== 'boolean') return false;
+  if (!Number.isInteger(state.position) || state.position < 0 || state.position > 16) return false;
+
+  if (state.id !== undefined && !isValidPlayerId(state.id)) return false;
+  if (state.username !== undefined && !isValidUsername(state.username)) return false;
+
+  return true;
+}
+
+function isValidZoneId(zoneId) {
+  return isSafeString(zoneId, { maxLength: 32, pattern: ROOM_ID_PATTERN }) && ALLOWED_ZONE_IDS.has(zoneId);
+}
 
 wss.on('connection', (ws) => {
   console.log('New WebSocket connection');
@@ -184,9 +258,26 @@ wss.on('connection', (ws) => {
 
 function handleJoinRoom(ws, data) {
   const { roomId, playerId, username } = data;
+
+  if (!isValidRoomId(roomId)) {
+    warnInvalidInput('join_room', 'invalid roomId');
+    return;
+  }
+  if (!isValidPlayerId(playerId)) {
+    warnInvalidInput('join_room', 'invalid playerId');
+    return;
+  }
+  if (!isValidUsername(username)) {
+    warnInvalidInput('join_room', 'invalid username');
+    return;
+  }
+
+  const normalizedRoomId = normalizeSafeString(roomId);
+  const normalizedPlayerId = normalizeSafeString(playerId);
+  const normalizedUsername = normalizeSafeString(username);
   
-  if (!gameRooms.has(roomId)) {
-    gameRooms.set(roomId, {
+  if (!gameRooms.has(normalizedRoomId)) {
+    gameRooms.set(normalizedRoomId, {
       players: [],
       started: false,
       killedEnemies: new Set(), // Track killed enemies to prevent double-rewards
@@ -195,7 +286,12 @@ function handleJoinRoom(ws, data) {
     });
   }
   
-  const room = gameRooms.get(roomId);
+  const room = gameRooms.get(normalizedRoomId);
+  if (room.players.some(player => player.id === normalizedPlayerId)) {
+    warnInvalidInput('join_room', 'duplicate playerId in room');
+    return;
+  }
+
   if (room.players.length >= MAX_PARTY_SIZE) {
     ws.send(JSON.stringify({ type: 'room_full', maxPlayers: MAX_PARTY_SIZE }));
     return;
@@ -203,28 +299,28 @@ function handleJoinRoom(ws, data) {
   
   // Add player to room
   const player = {
-    id: playerId,
-    username: username,
+    id: normalizedPlayerId,
+    username: normalizedUsername,
     ws: ws,
     ready: false,
     zone: 'hub' // Track which zone each player is in
   };
   
   room.players.push(player);
-  ws.roomId = roomId;
-  ws.playerId = playerId;
-  ws.username = username; // Store username on WebSocket object
+  ws.roomId = normalizedRoomId;
+  ws.playerId = normalizedPlayerId;
+  ws.username = normalizedUsername; // Store username on WebSocket object
   
   // Assign host if none exists (first player becomes host)
   if (!room.hostId) {
-    room.hostId = playerId;
+    room.hostId = normalizedPlayerId;
   }
   
   // Notify all players in room
-  broadcastToRoom(roomId, {
+  broadcastToRoom(normalizedRoomId, {
     type: 'room_update',
     players: room.players.map(p => ({ id: p.id, username: p.username, ready: p.ready, zone: p.zone })),
-    roomId: roomId,
+    roomId: normalizedRoomId,
     hostId: room.hostId
   });
   
@@ -280,6 +376,11 @@ function handlePlayerUpdate(ws, data) {
     const room = gameRooms.get(ws.roomId);
     if (!room) return;
 
+    if (!isValidPlayerState(data.state)) {
+      warnInvalidInput('player_update', 'invalid player state');
+      return;
+    }
+
     // Find the sending player to determine their zone
     const sender = room.players.find(p => p.id === ws.playerId);
     if (!sender) return;
@@ -316,23 +417,30 @@ function handleGameStart(ws, data) {
 
 function handleZoneEnter(ws, data) {
   if (ws.roomId && data.zoneId) {
+    const normalizedZoneId = normalizeSafeString(data.zoneId);
+
+    if (!isValidZoneId(normalizedZoneId)) {
+      warnInvalidInput('zone_enter', 'invalid zoneId');
+      return;
+    }
+
     const room = gameRooms.get(ws.roomId);
     if (room) {
       // Update this player's zone on the server
       const player = room.players.find(p => p.id === ws.playerId);
       if (player) {
-        player.zone = data.zoneId;
+        player.zone = normalizedZoneId;
       }
 
       // Collect players already in the target zone (excluding the transitioning player)
       const zoneMates = room.players
-        .filter(p => p.zone === data.zoneId && p.id !== ws.playerId)
+        .filter(p => p.zone === normalizedZoneId && p.id !== ws.playerId)
         .map(p => ({ id: p.id, username: p.username, zone: p.zone }));
 
       // Only send the zone transition back to the player who entered the portal
       ws.send(JSON.stringify({
         type: 'zone_enter',
-        zoneId: data.zoneId,
+        zoneId: normalizedZoneId,
         playerId: ws.playerId,
         zonePlayers: zoneMates
       }));
