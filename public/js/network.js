@@ -91,6 +91,9 @@ class NetworkManager {
             case 'room_list':
                 if (this.onRoomList) this.onRoomList(data);
                 break;
+            case 'player_zone':
+                if (this.onZoneEnter) this.onZoneEnter(data);
+                break;
         }
     }
     
