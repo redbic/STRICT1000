@@ -368,6 +368,9 @@ function handleLeaveRoom(ws, data) {
     
     // Notify unjoined clients about updated room list
     broadcastRoomList();
+    
+    ws.roomId = null;
+    ws.playerId = null;
   }
 }
 
@@ -501,11 +504,11 @@ async function handleEnemyKilled(ws, data) {
     // Schedule respawn
     const timerId = setTimeout(() => {
       // Check if room still exists
-      const room = gameRooms.get(ws.roomId);
-      if (!room) return;
+      const currentRoom = gameRooms.get(ws.roomId);
+      if (!currentRoom) return;
       
       // Remove from killed enemies so it can be killed again
-      room.killedEnemies.delete(enemyKey);
+      currentRoom.killedEnemies.delete(enemyKey);
       
       // Broadcast respawn to all players in room
       broadcastToRoom(ws.roomId, {
@@ -515,7 +518,7 @@ async function handleEnemyKilled(ws, data) {
       });
       
       // Clean up timer reference
-      room.respawnTimers.delete(enemyKey);
+      currentRoom.respawnTimers.delete(enemyKey);
     }, respawnDelay);
     
     room.respawnTimers.set(enemyKey, timerId);
@@ -564,9 +567,8 @@ function handleEnemyDamage(ws, data) {
   if (!sender || !host || sender.zone !== host.zone) return;
   
   // Forward damage to the host player
-  const hostPlayer = room.players.find(p => p.id === room.hostId);
-  if (hostPlayer && hostPlayer.ws.readyState === WebSocket.OPEN) {
-    hostPlayer.ws.send(JSON.stringify({
+  if (host.ws.readyState === WebSocket.OPEN) {
+    host.ws.send(JSON.stringify({
       type: 'enemy_damage',
       enemyId: data.enemyId,
       damage: data.damage,

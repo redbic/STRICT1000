@@ -312,14 +312,31 @@ function renderRoomList(rooms) {
     rooms.forEach(room => {
         const item = document.createElement('div');
         item.className = 'room-list-item';
-        const statusLabel = room.started ? ' <span class="room-status">(In Progress)</span>' : '';
-        item.innerHTML = `
-            <div class="room-info">
-                <div>${room.players.join(', ')}${statusLabel}</div>
-                <div class="room-players">${room.playerCount}/${room.maxPlayers} players</div>
-            </div>
-            <span class="join-label">Join ▸</span>
-        `;
+
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'room-info';
+
+        const nameDiv = document.createElement('div');
+        nameDiv.textContent = room.players.join(', ');
+        if (room.started) {
+            const statusSpan = document.createElement('span');
+            statusSpan.className = 'room-status';
+            statusSpan.textContent = ' (In Progress)';
+            nameDiv.appendChild(statusSpan);
+        }
+        infoDiv.appendChild(nameDiv);
+
+        const countDiv = document.createElement('div');
+        countDiv.className = 'room-players';
+        countDiv.textContent = `${room.playerCount}/${room.maxPlayers} players`;
+        infoDiv.appendChild(countDiv);
+
+        const joinLabel = document.createElement('span');
+        joinLabel.className = 'join-label';
+        joinLabel.textContent = 'Join ▸';
+
+        item.appendChild(infoDiv);
+        item.appendChild(joinLabel);
         item.addEventListener('click', () => joinExistingRoom(room.roomId));
         listEl.appendChild(item);
     });
