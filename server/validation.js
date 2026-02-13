@@ -6,7 +6,7 @@ const MAX_USERNAME_LENGTH = 32;
 const ROOM_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
 const PLAYER_ID_PATTERN = /^[A-Za-z0-9_-]+$/;
 const USERNAME_PATTERN = /^[A-Za-z0-9]([A-Za-z0-9 _-]*[A-Za-z0-9])?$/;
-const ALLOWED_ZONE_IDS = new Set(['hub', 'training', 'gallery']);
+const ALLOWED_ZONE_IDS = new Set(['hub', 'training']);
 const PLAYER_STATE_KEYS = new Set(['id', 'x', 'y', 'angle', 'speed', 'zoneLevel', 'username', 'stunned', 'hp', 'isDead']);
 const INVENTORY_MAX_ITEMS = 16;
 

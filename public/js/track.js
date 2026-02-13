@@ -437,9 +437,7 @@ const ZONES = {
         ],
         portals: [
             // Training room portal
-            { id: 'training', x: 400, y: 900, width: 60, height: 60, label: 'Training' },
-            // The Gallery - new experimental room
-            { id: 'gallery', x: 900, y: 1150, width: 60, height: 60, label: 'The Gallery' }
+            { id: 'training', x: 400, y: 900, width: 60, height: 60, label: 'Training' }
         ],
         npcs: [
             { x: 900, y: 400, name: 'The Receptionist', color: '#d4a745' }
@@ -474,41 +472,6 @@ const ZONES = {
         items: [
             { id: 'practice-blade', name: 'Practice Blade', icon: '🗡️', x: 530, y: 520 },
             { id: 'iron-ore', name: 'Iron Ore', icon: '⛓️', x: 420, y: 320 }
-        ]
-    },
-    gallery: {
-        name: 'The Gallery',
-        width: 1200,
-        height: 1000,
-        startX: 600,
-        startY: 900,
-        wallColor: '#1a1a1a',
-        floorColor: '#0d0d0d',
-        totalLevels: 1,
-        ruleset: 'darkness', // Experimental: limited visibility
-        visibilityRadius: 150, // Player can only see 150px around them
-        walls: [
-            // Outer boundary
-            { x: 0, y: 0, width: 1200, height: 40 },
-            { x: 0, y: 0, width: 40, height: 1000 },
-            { x: 0, y: 960, width: 1200, height: 40 },
-            { x: 1160, y: 0, width: 40, height: 1000 },
-            // Internal maze-like walls for navigation challenge
-            { x: 200, y: 200, width: 400, height: 20 },
-            { x: 600, y: 400, width: 400, height: 20 },
-            { x: 200, y: 600, width: 400, height: 20 }
-        ],
-        portals: [
-            { id: 'hub', x: 570, y: 920, width: 60, height: 60, label: 'Return to Lobby' }
-        ],
-        enemies: [
-            { x: 400, y: 300, stationary: false, passive: false, hp: 40, maxHp: 40 },
-            { x: 800, y: 500, stationary: false, passive: false, hp: 40, maxHp: 40 },
-            { x: 300, y: 700, stationary: false, passive: false, hp: 40, maxHp: 40 }
-        ],
-        items: [
-            { id: 'gallery-shard', name: 'Gallery Shard', icon: '💠', x: 680, y: 260 },
-            { id: 'dim-lantern', name: 'Dim Lantern', icon: '🏮', x: 940, y: 760 }
         ]
     }
 };
