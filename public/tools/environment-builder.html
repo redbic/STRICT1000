@@ -446,6 +446,8 @@ const MYZONE_FLOOR = {
                     <div class="layer-tab" data-layer="walls">Walls</div>
                     <div class="layer-tab" data-layer="objects">Objects</div>
                     <div class="layer-tab" data-layer="portals">Portals</div>
+                    <div class="layer-tab" data-layer="enemies">Enemies</div>
+                    <div class="layer-tab" data-layer="npcs">NPCs</div>
                 </div>
                 <div class="tileset-select">
                     <select id="tilesetSelect"></select>
@@ -473,6 +475,12 @@ const MYZONE_FLOOR = {
             </div>
             <div class="wall-options" id="portalOptions">
                 <label style="color:#4a9;">Portal Mode: Click & drag to create portal hitbox</label>
+            </div>
+            <div class="wall-options" id="enemyOptions">
+                <label style="color:#c44;">Enemy Mode: Click to place, Erase to remove</label>
+            </div>
+            <div class="wall-options" id="npcOptions">
+                <label style="color:#48c;">NPC Mode: Click to place, Erase to remove</label>
             </div>
             <div class="palette-tiles" id="paletteTiles">
                 <div class="tileset-wrapper" id="tilesetWrapper">
@@ -587,7 +595,9 @@ const MYZONE_FLOOR = {
             floor: {},    // { "x,y": { tileset, tileX, tileY, flipH, flipV } }
             walls: [],    // [{ x, y, width, height }]
             objects: {},  // { "x,y": { tileset, tileX, tileY, flipH, flipV } }
-            portals: []   // [{ id, x, y, width, height }]
+            portals: [],  // [{ id, x, y, width, height }]
+            enemies: [],  // [{ x, y, stationary, passive, hp }]
+            npcs: []      // [{ x, y, name, character }]
         };
 
         // Wall/Portal drawing state
@@ -624,6 +634,8 @@ const MYZONE_FLOOR = {
                     currentLayer = tab.dataset.layer;
                     document.getElementById('wallOptions').classList.toggle('visible', currentLayer === 'walls');
                     document.getElementById('portalOptions').classList.toggle('visible', currentLayer === 'portals');
+                    document.getElementById('enemyOptions').classList.toggle('visible', currentLayer === 'enemies');
+                    document.getElementById('npcOptions').classList.toggle('visible', currentLayer === 'npcs');
                     updateStatus();
                 });
             });
@@ -898,6 +910,43 @@ const MYZONE_FLOOR = {
                 ctx.fillText('→ ' + portal.id, sx + sw / 2, sy + sh / 2);
                 ctx.fillStyle = 'rgba(80, 200, 120, 0.4)';
             }
+
+            // Draw enemies
+            ctx.font = '10px sans-serif';
+            for (const enemy of roomData.enemies) {
+                const sx = (enemy.x / (roomWidth * TILE_SIZE * 3)) * canvas.width;
+                const sy = (enemy.y / (roomHeight * TILE_SIZE * 3)) * canvas.height;
+                const radius = displayTileSize / 3;
+
+                ctx.fillStyle = enemy.passive ? 'rgba(200, 150, 80, 0.8)' : 'rgba(200, 60, 60, 0.8)';
+                ctx.strokeStyle = enemy.stationary ? '#fff' : '#000';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(sx, sy, radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = '#fff';
+                ctx.fillText('E', sx, sy + 3);
+            }
+
+            // Draw NPCs
+            for (const npc of roomData.npcs) {
+                const sx = (npc.x / (roomWidth * TILE_SIZE * 3)) * canvas.width;
+                const sy = (npc.y / (roomHeight * TILE_SIZE * 3)) * canvas.height;
+                const radius = displayTileSize / 3;
+
+                ctx.fillStyle = 'rgba(60, 120, 200, 0.8)';
+                ctx.strokeStyle = '#fff';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(sx, sy, radius, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = '#fff';
+                ctx.fillText(npc.name.substring(0, 3), sx, sy + 3);
+            }
         }
 
         function drawTileAt(tile, gridX, gridY) {
@@ -969,6 +1018,10 @@ const MYZONE_FLOOR = {
             } else if (currentLayer === 'portals') {
                 portalStart = getGridPos(e);
                 isDrawing = true;
+            } else if (currentLayer === 'enemies') {
+                placeEnemy(e);
+            } else if (currentLayer === 'npcs') {
+                placeNpc(e);
             } else {
                 isDrawing = true;
                 placeTile(e);
@@ -1086,9 +1139,75 @@ const MYZONE_FLOOR = {
             updateExport();
         }
 
+        function placeEnemy(e) {
+            const pos = getGridPos(e);
+            const worldX = pos.x * TILE_SIZE * 3 + (TILE_SIZE * 3) / 2;
+            const worldY = pos.y * TILE_SIZE * 3 + (TILE_SIZE * 3) / 2;
+
+            if (currentTool === 'erase') {
+                // Remove enemy near click position
+                const clickRadius = TILE_SIZE * 3;
+                roomData.enemies = roomData.enemies.filter(enemy => {
+                    const dx = enemy.x - worldX;
+                    const dy = enemy.y - worldY;
+                    return Math.sqrt(dx*dx + dy*dy) > clickRadius;
+                });
+            } else {
+                // Prompt for enemy properties
+                const stationary = confirm('Stationary enemy? (OK = Yes, Cancel = No)');
+                const passive = confirm('Passive enemy? (OK = Yes, Cancel = No)');
+                const hpStr = prompt('HP (default 50):', '50');
+                const hp = parseInt(hpStr) || 50;
+
+                roomData.enemies.push({
+                    x: worldX,
+                    y: worldY,
+                    stationary,
+                    passive,
+                    hp
+                });
+            }
+
+            renderRoom();
+            updateExport();
+        }
+
+        function placeNpc(e) {
+            const pos = getGridPos(e);
+            const worldX = pos.x * TILE_SIZE * 3 + (TILE_SIZE * 3) / 2;
+            const worldY = pos.y * TILE_SIZE * 3 + (TILE_SIZE * 3) / 2;
+
+            if (currentTool === 'erase') {
+                // Remove NPC near click position
+                const clickRadius = TILE_SIZE * 3;
+                roomData.npcs = roomData.npcs.filter(npc => {
+                    const dx = npc.x - worldX;
+                    const dy = npc.y - worldY;
+                    return Math.sqrt(dx*dx + dy*dy) > clickRadius;
+                });
+            } else {
+                // Prompt for NPC properties
+                const name = prompt('NPC Name:', 'NPC');
+                if (!name) return;
+
+                const charStr = prompt('Character number (8-20):', '8');
+                const character = Math.max(8, Math.min(20, parseInt(charStr) || 8));
+
+                roomData.npcs.push({
+                    x: worldX,
+                    y: worldY,
+                    name: name.trim(),
+                    character
+                });
+            }
+
+            renderRoom();
+            updateExport();
+        }
+
         function clearRoom() {
-            if (!confirm('Clear all tiles, walls and portals?')) return;
-            roomData = { floor: {}, walls: [], objects: {}, portals: [] };
+            if (!confirm('Clear all tiles, walls, portals, enemies and NPCs?')) return;
+            roomData = { floor: {}, walls: [], objects: {}, portals: [], enemies: [], npcs: [] };
             renderRoom();
             updateExport();
         }
@@ -1453,6 +1572,16 @@ const MYZONE_FLOOR = {
                     roomData.portals = zone.portals.slice();
                 }
 
+                // Load enemies
+                if (zone.enemies) {
+                    roomData.enemies = zone.enemies.slice();
+                }
+
+                // Load NPCs
+                if (zone.npcs) {
+                    roomData.npcs = zone.npcs.slice();
+                }
+
                 // Load all required tilesets
                 const usedTilesets = new Set();
                 Object.values(roomData.floor).forEach(t => usedTilesets.add(t.tileset));
@@ -1539,8 +1668,8 @@ const MYZONE_FLOOR = {
                 },
                 walls: roomData.walls,
                 portals: roomData.portals,
-                npcs: [],
-                enemies: []
+                npcs: roomData.npcs,
+                enemies: roomData.enemies
             };
 
             document.getElementById('statusBar').textContent = 'Saving to server...';
