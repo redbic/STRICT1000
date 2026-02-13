@@ -482,7 +482,21 @@ function updateZoneHostStatus() {
         console.log('Became zone host for zone:', localZone);
         startEnemySyncInterval();
     } else if (!gameState.game.isZoneHost && wasZoneHost && !gameState.game.isHost) {
-        console.log('Lost zone host status');
+        console.log('Lost zone host status - sending final enemy sync for handoff');
+        // Send ONE final enemy sync to hand off state to the new authoritative player
+        // This is critical: the main host entering our zone needs our enemy state
+        if (gameState.networkManager && gameState.networkManager.connected && gameState.game.enemies) {
+            gameState.networkManager.sendEnemySync(gameState.game.enemies.map(e => ({
+                id: e.id,
+                x: e.x,
+                y: e.y,
+                hp: e.hp,
+                maxHp: e.maxHp,
+                stunned: e.stunned,
+                stunnedTime: e.stunnedTime,
+                attackCooldown: e.attackCooldown
+            })));
+        }
         stopEnemySyncInterval();
     }
 }
