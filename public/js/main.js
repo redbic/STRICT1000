@@ -368,18 +368,17 @@ function startEnemySyncInterval() {
         // Both main host and zone host should send enemy syncs
         const isAuthoritative = game && game.running && (game.isHost || game.isZoneHost);
         if (isAuthoritative && networkManager && networkManager.connected) {
-            if (game.enemies.length > 0) {
-                networkManager.sendEnemySync(game.enemies.map(e => ({
-                    id: e.id,
-                    x: e.x,
-                    y: e.y,
-                    hp: e.hp,
-                    maxHp: e.maxHp,
-                    stunned: e.stunned,
-                    stunnedTime: e.stunnedTime,
-                    attackCooldown: e.attackCooldown
-                })));
-            }
+            // Always send sync, even if empty (so clients know all enemies are dead)
+            networkManager.sendEnemySync(game.enemies.map(e => ({
+                id: e.id,
+                x: e.x,
+                y: e.y,
+                hp: e.hp,
+                maxHp: e.maxHp,
+                stunned: e.stunned,
+                stunnedTime: e.stunnedTime,
+                attackCooldown: e.attackCooldown
+            })));
         }
     }, 100); // 10 sync updates per second for enemies
 }
