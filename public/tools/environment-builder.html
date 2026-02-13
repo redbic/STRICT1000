@@ -68,12 +68,14 @@
 
         /* Left panel - Tile palette */
         .palette-panel {
-            width: 420px;
+            width: 600px;
+            min-width: 500px;
             background: #252545;
             border-right: 1px solid #444;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            flex-shrink: 0;
         }
         .palette-header {
             padding: 10px;
@@ -357,8 +359,8 @@
                     <select id="tilesetSelect"></select>
                     <label>Scale:
                         <select id="paletteScale">
-                            <option value="2">2x</option>
-                            <option value="3" selected>3x</option>
+                            <option value="2" selected>2x</option>
+                            <option value="3">3x</option>
                             <option value="4">4x</option>
                         </select>
                     </label>
@@ -464,7 +466,7 @@
 
         const TILE_SIZE = 16; // Source tile size
         let displayTileSize = 32; // Display size for room canvas
-        let paletteScale = 3; // Scale for tileset palette
+        let paletteScale = 2; // Scale for tileset palette
         let roomWidth = 20;
         let roomHeight = 15;
         let currentLayer = 'floor';
