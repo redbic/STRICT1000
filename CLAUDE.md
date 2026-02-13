@@ -48,11 +48,17 @@ Server runs at `http://localhost:3000`. Requires `APP_PASSWORD` env var (see `.e
 ## Key Patterns
 
 - All user input validated via `server/validation.js` - use `normalizeSafeString()`, `isValidUsername()`, etc.
-- Zone IDs must be in `ALLOWED_ZONE_IDS` set (currently: `hub`, `training`, `gallery`)
 - Player state synced at 20 updates/second in multiplayer
-- Portals in `track.js` define zone transitions - `portal.id` matches target zone key in `ZONES`
+- Portals define zone transitions - `portal.id` matches target zone name
 - Session-based authentication with login page (`/login.html`) - password checked against `APP_PASSWORD` env var
 - Authentication managed by `server/auth.js` - login rate limiting, session middleware
+
+## Adding New Zones
+
+When creating a new zone:
+1. Create `public/data/zones/{zonename}.json` (use environment builder)
+2. **Add zone ID to `server/validation.js` → `ALLOWED_ZONE_IDS`** (portals won't work otherwise!)
+3. Add portals in other zones that connect to the new zone
 
 ## Environment Variables
 
