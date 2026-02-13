@@ -35,10 +35,10 @@ class Zone {
         canvas.height = 600;
         const ctx = canvas.getContext('2d');
 
-        // Create gradient centered in the canvas - red tinted for noir
+        // Fluorescent/warm light glow for liminal aesthetic
         const gradient = ctx.createRadialGradient(300, 300, 0, 300, 300, 300);
-        gradient.addColorStop(0, 'rgba(180, 80, 60, 0.25)');
-        gradient.addColorStop(0.5, 'rgba(139, 0, 0, 0.1)');
+        gradient.addColorStop(0, 'rgba(255, 251, 220, 0.3)');
+        gradient.addColorStop(0.5, 'rgba(255, 248, 200, 0.15)');
         gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
 
         ctx.fillStyle = gradient;
@@ -48,7 +48,7 @@ class Zone {
     }
     
     draw(ctx, cameraX, cameraY) {
-        // Get noir colors
+        // Get liminal hotel colors
         const floorCol = typeof COLORS !== 'undefined' ? COLORS.FLOOR_COLOR : this.floorColor;
         const wallCol = typeof COLORS !== 'undefined' ? COLORS.WALL_COLOR : this.wallColor;
 
@@ -56,12 +56,12 @@ class Zone {
         if (typeof spriteManager !== 'undefined' && spriteManager.has('floorTile')) {
             this.drawTiledFloor(ctx, cameraX, cameraY);
         } else {
-            // Fallback - noir solid color with subtle grid
+            // Fallback - liminal carpet with subtle pattern
             ctx.fillStyle = floorCol;
             ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-            // Subtle floor tile grid
-            ctx.strokeStyle = 'rgba(30, 10, 10, 0.3)';
+            // Subtle carpet/tile grid pattern
+            ctx.strokeStyle = 'rgba(154, 139, 112, 0.25)';
             ctx.lineWidth = 1;
             const tileSize = 64;
             const startX = -(cameraX % tileSize);
@@ -85,27 +85,27 @@ class Zone {
             this.drawChandelier(ctx, cameraX, cameraY);
         }
 
-        // Draw walls/obstacles with noir styling
+        // Draw walls/obstacles with liminal hotel styling
         this.walls.forEach(wall => {
             if (this.isVisible(wall, cameraX, cameraY, ctx.canvas.width, ctx.canvas.height)) {
                 if (wall.isPillar) {
                     this.drawPillar(ctx, wall, cameraX, cameraY);
                 } else {
-                    // Draw wall with noir style
+                    // Draw wall with liminal style
                     const wx = wall.x - cameraX;
                     const wy = wall.y - cameraY;
 
-                    // Main wall body
+                    // Main wall body (beige/cream)
                     ctx.fillStyle = wallCol;
                     ctx.fillRect(wx, wy, wall.width, wall.height);
 
-                    // Red accent line on top edge
-                    ctx.fillStyle = 'rgba(139, 0, 0, 0.4)';
-                    ctx.fillRect(wx, wy, wall.width, 2);
+                    // Wood baseboard at bottom
+                    ctx.fillStyle = '#8b7355';
+                    ctx.fillRect(wx, wy + wall.height - 8, wall.width, 8);
 
-                    // Inner shadow
-                    ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-                    ctx.fillRect(wx + 2, wy + 2, wall.width - 4, wall.height - 4);
+                    // Subtle shadow at top
+                    ctx.fillStyle = 'rgba(80, 70, 55, 0.2)';
+                    ctx.fillRect(wx, wy, wall.width, 3);
                 }
             }
         });
@@ -123,8 +123,8 @@ class Zone {
             }
         }
 
-        // Draw exploration nodes (subtle red glow)
-        ctx.strokeStyle = 'rgba(139, 0, 0, 0.4)';
+        // Draw exploration nodes (subtle glow)
+        ctx.strokeStyle = 'rgba(139, 115, 85, 0.3)';
         ctx.lineWidth = 2;
         this.nodes.forEach((node) => {
             if (this.isVisible(node, cameraX, cameraY, ctx.canvas.width, ctx.canvas.height)) {
@@ -140,15 +140,15 @@ class Zone {
             }
         });
 
-        // Draw spawn point (red instead of white)
+        // Draw spawn point (subtle)
         const spawnArea = { x: this.startX - 30, y: this.startY - 30, width: 60, height: 60 };
         if (this.isVisible(spawnArea, cameraX, cameraY, ctx.canvas.width, ctx.canvas.height)) {
-            ctx.strokeStyle = 'rgba(139, 0, 0, 0.5)';
+            ctx.strokeStyle = 'rgba(139, 115, 85, 0.4)';
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.arc(this.startX - cameraX, this.startY - cameraY, 25, 0, Math.PI * 2);
             ctx.stroke();
-            ctx.fillStyle = 'rgba(139, 0, 0, 0.1)';
+            ctx.fillStyle = 'rgba(255, 251, 230, 0.15)';
             ctx.fill();
         }
 
@@ -159,7 +159,7 @@ class Zone {
             }
         });
 
-        // Draw pickup items with red glow
+        // Draw pickup items with soft glow
         this.items.forEach(item => {
             if (!this.isVisible({ x: item.x - 12, y: item.y - 12, width: 24, height: 24 }, cameraX, cameraY, ctx.canvas.width, ctx.canvas.height)) {
                 return;
@@ -168,16 +168,16 @@ class Zone {
             const itemX = item.x - cameraX;
             const itemY = item.y - cameraY;
 
-            // Red glow under item
-            ctx.fillStyle = 'rgba(139, 0, 0, 0.3)';
-            ctx.shadowColor = '#8b0000';
-            ctx.shadowBlur = 10;
+            // Soft fluorescent glow under item
+            ctx.fillStyle = 'rgba(255, 251, 220, 0.4)';
+            ctx.shadowColor = '#fffbe6';
+            ctx.shadowBlur = 8;
             ctx.beginPath();
             ctx.arc(itemX, itemY, 14, 0, Math.PI * 2);
             ctx.fill();
             ctx.shadowBlur = 0;
 
-            ctx.fillStyle = '#fff';
+            ctx.fillStyle = '#3a3530';
             ctx.font = '18px Arial';
             ctx.textAlign = 'center';
             ctx.fillText(item.icon || '📦', itemX, itemY + 6);
@@ -201,7 +201,7 @@ class Zone {
     }
 
     /**
-     * Draw a noir-style door portal
+     * Draw a liminal hotel-style door portal
      */
     drawNoirDoor(ctx, portal, cameraX, cameraY) {
         const px = portal.x - cameraX;
@@ -214,66 +214,63 @@ class Zone {
             const sprite = spriteManager.get('doorClosed');
             ctx.drawImage(sprite, px, py, pw, ph);
         } else {
-            // Fallback - draw noir door
-            // Door frame (dark wood)
-            ctx.fillStyle = '#1a0a0a';
+            // Door frame (wood)
+            ctx.fillStyle = '#6b5344';
             ctx.fillRect(px - 4, py - 4, pw + 8, ph + 8);
 
-            // Door body
-            ctx.fillStyle = '#0d0505';
+            // Door body (wood panel)
+            ctx.fillStyle = '#a08060';
             ctx.fillRect(px, py, pw, ph);
 
-            // Door panels (vertical lines)
-            ctx.strokeStyle = '#2a0a0a';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            ctx.moveTo(px + pw * 0.33, py + 5);
-            ctx.lineTo(px + pw * 0.33, py + ph - 5);
-            ctx.moveTo(px + pw * 0.66, py + 5);
-            ctx.lineTo(px + pw * 0.66, py + ph - 5);
-            ctx.stroke();
+            // Door panels (inset rectangles)
+            ctx.fillStyle = '#8b7355';
+            ctx.fillRect(px + 6, py + 6, pw - 12, ph * 0.4 - 8);
+            ctx.fillRect(px + 6, py + ph * 0.45, pw - 12, ph * 0.5 - 8);
 
-            // Door handle (brass/gold)
-            ctx.fillStyle = '#8b6f47';
+            // Door handle (brass)
+            ctx.fillStyle = '#c9a54a';
             ctx.beginPath();
-            ctx.arc(px + pw - 12, py + ph/2, 4, 0, Math.PI * 2);
+            ctx.arc(px + pw - 14, py + ph/2, 5, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.fillStyle = '#a08535';
+            ctx.beginPath();
+            ctx.arc(px + pw - 14, py + ph/2, 3, 0, Math.PI * 2);
             ctx.fill();
         }
 
-        // Red glow seeping from under door
-        ctx.fillStyle = 'rgba(139, 0, 0, 0.4)';
-        ctx.shadowColor = '#8b0000';
-        ctx.shadowBlur = 15;
-        ctx.fillRect(px, py + ph - 3, pw, 6);
+        // Light seeping from under door (fluorescent yellow)
+        ctx.fillStyle = 'rgba(255, 251, 220, 0.5)';
+        ctx.shadowColor = '#fffbe6';
+        ctx.shadowBlur = 12;
+        ctx.fillRect(px + 2, py + ph - 2, pw - 4, 4);
         ctx.shadowBlur = 0;
 
-        // Label plaque (above door)
+        // Room number plaque (above door)
         if (portal.label) {
-            ctx.fillStyle = '#1a0a0a';
-            ctx.fillRect(px + pw/2 - 45, py - 30, 90, 22);
-
-            // Red border
-            ctx.strokeStyle = '#4a0000';
+            // Plaque background
+            ctx.fillStyle = '#c9b896';
+            ctx.fillRect(px + pw/2 - 40, py - 28, 80, 20);
+            ctx.strokeStyle = '#8b7355';
             ctx.lineWidth = 1;
-            ctx.strokeRect(px + pw/2 - 45, py - 30, 90, 22);
+            ctx.strokeRect(px + pw/2 - 40, py - 28, 80, 20);
 
-            ctx.fillStyle = '#8b0000';
-            ctx.font = 'bold 11px serif';
+            ctx.fillStyle = '#4a4540';
+            ctx.font = '11px Arial';
             ctx.textAlign = 'center';
             ctx.fillText(portal.label.toUpperCase(), px + pw/2, py - 14);
         }
 
         // Locked indicator
         if (portal.locked) {
-            ctx.fillStyle = 'rgba(139, 0, 0, 0.8)';
+            ctx.fillStyle = 'rgba(176, 64, 64, 0.7)';
             ctx.beginPath();
-            ctx.arc(px + pw/2, py + ph/2, 18, 0, Math.PI * 2);
+            ctx.arc(px + pw/2, py + ph/2, 16, 0, Math.PI * 2);
             ctx.fill();
 
-            ctx.fillStyle = '#000';
-            ctx.font = 'bold 18px monospace';
+            ctx.fillStyle = '#f5f0e6';
+            ctx.font = '16px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('🔒', px + pw/2, py + ph/2 + 6);
+            ctx.fillText('🔒', px + pw/2, py + ph/2 + 5);
         }
     }
     
@@ -344,23 +341,27 @@ class Zone {
         return this.items.splice(idx, 1)[0];
     }
     
-    // Decorative drawing methods for lobby (noir style)
+    // Decorative drawing methods for lobby (liminal hotel style)
     drawPillar(ctx, wall, cameraX, cameraY) {
         const px = wall.x - cameraX;
         const py = wall.y - cameraY;
 
-        // Draw pillar with dark marble shading
-        ctx.fillStyle = '#1a1a1a';
+        // Draw pillar (cream/beige marble)
+        ctx.fillStyle = '#d4c8b0';
         ctx.fillRect(px, py, wall.width, wall.height);
 
-        // Red accent stripe
-        ctx.fillStyle = 'rgba(139, 0, 0, 0.4)';
-        ctx.fillRect(px + wall.width/2 - 1, py, 2, wall.height);
+        // Subtle highlight on left
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.2)';
+        ctx.fillRect(px, py, 4, wall.height);
 
-        // Darker edges
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
-        ctx.fillRect(px, py, 3, wall.height);
-        ctx.fillRect(px + wall.width - 3, py, 3, wall.height);
+        // Shadow on right
+        ctx.fillStyle = 'rgba(80, 70, 55, 0.25)';
+        ctx.fillRect(px + wall.width - 4, py, 4, wall.height);
+
+        // Base and top trim
+        ctx.fillStyle = '#a08060';
+        ctx.fillRect(px - 2, py, wall.width + 4, 6);
+        ctx.fillRect(px - 2, py + wall.height - 6, wall.width + 4, 6);
     }
 
     drawClock(ctx, cameraX, cameraY) {
@@ -379,30 +380,30 @@ class Zone {
             this.lastClockUpdate = now;
         }
 
-        // Clock body (tall rectangle) - dark wood
-        ctx.fillStyle = '#0d0505';
+        // Clock body (tall rectangle) - wood
+        ctx.fillStyle = '#8b7355';
         ctx.fillRect(clockX - 22, clockY, 44, 155);
 
-        // Red trim
-        ctx.strokeStyle = '#4a0000';
+        // Wood trim
+        ctx.strokeStyle = '#6b5344';
         ctx.lineWidth = 2;
         ctx.strokeRect(clockX - 22, clockY, 44, 155);
 
-        // Clock face (dark with red accents)
-        ctx.fillStyle = '#1a0a0a';
+        // Clock face (cream/white)
+        ctx.fillStyle = '#f5f0e6';
         ctx.beginPath();
         ctx.arc(clockX, clockY + 32, 26, 0, Math.PI * 2);
         ctx.fill();
 
-        // Red glow ring
-        ctx.strokeStyle = 'rgba(139, 0, 0, 0.6)';
-        ctx.lineWidth = 2;
+        // Clock rim
+        ctx.strokeStyle = '#a08060';
+        ctx.lineWidth = 3;
         ctx.beginPath();
         ctx.arc(clockX, clockY + 32, 26, 0, Math.PI * 2);
         ctx.stroke();
 
-        // Clock hands (red)
-        ctx.strokeStyle = '#8b0000';
+        // Clock hands (dark)
+        ctx.strokeStyle = '#3a3530';
         ctx.lineWidth = 2;
         ctx.lineCap = 'round';
         // Hour hand
@@ -423,7 +424,7 @@ class Zone {
         ctx.stroke();
 
         // Center dot
-        ctx.fillStyle = '#8b0000';
+        ctx.fillStyle = '#6b5344';
         ctx.beginPath();
         ctx.arc(clockX, clockY + 32, 3, 0, Math.PI * 2);
         ctx.fill();
@@ -439,16 +440,16 @@ class Zone {
             ctx.drawImage(this.chandelierCanvas, chandelierX - 300, chandelierY - 300);
         }
 
-        // Dark chandelier body
-        ctx.fillStyle = '#1a0a0a';
+        // Chandelier body (brass/gold)
+        ctx.fillStyle = '#a08060';
         ctx.beginPath();
         ctx.arc(chandelierX, chandelierY, 12, 0, Math.PI * 2);
         ctx.fill();
 
-        // Red glowing crystals
-        ctx.fillStyle = '#8b0000';
-        ctx.shadowColor = '#ff0000';
-        ctx.shadowBlur = 8;
+        // Light bulbs (warm fluorescent glow)
+        ctx.fillStyle = '#fffbe6';
+        ctx.shadowColor = '#fffbe6';
+        ctx.shadowBlur = 12;
         for (let i = 0; i < 6; i++) {
             const angle = (i / 6) * Math.PI * 2;
             const x = chandelierX + Math.cos(angle) * 24;
@@ -458,6 +459,17 @@ class Zone {
             ctx.fill();
         }
         ctx.shadowBlur = 0;
+
+        // Arms connecting to lights
+        ctx.strokeStyle = '#8b7355';
+        ctx.lineWidth = 2;
+        for (let i = 0; i < 6; i++) {
+            const angle = (i / 6) * Math.PI * 2;
+            ctx.beginPath();
+            ctx.moveTo(chandelierX, chandelierY);
+            ctx.lineTo(chandelierX + Math.cos(angle) * 24, chandelierY + 18);
+            ctx.stroke();
+        }
     }
 
     drawPortraits(ctx, cameraX, cameraY) {
@@ -465,34 +477,35 @@ class Zone {
             const screenX = p.x - cameraX;
             const screenY = p.y - cameraY;
 
-            // Dark frame with red trim
-            ctx.fillStyle = '#0d0505';
+            // Ornate frame (gold/brass)
+            ctx.fillStyle = '#a08060';
             ctx.fillRect(screenX - 42, screenY - 62, 84, 104);
 
-            ctx.strokeStyle = '#4a0000';
+            ctx.strokeStyle = '#c9a54a';
             ctx.lineWidth = 2;
             ctx.strokeRect(screenX - 42, screenY - 62, 84, 104);
 
-            // Inner dark content
-            ctx.fillStyle = '#050505';
-            ctx.fillRect(screenX - 36, screenY - 56, 72, 92);
+            // Inner frame shadow
+            ctx.fillStyle = '#8b7355';
+            ctx.fillRect(screenX - 38, screenY - 58, 76, 96);
 
-            // Mysterious shadowy figure
-            ctx.fillStyle = '#1a0a0a';
-            ctx.beginPath();
-            ctx.arc(screenX, screenY - 22, 16, 0, Math.PI * 2); // Head
-            ctx.fill();
-            ctx.fillRect(screenX - 22, screenY - 2, 44, 34); // Body
+            // Portrait canvas (aged cream)
+            ctx.fillStyle = '#d4c8b0';
+            ctx.fillRect(screenX - 34, screenY - 54, 68, 88);
 
-            // Red glowing eyes on portrait
-            ctx.fillStyle = '#8b0000';
-            ctx.shadowColor = '#ff0000';
-            ctx.shadowBlur = 4;
+            // Faded figure silhouette
+            ctx.fillStyle = '#b5a589';
             ctx.beginPath();
-            ctx.arc(screenX - 5, screenY - 24, 2, 0, Math.PI * 2);
-            ctx.arc(screenX + 5, screenY - 24, 2, 0, Math.PI * 2);
+            ctx.arc(screenX, screenY - 22, 14, 0, Math.PI * 2); // Head
             ctx.fill();
-            ctx.shadowBlur = 0;
+            ctx.fillRect(screenX - 18, screenY - 4, 36, 30); // Body
+
+            // Subtle face features
+            ctx.fillStyle = '#9a8b70';
+            ctx.beginPath();
+            ctx.arc(screenX - 4, screenY - 24, 2, 0, Math.PI * 2);
+            ctx.arc(screenX + 4, screenY - 24, 2, 0, Math.PI * 2);
+            ctx.fill();
         });
     }
 
@@ -501,42 +514,45 @@ class Zone {
         const elevatorX = elevator.x + 60 - cameraX;
         const elevatorY = elevator.y - 20 - cameraY;
 
-        // "OUT OF SERVICE" light (pulsing red)
-        if (elevator.locked) {
-            const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 500);
-            ctx.fillStyle = `rgba(139, 0, 0, ${0.5 + pulse * 0.5})`;
-            ctx.shadowColor = '#ff0000';
-            ctx.shadowBlur = 10 * pulse;
-            ctx.beginPath();
-            ctx.arc(elevatorX, elevatorY, 10, 0, Math.PI * 2);
-            ctx.fill();
-            ctx.shadowBlur = 0;
+        // Floor indicator display
+        ctx.fillStyle = '#3a3530';
+        ctx.fillRect(elevatorX - 25, elevatorY - 35, 50, 25);
+        ctx.fillStyle = '#fffbe6';
+        ctx.font = 'bold 14px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('L', elevatorX, elevatorY - 18);
 
-            // Art deco triangle pattern (dark red)
-            ctx.strokeStyle = '#4a0000';
-            ctx.lineWidth = 2;
-            for (let i = 0; i < 3; i++) {
-                ctx.beginPath();
-                ctx.moveTo(elevatorX - 30 + i * 15, elevatorY - 20);
-                ctx.lineTo(elevatorX - 30 + i * 15 + 7, elevatorY - 35);
-                ctx.lineTo(elevatorX - 30 + i * 15 + 15, elevatorY - 20);
-                ctx.stroke();
-            }
+        // "OUT OF SERVICE" indicator
+        if (elevator.locked) {
+            const pulse = 0.5 + 0.5 * Math.sin(Date.now() / 800);
+            ctx.fillStyle = `rgba(176, 64, 64, ${0.4 + pulse * 0.3})`;
+            ctx.beginPath();
+            ctx.arc(elevatorX, elevatorY + 10, 8, 0, Math.PI * 2);
+            ctx.fill();
+
+            // Call button (inactive)
+            ctx.fillStyle = '#6a6560';
+            ctx.beginPath();
+            ctx.arc(elevatorX - 40, elevatorY, 6, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.beginPath();
+            ctx.arc(elevatorX - 40, elevatorY + 15, 6, 0, Math.PI * 2);
+            ctx.fill();
         }
     }
 }
 
-// Zone definitions
+// Zone definitions - Liminal Hotel
 const ZONES = {
     hub: {
-        name: 'Hotel Lobby',
+        name: 'Lobby',
         width: 1800,
         height: 1400,
         startX: 900,
         startY: 700,
         isHub: true,
-        wallColor: '#0d0d0d',    // Near black
-        floorColor: '#080505',    // Dark with red tint
+        wallColor: '#c9b896',     // Beige walls
+        floorColor: '#b5a589',    // Carpet beige
         totalLevels: 1,
         decorations: {
             clock: { x: 200, y: 200 },
@@ -572,24 +588,24 @@ const ZONES = {
         ],
         portals: [
             // Training room portal
-            { id: 'training', x: 400, y: 900, width: 60, height: 60, label: 'Training' }
+            { id: 'training', x: 400, y: 900, width: 60, height: 80, label: 'Room 101' }
         ],
         npcs: [
-            { x: 900, y: 400, name: 'The Receptionist', color: '#d4a745' }
+            { x: 900, y: 400, name: 'Receptionist', color: '#8b7355' }
         ],
         items: [
-            { id: 'old-key', name: 'Old Key', icon: '🗝️', x: 820, y: 760 },
-            { id: 'energy-tonic', name: 'Energy Tonic', icon: '🧪', x: 1010, y: 760 }
+            { id: 'old-key', name: 'Room Key', icon: '🗝️', x: 820, y: 760 },
+            { id: 'energy-tonic', name: 'Water Bottle', icon: '💧', x: 1010, y: 760 }
         ]
     },
     training: {
-        name: 'Training',
+        name: 'Room 101',
         width: 1000,
         height: 800,
         startX: 500,
         startY: 700,
-        wallColor: '#0a0a0a',      // Near black
-        floorColor: '#050505',     // Almost pure black
+        wallColor: '#c9b896',     // Beige walls
+        floorColor: '#7a8b6e',    // Green carpet (different room, different carpet)
         totalLevels: 1,
         walls: [
             // Outer boundary
@@ -599,14 +615,14 @@ const ZONES = {
             { x: 960, y: 0, width: 40, height: 800 }
         ],
         portals: [
-            { id: 'hub', x: 470, y: 720, width: 60, height: 60, label: 'Return to Lobby' }
+            { id: 'hub', x: 470, y: 720, width: 60, height: 80, label: 'Lobby' }
         ],
         enemies: [
             { x: 500, y: 400, stationary: true, passive: true, hp: 100, maxHp: 100 }
         ],
         items: [
-            { id: 'practice-blade', name: 'Practice Blade', icon: '🗡️', x: 530, y: 520 },
-            { id: 'iron-ore', name: 'Iron Ore', icon: '⛓️', x: 420, y: 320 }
+            { id: 'flashlight', name: 'Flashlight', icon: '🔦', x: 530, y: 520 },
+            { id: 'battery', name: 'Battery', icon: '🔋', x: 420, y: 320 }
         ]
     }
 };

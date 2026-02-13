@@ -47,8 +47,8 @@ class Game {
         this.onPlayerDeath = null; // Callback for when the local player dies
         this.onPlayerFire = null; // Callback for when local player fires (to sync to others)
 
-        // Screen flash effect for damage feedback
-        this.screenFlash = { active: false, timer: 0, color: 'rgba(255, 0, 0, 0.3)' };
+        // Screen flash effect for damage feedback (muted for liminal aesthetic)
+        this.screenFlash = { active: false, timer: 0, color: 'rgba(176, 64, 64, 0.25)' };
         
         // Performance optimization: cache darkness overlay canvas
         this.darknessCanvas = null;
@@ -229,18 +229,18 @@ class Game {
         this.vignetteCanvas.height = this.canvas.height;
         const vctx = this.vignetteCanvas.getContext('2d');
 
-        // Create radial gradient for vignette effect
+        // Liminal vignette - subtle, warm tinted edges
         const centerX = this.canvas.width / 2;
         const centerY = this.canvas.height / 2;
-        const outerRadius = Math.max(this.canvas.width, this.canvas.height) * 0.7;
+        const outerRadius = Math.max(this.canvas.width, this.canvas.height) * 0.75;
 
         const gradient = vctx.createRadialGradient(
-            centerX, centerY, this.canvas.width * 0.2,
+            centerX, centerY, this.canvas.width * 0.3,
             centerX, centerY, outerRadius
         );
         gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
-        gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.2)');
-        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
+        gradient.addColorStop(0.6, 'rgba(60, 50, 40, 0.1)');
+        gradient.addColorStop(1, 'rgba(60, 50, 40, 0.4)');
 
         vctx.fillStyle = gradient;
         vctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
@@ -402,7 +402,7 @@ class Game {
         // Check if local player took damage (from enemies or other sources)
         if (this.localPlayer && !this.localPlayer.isDead) {
             if (this.localPlayer.hp < hpBeforeUpdate) {
-                this.screenFlash = { active: true, timer: 0.1, color: 'rgba(255, 0, 0, 0.3)' };
+                this.screenFlash = { active: true, timer: 0.1, color: 'rgba(176, 64, 64, 0.25)' };
             }
             // Check if player just died
             if (this.localPlayer.hp <= 0) {
@@ -919,9 +919,9 @@ class Game {
             this.ctx.drawImage(this.vignetteCanvas, 0, 0);
         }
 
-        // Draw FPS counter (top-left, small, noir style)
+        // Draw FPS counter (top-left, small, muted)
         const fps = Math.round(1 / (this.deltaTime || 0.016));
-        this.ctx.fillStyle = fps < 30 ? '#8b0000' : '#4a0000';
+        this.ctx.fillStyle = fps < 30 ? '#b04040' : '#8a8580';
         this.ctx.font = '11px monospace';
         this.ctx.textAlign = 'left';
         this.ctx.fillText(`FPS: ${fps}`, 10, 20);

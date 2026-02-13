@@ -120,56 +120,53 @@ class Enemy {
             const size = this.width * 1.5;
             ctx.drawImage(sprite, screenX - size/2, screenY - size/2, size, size);
         } else {
-            // Noir style fallback - shadowy creature with red eyes
-            const bodyColor = typeof COLORS !== 'undefined' ? COLORS.ENEMY_BODY : '#2d0a0a';
-            const eyeColor = typeof COLORS !== 'undefined' ? COLORS.ENEMY_EYES : '#ff0000';
+            // Liminal style - uncanny, muted creature
+            const bodyColor = typeof COLORS !== 'undefined' ? COLORS.ENEMY_BODY : '#5c4a4a';
+            const eyeColor = typeof COLORS !== 'undefined' ? COLORS.ENEMY_EYES : '#2a2a2a';
 
             // Shadow beneath
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
+            ctx.fillStyle = 'rgba(40, 35, 25, 0.4)';
             ctx.beginPath();
             ctx.ellipse(screenX, screenY + this.width/2 + 4, this.width/2, 4, 0, 0, Math.PI * 2);
             ctx.fill();
 
-            // Body - dark menacing shape
-            ctx.fillStyle = this.stunned ? '#1a1a1a' : bodyColor;
+            // Body - muted, unsettling shape
+            ctx.fillStyle = this.stunned ? '#8a8580' : bodyColor;
             ctx.beginPath();
             ctx.arc(screenX, screenY, this.width / 2, 0, Math.PI * 2);
             ctx.fill();
 
-            // Darker inner shadow
+            // Subtle inner shadow
             const gradient = ctx.createRadialGradient(screenX, screenY, 0, screenX, screenY, this.width/2);
-            gradient.addColorStop(0, 'rgba(0, 0, 0, 0.4)');
+            gradient.addColorStop(0, 'rgba(0, 0, 0, 0.2)');
             gradient.addColorStop(1, 'rgba(0, 0, 0, 0)');
             ctx.fillStyle = gradient;
             ctx.beginPath();
             ctx.arc(screenX, screenY, this.width / 2, 0, Math.PI * 2);
             ctx.fill();
 
-            // Red outline glow
-            ctx.strokeStyle = 'rgba(139, 0, 0, 0.5)';
+            // Subtle outline
+            ctx.strokeStyle = 'rgba(80, 70, 55, 0.4)';
             ctx.lineWidth = 2;
             ctx.beginPath();
             ctx.arc(screenX, screenY, this.width / 2, 0, Math.PI * 2);
             ctx.stroke();
 
-            // Glowing red eyes
+            // Dark, empty eyes (unsettling)
             ctx.fillStyle = eyeColor;
-            ctx.shadowColor = eyeColor;
-            ctx.shadowBlur = 8;
             ctx.beginPath();
             ctx.arc(screenX - 4, screenY - 2, 2.5, 0, Math.PI * 2);
             ctx.arc(screenX + 4, screenY - 2, 2.5, 0, Math.PI * 2);
             ctx.fill();
-            ctx.shadowBlur = 0;
         }
 
-        // HP bar (red theme)
+        // HP bar (muted colors)
         const barWidth = 36;
         const barHeight = 5;
         const hpRatio = this.hp / this.maxHp;
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+        ctx.fillStyle = 'rgba(60, 50, 40, 0.7)';
         ctx.fillRect(screenX - barWidth / 2, screenY - 24, barWidth, barHeight);
-        ctx.fillStyle = '#8b0000';
+        ctx.fillStyle = '#b04040';
         ctx.fillRect(screenX - barWidth / 2, screenY - 24, barWidth * hpRatio, barHeight);
 
         ctx.restore();

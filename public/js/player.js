@@ -252,7 +252,7 @@ class Player {
     }
 
     /**
-     * Draw player using canvas primitives (noir style fallback)
+     * Draw player using canvas primitives (liminal hotel style)
      */
     drawFallback(ctx, screenX, screenY) {
         const now = performance.now() / 1000;
@@ -260,71 +260,60 @@ class Player {
         const bob = Math.sin(now * 10) * moveIntensity * 2;
         const bodyY = screenY + bob;
 
-        // Noir color palette
-        const primaryColor = typeof COLORS !== 'undefined' ? COLORS.PLAYER_BODY : '#1a1a2e';
-        const accentColor = typeof COLORS !== 'undefined' ? COLORS.BLOOD_RED : '#8b0000';
-        const shadowColor = typeof COLORS !== 'undefined' ? COLORS.SHADOW : 'rgba(0, 0, 0, 0.8)';
+        // Liminal color palette - muted, institutional
+        const primaryColor = typeof COLORS !== 'undefined' ? COLORS.PLAYER_BODY : '#4a5568';
+        const accentColor = typeof COLORS !== 'undefined' ? COLORS.PLAYER_ACCENT : '#6b7280';
+        const shadowColor = typeof COLORS !== 'undefined' ? COLORS.SHADOW_DEEP : 'rgba(40, 35, 25, 0.5)';
 
-        // Body shadow (larger for bigger player)
+        // Body shadow
         ctx.fillStyle = shadowColor;
         ctx.beginPath();
         ctx.ellipse(screenX, screenY + 16, 14, 6, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Torso - flash red when taking damage, noir colors
+        // Torso - flash when taking damage
         let bodyColor = primaryColor;
         if (this.damageFlashTimer > 0) {
-            bodyColor = '#ff0000';
+            bodyColor = '#b04040';
         } else if (this.stunned) {
-            bodyColor = '#333333';
+            bodyColor = '#8a8580';
         }
         ctx.fillStyle = bodyColor;
         ctx.beginPath();
         ctx.ellipse(screenX, bodyY + 2, 14, 11, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Red accent stripe on torso
-        ctx.strokeStyle = accentColor;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(screenX, bodyY - 8);
-        ctx.lineTo(screenX, bodyY + 10);
-        ctx.stroke();
-
         // Subtle outline
-        ctx.strokeStyle = 'rgba(139, 0, 0, 0.5)';
+        ctx.strokeStyle = 'rgba(80, 70, 55, 0.4)';
         ctx.lineWidth = 1.5;
         ctx.beginPath();
         ctx.ellipse(screenX, bodyY + 2, 14, 11, 0, 0, Math.PI * 2);
         ctx.stroke();
 
-        // Head (dark/shadowed)
-        ctx.fillStyle = this.stunned ? '#444' : '#2a2a2a';
+        // Head
+        ctx.fillStyle = this.stunned ? '#9a9590' : '#5a5550';
         ctx.beginPath();
         ctx.arc(screenX, bodyY - 12, 8, 0, Math.PI * 2);
         ctx.fill();
 
-        // Red glowing eyes
-        ctx.fillStyle = accentColor;
-        ctx.shadowColor = accentColor;
-        ctx.shadowBlur = 6;
+        // Eyes (subtle, not glowing)
+        ctx.fillStyle = '#3a3530';
         ctx.beginPath();
         ctx.arc(screenX - 3, bodyY - 12, 1.5, 0, Math.PI * 2);
         ctx.arc(screenX + 3, bodyY - 12, 1.5, 0, Math.PI * 2);
         ctx.fill();
-        ctx.shadowBlur = 0;
 
-        // Facing indicator (subtle red glow direction)
+        // Facing indicator (subtle)
         const dirX = screenX + Math.cos(this.angle) * 10;
         const dirY = bodyY - 12 + Math.sin(this.angle) * 5;
-        ctx.fillStyle = 'rgba(139, 0, 0, 0.4)';
+        ctx.fillStyle = 'rgba(90, 128, 128, 0.4)';
         ctx.beginPath();
         ctx.arc(dirX, dirY, 3, 0, Math.PI * 2);
         ctx.fill();
 
         // Feet (simple walk cycle)
         const stride = Math.sin(now * 16) * moveIntensity * 3.5;
-        ctx.strokeStyle = '#1a1a1a';
+        ctx.strokeStyle = '#4a4540';
         ctx.lineWidth = 3;
         ctx.lineCap = 'round';
         ctx.beginPath();
@@ -354,8 +343,8 @@ class Player {
         const barrelTipX = handX + Math.cos(gunAngle) * gunLength;
         const barrelTipY = handY + Math.sin(gunAngle) * gunLength;
 
-        // Gun body - dark with red accents
-        ctx.strokeStyle = this.gun.reloading ? '#333' : '#1a1a1a';
+        // Gun body - muted colors
+        ctx.strokeStyle = this.gun.reloading ? '#8a8580' : '#4a4540';
         ctx.lineWidth = gunWidth;
         ctx.lineCap = 'round';
         ctx.beginPath();
@@ -363,16 +352,16 @@ class Player {
         ctx.lineTo(barrelTipX, barrelTipY);
         ctx.stroke();
 
-        // Gun barrel highlight (red)
-        ctx.strokeStyle = '#4a0000';
+        // Gun barrel highlight
+        ctx.strokeStyle = '#6b5344';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.moveTo(handX + Math.cos(gunAngle) * 10, handY + Math.sin(gunAngle) * 10);
         ctx.lineTo(barrelTipX, barrelTipY);
         ctx.stroke();
 
-        // Hand on grip (dark)
-        ctx.fillStyle = '#2a2a2a';
+        // Hand on grip
+        ctx.fillStyle = '#5a5550';
         ctx.beginPath();
         ctx.arc(handX, handY, 3, 0, Math.PI * 2);
         ctx.fill();
