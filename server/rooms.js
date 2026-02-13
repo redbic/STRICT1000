@@ -13,12 +13,24 @@ const WebSocket = require('ws');
  */
 
 /**
+ * @typedef {Object} EnemyState
+ * @property {string} id - Enemy ID (e.g., "training-enemy-0")
+ * @property {number} x - X position
+ * @property {number} y - Y position
+ * @property {number} hp - Current HP
+ * @property {number} maxHp - Maximum HP
+ * @property {boolean} [stationary] - Whether enemy is stationary
+ * @property {boolean} [passive] - Whether enemy is passive
+ */
+
+/**
  * @typedef {Object} Room
  * @property {Player[]} players - Players currently in the room
  * @property {boolean} started - Whether the game has started
  * @property {Set<string>} killedEnemies - Set of "zone-enemyId" keys for killed enemies
  * @property {Map<string, NodeJS.Timeout>} respawnTimers - Timers for enemy respawns
  * @property {string|null} hostId - Player ID of the room host (authoritative for enemies)
+ * @property {Map<string, EnemyState[]>} zoneEnemies - Enemy state per zone (server-authoritative)
  */
 
 const MAX_PARTY_SIZE = 6;
@@ -62,6 +74,7 @@ class RoomManager {
       killedEnemies: new Set(),
       respawnTimers: new Map(),
       hostId: null,
+      zoneEnemies: new Map(), // Server-authoritative enemy state per zone
     };
     this.rooms.set(roomId, room);
     return room;
@@ -193,6 +206,97 @@ class RoomManager {
         player.ws.send(payload);
       }
     });
+  }
+
+  /**
+   * Get enemy state for a zone, or null if not initialized
+   * @param {string} roomId
+   * @param {string} zoneId
+   * @returns {EnemyState[]|null}
+   */
+  getZoneEnemies(roomId, zoneId) {
+    const room = this.rooms.get(roomId);
+    if (!room || !room.zoneEnemies) return null;
+    return room.zoneEnemies.get(zoneId) || null;
+  }
+
+  /**
+   * Set enemy state for a zone
+   * @param {string} roomId
+   * @param {string} zoneId
+   * @param {EnemyState[]} enemies
+   */
+  setZoneEnemies(roomId, zoneId, enemies) {
+    const room = this.rooms.get(roomId);
+    if (!room) return;
+    if (!room.zoneEnemies) room.zoneEnemies = new Map();
+    room.zoneEnemies.set(zoneId, enemies);
+  }
+
+  /**
+   * Update a single enemy's state in a zone
+   * @param {string} roomId
+   * @param {string} zoneId
+   * @param {string} enemyId
+   * @param {Partial<EnemyState>} updates
+   * @returns {EnemyState|null} - Updated enemy state or null if not found
+   */
+  updateEnemy(roomId, zoneId, enemyId, updates) {
+    const room = this.rooms.get(roomId);
+    if (!room || !room.zoneEnemies) return null;
+
+    const enemies = room.zoneEnemies.get(zoneId);
+    if (!enemies) return null;
+
+    const enemy = enemies.find(e => e.id === enemyId);
+    if (!enemy) return null;
+
+    Object.assign(enemy, updates);
+    return enemy;
+  }
+
+  /**
+   * Remove an enemy from a zone (when killed)
+   * @param {string} roomId
+   * @param {string} zoneId
+   * @param {string} enemyId
+   * @returns {EnemyState|null} - Removed enemy or null if not found
+   */
+  removeEnemy(roomId, zoneId, enemyId) {
+    const room = this.rooms.get(roomId);
+    if (!room || !room.zoneEnemies) return null;
+
+    const enemies = room.zoneEnemies.get(zoneId);
+    if (!enemies) return null;
+
+    const index = enemies.findIndex(e => e.id === enemyId);
+    if (index === -1) return null;
+
+    const [removed] = enemies.splice(index, 1);
+    return removed;
+  }
+
+  /**
+   * Add an enemy back to a zone (for respawning)
+   * @param {string} roomId
+   * @param {string} zoneId
+   * @param {EnemyState} enemy
+   */
+  addEnemy(roomId, zoneId, enemy) {
+    const room = this.rooms.get(roomId);
+    if (!room) return;
+    if (!room.zoneEnemies) room.zoneEnemies = new Map();
+
+    let enemies = room.zoneEnemies.get(zoneId);
+    if (!enemies) {
+      enemies = [];
+      room.zoneEnemies.set(zoneId, enemies);
+    }
+
+    // Don't add duplicates
+    if (!enemies.some(e => e.id === enemy.id)) {
+      enemies.push(enemy);
+    }
   }
 }
 

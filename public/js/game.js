@@ -247,7 +247,7 @@ class Game {
         vctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
     
-    async init(zoneName, playerName, playerId, characterNum = null) {
+    async init(zoneName, playerName, playerId, characterNum = null, serverEnemies = null) {
         // Load zone from JSON or fallback to ZONES
         const zoneData = await ZoneLoader.getZone(zoneName);
         if (!zoneData) {
@@ -277,9 +277,21 @@ class Game {
             ? CONFIG.ZONE_TRANSITION_GRACE_MS / 1000
             : 0.5;
         this.zoneTransitionGrace = gracePeriod;
-        
-        // Spawn enemies from zone data
-        if (zoneData.enemies && Array.isArray(zoneData.enemies)) {
+
+        // Use server-provided enemy state if available (multiplayer, server-authoritative)
+        // Otherwise fall back to zone data (single-player or legacy)
+        if (serverEnemies && Array.isArray(serverEnemies)) {
+            serverEnemies.forEach(enemyData => {
+                const enemy = new Enemy(enemyData.x, enemyData.y, enemyData.id, {
+                    stationary: enemyData.stationary,
+                    passive: enemyData.passive,
+                    hp: enemyData.hp,
+                    maxHp: enemyData.maxHp
+                });
+                this.enemies.push(enemy);
+            });
+        } else if (zoneData.enemies && Array.isArray(zoneData.enemies)) {
+            // Fallback: spawn enemies from zone data (for initial game start or single-player)
             zoneData.enemies.forEach((enemyData, index) => {
                 const enemyId = `${zoneName}-enemy-${index}`;
                 const enemy = new Enemy(enemyData.x, enemyData.y, enemyId, {
@@ -405,18 +417,10 @@ class Game {
 
         // Enemy AI is now updated in the fixed timestep loop above
 
-        // Check enemy defeats (only authoritative player removes enemies and reports kills)
-        if (this.isHost || this.isZoneHost) {
-            const newlyDead = this.enemies.filter(enemy => enemy.hp <= 0);
-            this.enemies = this.enemies.filter(enemy => enemy.hp > 0);
-
-            newlyDead.forEach(enemy => {
-                if (this.onEnemyKilled) {
-                    this.onEnemyKilled(enemy.id, this.zoneId || 'unknown');
-                }
-            });
-        }
-        // Non-authoritative players: enemy removal is handled by applyEnemySync()
+        // Server-authoritative: enemy deaths are handled by server
+        // Client receives enemy_killed_sync message and removes enemy
+        // Local HP updates come from enemy_state_update messages
+        // No client-side death checking needed
 
         // Check if local player took damage (from enemies or other sources)
         if (this.localPlayer && !this.localPlayer.isDead) {
@@ -537,24 +541,22 @@ class Game {
     applyEnemySync(enemyStates) {
         if (!Array.isArray(enemyStates)) return;
 
-        // Track which enemies are in the sync
-        const syncedIds = new Set(enemyStates.map(s => s.id));
-
+        // Apply position and AI state sync (NOT HP - HP is server-authoritative)
         enemyStates.forEach(state => {
             const enemy = this.enemies.find(e => e.id === state.id);
             if (enemy) {
+                // Position sync
                 enemy.x = state.x;
                 enemy.y = state.y;
-                enemy.hp = state.hp;
-                enemy.maxHp = state.maxHp;
+                // AI state sync (but NOT HP - server handles HP via enemy_state_update)
                 enemy.stunned = state.stunned;
                 enemy.stunnedTime = state.stunnedTime;
                 enemy.attackCooldown = state.attackCooldown;
             }
         });
 
-        // Remove enemies that are dead OR not in sync (killed by authoritative player)
-        this.enemies = this.enemies.filter(e => e.hp > 0 && syncedIds.has(e.id));
+        // Note: Enemy removal is handled by server via enemy_killed_sync
+        // We no longer filter enemies based on sync - server is authoritative
     }
 
     updateProjectiles(dt) {
@@ -569,11 +571,9 @@ class Game {
                         // Create hit spark effect
                         this.createHitSpark(proj.x, proj.y);
 
-                        if (this.isHost || this.isZoneHost) {
-                            // Host or zone host applies damage directly
-                            enemy.takeDamage(proj.damage);
-                        } else if (this.onEnemyDamage) {
-                            // Non-host sends damage to host via network
+                        // Server-authoritative: always send damage to server
+                        // Server updates state and broadcasts to all players
+                        if (this.onEnemyDamage) {
                             this.onEnemyDamage(enemy.id, proj.damage);
                         }
                         proj.alive = false;
@@ -736,10 +736,10 @@ class Game {
         }
     }
 
-    async transitionZone(zoneName, roster = [], localId = '') {
+    async transitionZone(zoneName, roster = [], localId = '', serverEnemies = null) {
         const playerId = localId || (this.localPlayer ? this.localPlayer.id : '');
         const characterNum = this.localPlayer ? this.localPlayer.characterNum : this.localCharacter;
-        await this.init(zoneName, this.localPlayer ? this.localPlayer.username : 'Player', playerId, characterNum);
+        await this.init(zoneName, this.localPlayer ? this.localPlayer.username : 'Player', playerId, characterNum, serverEnemies);
         this.syncMultiplayerPlayers(roster, localId);
     }
 

@@ -296,7 +296,28 @@ function setupNetworkHandlers() {
         // This is for the LOCAL player entering a zone
         if (gameState.game && data.zoneId && data.playerId === gameState.networkManager.playerId) {
             const zonePlayers = data.zonePlayers || [];
-            await gameState.game.transitionZone(data.zoneId, zonePlayers, gameState.networkManager.playerId);
+            const serverEnemies = data.enemies || null; // Server-authoritative enemy state
+
+            // If we're already in this zone (initial game start), just sync enemies
+            // Otherwise, do a full zone transition
+            if (gameState.game.zoneId === data.zoneId && gameState.game.gameStarted) {
+                // Already in this zone - just sync enemies from server
+                if (serverEnemies && Array.isArray(serverEnemies)) {
+                    gameState.game.enemies = serverEnemies.map(enemyData => {
+                        return new Enemy(enemyData.x, enemyData.y, enemyData.id, {
+                            stationary: enemyData.stationary,
+                            passive: enemyData.passive,
+                            hp: enemyData.hp,
+                            maxHp: enemyData.maxHp
+                        });
+                    });
+                }
+                // Sync other players
+                gameState.game.syncMultiplayerPlayers(zonePlayers, gameState.networkManager.playerId);
+            } else {
+                // Different zone - do full transition
+                await gameState.game.transitionZone(data.zoneId, zonePlayers, gameState.networkManager.playerId, serverEnemies);
+            }
 
             // Update our own zone in currentRoomPlayers BEFORE checking zone host status
             const selfInRoster = gameState.currentRoomPlayers.find(p => p.id === gameState.networkManager.playerId);
@@ -360,11 +381,22 @@ function setupNetworkHandlers() {
             // Only respawn if player is in the same zone
             if (gameState.game.zoneId !== data.zone) return;
 
-            // Re-add the enemy to the game
-            // Note: Zone IDs are lowercase keys (e.g., 'hub', 'training')
-            const zoneData = ZONES[data.zone];
+            // Server sends full enemy state in new system
+            if (data.enemy) {
+                const enemyData = data.enemy;
+                const enemy = new Enemy(enemyData.x, enemyData.y, data.enemyId, {
+                    stationary: enemyData.stationary,
+                    passive: enemyData.passive,
+                    hp: enemyData.hp,
+                    maxHp: enemyData.maxHp
+                });
+                gameState.game.enemies.push(enemy);
+                return;
+            }
+
+            // Fallback for legacy respawn format (backward compatibility)
+            const zoneData = typeof ZONES !== 'undefined' ? ZONES[data.zone] : null;
             if (zoneData && zoneData.enemies) {
-                // Find the enemy config - enemyId format: "zonename-enemy-index"
                 const enemyIndex = parseInt(data.enemyId.split('-').pop());
                 if (!isNaN(enemyIndex) && enemyIndex >= 0 && enemyIndex < zoneData.enemies.length) {
                     const enemyConfig = zoneData.enemies[enemyIndex];
@@ -378,6 +410,27 @@ function setupNetworkHandlers() {
                 }
             }
         }
+    };
+
+    // Server-authoritative enemy HP update
+    gameState.networkManager.onEnemyStateUpdate = (data) => {
+        if (!gameState.game || !data.enemyId) return;
+
+        const enemy = gameState.game.enemies.find(e => e.id === data.enemyId);
+        if (enemy) {
+            enemy.hp = data.hp;
+            if (data.maxHp !== undefined) {
+                enemy.maxHp = data.maxHp;
+            }
+        }
+    };
+
+    // Server confirms enemy death - remove from game
+    gameState.networkManager.onEnemyKilledSync = (data) => {
+        if (!gameState.game || !data.enemyId) return;
+        if (data.zone && gameState.game.zoneId !== data.zone) return;
+
+        gameState.game.enemies = gameState.game.enemies.filter(e => e.id !== data.enemyId);
     };
 
     gameState.networkManager.onEnemySync = (data) => {
@@ -397,15 +450,11 @@ function setupNetworkHandlers() {
         }
     };
 
-    gameState.networkManager.onEnemyDamage = (data) => {
-        // Host or zone host receives damage reports from other players
-        const isAuthoritative = gameState.game && (gameState.game.isHost || gameState.game.isZoneHost);
-        if (isAuthoritative && data.enemyId && typeof data.damage === 'number') {
-            const enemy = gameState.game.enemies.find(e => e.id === data.enemyId);
-            if (enemy) {
-                enemy.takeDamage(data.damage);
-            }
-        }
+    // Note: onEnemyDamage is no longer used - server handles all damage
+    // Kept for potential backward compatibility with legacy messages
+    gameState.networkManager.onEnemyDamage = () => {
+        // Server-authoritative: damage is handled server-side now
+        // Client receives enemy_state_update with new HP
     };
 
     gameState.networkManager.onPlayerLeft = (data) => {
@@ -483,15 +532,13 @@ function updateZoneHostStatus() {
         startEnemySyncInterval();
     } else if (!gameState.game.isZoneHost && wasZoneHost && !gameState.game.isHost) {
         console.log('Lost zone host status - sending final enemy sync for handoff');
-        // Send ONE final enemy sync to hand off state to the new authoritative player
-        // This is critical: the main host entering our zone needs our enemy state
+        // Send ONE final enemy sync to hand off position/AI state to the new authoritative player
+        // Note: HP is server-authoritative, so we don't need to include it
         if (gameState.networkManager && gameState.networkManager.connected && gameState.game.enemies) {
             gameState.networkManager.sendEnemySync(gameState.game.enemies.map(e => ({
                 id: e.id,
                 x: e.x,
                 y: e.y,
-                hp: e.hp,
-                maxHp: e.maxHp,
                 stunned: e.stunned,
                 stunnedTime: e.stunnedTime,
                 attackCooldown: e.attackCooldown
@@ -504,19 +551,18 @@ function updateZoneHostStatus() {
 function startEnemySyncInterval() {
     stopEnemySyncInterval();
     gameState.enemySyncInterval = setInterval(() => {
-        // Both main host and zone host should send enemy syncs
+        // Both main host and zone host should send enemy syncs for position/AI state
         // But not during grace period (allows receiving handoff from previous zone host)
         const isAuthoritative = gameState.game && gameState.game.running && (gameState.game.isHost || gameState.game.isZoneHost);
         const inGracePeriod = gameState.game && gameState.game.zoneTransitionGrace > 0;
 
         if (isAuthoritative && !inGracePeriod && gameState.networkManager && gameState.networkManager.connected) {
-            // Always send sync, even if empty (so clients know all enemies are dead)
+            // Sync position and AI state only - HP is server-authoritative
             gameState.networkManager.sendEnemySync(gameState.game.enemies.map(e => ({
                 id: e.id,
                 x: e.x,
                 y: e.y,
-                hp: e.hp,
-                maxHp: e.maxHp,
+                // Note: HP excluded - server is authoritative for HP via enemy_state_update
                 stunned: e.stunned,
                 stunnedTime: e.stunnedTime,
                 attackCooldown: e.attackCooldown
@@ -751,7 +797,18 @@ async function startGame(zoneName) {
 
     const playerId = gameState.networkManager ? gameState.networkManager.playerId : 'player1';
     console.log('Starting game:', { zoneName, playerId, isHost: gameState.currentHostId === playerId, character: gameState.selectedCharacter });
-    await gameState.game.init(zoneName, gameState.currentUsername, playerId, gameState.selectedCharacter);
+
+    // In multiplayer, request zone enter from server to get enemy state
+    // Init with empty enemies - they'll be synced via onZoneEnter
+    if (gameState.networkManager && gameState.networkManager.connected) {
+        // Init without enemies (pass empty array) - server will send state
+        await gameState.game.init(zoneName, gameState.currentUsername, playerId, gameState.selectedCharacter, []);
+        // Request enemy state from server
+        gameState.networkManager.enterZone(zoneName);
+    } else {
+        // No network - fall back to loading enemies from zone data
+        await gameState.game.init(zoneName, gameState.currentUsername, playerId, gameState.selectedCharacter);
+    }
     gameState.game.onPortalEnter = (targetZoneId) => {
         if (gameState.networkManager && gameState.networkManager.connected) {
             gameState.networkManager.enterZone(targetZoneId);

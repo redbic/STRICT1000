@@ -229,6 +229,55 @@ app.post('/api/inventory', async (req, res) => {
 const fs = require('fs').promises;
 const zonesDir = path.join(__dirname, 'public', 'data', 'zones');
 
+// Cache for zone data (to avoid repeated file reads)
+const zoneDataCache = new Map();
+
+/**
+ * Load zone data from JSON file
+ * @param {string} zoneId
+ * @returns {Promise<Object|null>}
+ */
+async function loadZoneData(zoneId) {
+  if (zoneDataCache.has(zoneId)) {
+    return zoneDataCache.get(zoneId);
+  }
+
+  try {
+    const filePath = path.join(zonesDir, `${zoneId}.json`);
+    const data = await fs.readFile(filePath, 'utf8');
+    const parsed = JSON.parse(data);
+    zoneDataCache.set(zoneId, parsed);
+    return parsed;
+  } catch (error) {
+    if (error.code !== 'ENOENT') {
+      console.error(`Failed to load zone ${zoneId}:`, error);
+    }
+    return null;
+  }
+}
+
+/**
+ * Initialize enemy state for a zone from zone data
+ * @param {string} zoneId
+ * @param {Object} zoneData
+ * @returns {Array}
+ */
+function createEnemyStateFromZone(zoneId, zoneData) {
+  if (!zoneData || !Array.isArray(zoneData.enemies)) {
+    return [];
+  }
+
+  return zoneData.enemies.map((enemyData, index) => ({
+    id: `${zoneId}-enemy-${index}`,
+    x: enemyData.x,
+    y: enemyData.y,
+    hp: enemyData.hp || 100,
+    maxHp: enemyData.maxHp || enemyData.hp || 100,
+    stationary: enemyData.stationary || false,
+    passive: enemyData.passive || false,
+  }));
+}
+
 // Save zone data
 app.post('/api/zones/:zoneId', async (req, res) => {
   const zoneId = normalizeSafeString(req.params.zoneId);
@@ -578,10 +627,8 @@ function handleGameStart(ws) {
 // Zone Transition Pattern:
 // Client initiates zone_enter, server validates and broadcasts player_zone to room,
 // then sends zone_enter back to the client with list of players in that zone.
-// The client has a 500ms grace period (zoneTransitionGrace) during which it will
-// accept enemy syncs even if it's the authoritative host - this allows the previous
-// zone host to hand off their enemy state during transitions.
-function handleZoneEnter(ws, data) {
+// Server is authoritative for enemy state - sends current enemy HP when player enters zone.
+async function handleZoneEnter(ws, data) {
   if (!ws.roomId || !data.zoneId) {
     debugLog('zone_enter', 'missing roomId or zoneId');
     return;
@@ -598,6 +645,21 @@ function handleZoneEnter(ws, data) {
   const player = room.players.find(p => p.id === ws.playerId);
   if (player) player.zone = zoneId;
 
+  // Initialize enemy state for this zone if not already done
+  let enemies = rooms.getZoneEnemies(ws.roomId, zoneId);
+  if (!enemies) {
+    const zoneData = await loadZoneData(zoneId);
+    enemies = createEnemyStateFromZone(zoneId, zoneData);
+    rooms.setZoneEnemies(ws.roomId, zoneId, enemies);
+    debugLog('zone_enter', `initialized ${enemies.length} enemies for zone ${zoneId}`);
+  }
+
+  // Filter out killed enemies that haven't respawned yet
+  const aliveEnemies = enemies.filter(e => {
+    const enemyKey = `${zoneId}-${e.id}`;
+    return !room.killedEnemies.has(enemyKey);
+  });
+
   rooms.broadcastToRoom(ws.roomId, {
     type: 'player_zone',
     playerId: ws.playerId,
@@ -608,58 +670,26 @@ function handleZoneEnter(ws, data) {
     .filter(p => p.zone === zoneId && p.id !== ws.playerId)
     .map(p => ({ id: p.id, username: p.username, zone: p.zone }));
 
+  // Send zone enter with current enemy state
   safeSend(ws, {
     type: 'zone_enter',
     zoneId,
     playerId: ws.playerId,
     zonePlayers: zoneMates,
+    enemies: aliveEnemies, // Server-authoritative enemy state
   });
 }
 
 async function handleEnemyKilled(ws, data) {
+  // Legacy handler - enemy kills are now handled server-side when HP reaches 0
+  // This is kept for backward compatibility but shouldn't be called in the new system
   const { enemyId, zone } = data;
   const zoneKey = (typeof zone === 'string' ? zone.trim().toLowerCase() : '') || 'unknown';
 
   if (!ws.roomId || !ws.username || !enemyId || typeof enemyId !== 'string') return;
 
-  const room = rooms.getRoom(ws.roomId);
-  if (!room) return;
-
-  const enemyKey = `${zoneKey}-${enemyId}`;
-  if (room.killedEnemies.has(enemyKey)) return;
-
-  room.killedEnemies.add(enemyKey);
-
-  const newBalance = await currency.addBalance(
-    pool, ws.username, ENEMY_KILL_REWARD, 'enemy_kill',
-    { game: 'strict1000', enemy: enemyId, zone: zoneKey }
-  );
-
-  if (newBalance !== null) {
-    safeSend(ws, { type: 'balance_update', balance: newBalance });
-  }
-
-  // Respawn timer for all zones
-  const respawnDelay = ENEMY_RESPAWN_DELAY_MS;
-  if (room.respawnTimers.has(enemyKey)) {
-    clearTimeout(room.respawnTimers.get(enemyKey));
-  }
-
-  const roomId = ws.roomId;
-  const timerId = setTimeout(() => {
-    const currentRoom = rooms.getRoom(roomId);
-    if (!currentRoom) return;
-
-    currentRoom.killedEnemies.delete(enemyKey);
-    rooms.broadcastToRoom(roomId, {
-      type: 'enemy_respawn',
-      enemyId,
-      zone: zoneKey,
-    });
-    currentRoom.respawnTimers.delete(enemyKey);
-  }, respawnDelay);
-
-  room.respawnTimers.set(enemyKey, timerId);
+  // Delegate to the new server-side death handler
+  await handleEnemyDeath(ws.roomId, zoneKey, enemyId, ws.username);
 }
 
 function handleEnemySync(ws, data) {
@@ -705,18 +735,98 @@ function handleEnemyDamage(ws, data) {
   const sender = room.players.find(p => p.id === ws.playerId);
   if (!sender) return;
 
-  // Find the zone host for sender's zone
-  const zoneHost = getZoneHost(room, sender.zone);
+  const zoneId = sender.zone;
 
-  // Route damage to zone host (if they exist and aren't the sender)
-  if (zoneHost && zoneHost.id !== ws.playerId) {
-    safeSend(zoneHost.ws, {
-      type: 'enemy_damage',
-      enemyId: data.enemyId,
-      damage: data.damage,
-      attackerId: ws.playerId,
-    });
+  // Update server-side enemy state
+  const enemy = rooms.updateEnemy(ws.roomId, zoneId, data.enemyId, {});
+  if (!enemy) {
+    debugLog('enemy_damage', 'enemy not found', { enemyId: data.enemyId, zone: zoneId });
+    return;
   }
+
+  // Apply damage on server
+  enemy.hp = Math.max(0, enemy.hp - data.damage);
+  debugLog('enemy_damage', `${data.enemyId} took ${data.damage} damage, hp: ${enemy.hp}`);
+
+  // Broadcast updated enemy state to ALL players in zone
+  broadcastToZone(room, zoneId, {
+    type: 'enemy_state_update',
+    enemyId: data.enemyId,
+    hp: enemy.hp,
+    maxHp: enemy.maxHp,
+  });
+
+  // If enemy died, handle it server-side
+  if (enemy.hp <= 0) {
+    handleEnemyDeath(ws.roomId, zoneId, data.enemyId, ws.username);
+  }
+}
+
+/**
+ * Handle enemy death server-side
+ */
+async function handleEnemyDeath(roomId, zoneId, enemyId, killerUsername) {
+  const room = rooms.getRoom(roomId);
+  if (!room) return;
+
+  const enemyKey = `${zoneId}-${enemyId}`;
+  if (room.killedEnemies.has(enemyKey)) return; // Already dead
+
+  room.killedEnemies.add(enemyKey);
+
+  // Remove enemy from active state
+  const removedEnemy = rooms.removeEnemy(roomId, zoneId, enemyId);
+
+  // Broadcast enemy death to all players in zone
+  broadcastToZone(room, zoneId, {
+    type: 'enemy_killed_sync',
+    enemyId,
+    zone: zoneId,
+  });
+
+  // Award coins to killer if we can find their socket
+  for (const player of room.players) {
+    if (player.username === killerUsername) {
+      const newBalance = await currency.addBalance(
+        pool, killerUsername, ENEMY_KILL_REWARD, 'enemy_kill',
+        { game: 'strict1000', enemy: enemyId, zone: zoneId }
+      );
+      if (newBalance !== null) {
+        safeSend(player.ws, { type: 'balance_update', balance: newBalance });
+      }
+      break;
+    }
+  }
+
+  // Set up respawn timer
+  if (room.respawnTimers.has(enemyKey)) {
+    clearTimeout(room.respawnTimers.get(enemyKey));
+  }
+
+  const timerId = setTimeout(() => {
+    const currentRoom = rooms.getRoom(roomId);
+    if (!currentRoom) return;
+
+    currentRoom.killedEnemies.delete(enemyKey);
+
+    // Re-add enemy with full HP
+    if (removedEnemy) {
+      removedEnemy.hp = removedEnemy.maxHp;
+      rooms.addEnemy(roomId, zoneId, removedEnemy);
+    }
+
+    // Broadcast respawn to all players in zone
+    broadcastToZone(currentRoom, zoneId, {
+      type: 'enemy_respawn',
+      enemyId,
+      zone: zoneId,
+      enemy: removedEnemy, // Send full enemy state
+    });
+
+    currentRoom.respawnTimers.delete(enemyKey);
+  }, ENEMY_RESPAWN_DELAY_MS);
+
+  room.respawnTimers.set(enemyKey, timerId);
 }
 
 function handlePlayerFire(ws, data) {

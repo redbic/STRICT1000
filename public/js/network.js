@@ -19,6 +19,8 @@ class NetworkManager {
         this.onRoomList = null; // Callback for available room list
         this.onPlayerZoneChange = null; // Callback when OTHER player changes zone
         this.onPlayerFire = null; // Callback when another player fires
+        this.onEnemyStateUpdate = null; // Callback for server-authoritative enemy HP update
+        this.onEnemyKilledSync = null; // Callback when server confirms enemy death
     }
     
     connect() {
@@ -109,6 +111,12 @@ class NetworkManager {
                 break;
             case 'player_fire':
                 if (this.onPlayerFire) this.onPlayerFire(data);
+                break;
+            case 'enemy_state_update':
+                if (this.onEnemyStateUpdate) this.onEnemyStateUpdate(data);
+                break;
+            case 'enemy_killed_sync':
+                if (this.onEnemyKilledSync) this.onEnemyKilledSync(data);
                 break;
         }
     }
