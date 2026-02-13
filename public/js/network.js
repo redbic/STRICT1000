@@ -103,17 +103,18 @@ class NetworkManager {
         }
     }
     
-    joinRoom(roomId, playerId, username) {
+    joinRoom(roomId, playerId, username, characterNum = 1) {
         if (!this.connected) return;
-        
+
         this.roomId = roomId;
         this.playerId = playerId;
-        
+
         this.send({
             type: 'join_room',
             roomId: roomId,
             playerId: playerId,
-            username: username
+            username: username,
+            character: characterNum
         });
     }
     

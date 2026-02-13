@@ -17,6 +17,7 @@ let enemySyncInterval = null; // Track enemy sync interval
 let currentHostId = null; // Track the current host ID across game creation
 let browseManager = null; // Separate connection for browsing room list
 let inventorySaveTimeout = null;
+let selectedCharacter = 1; // Default to character 1 (range: 1-7 for players)
 
 // Helper function to update balance display
 function updateBalanceDisplay(balance) {
@@ -24,6 +25,81 @@ function updateBalanceDisplay(balance) {
     const hudBalanceEl = document.getElementById('hudBalanceAmount');
     if (balanceEl) balanceEl.textContent = Number(balance).toFixed(2);
     if (hudBalanceEl) hudBalanceEl.textContent = Number(balance).toFixed(2);
+}
+
+// Initialize character selection grid
+function initCharacterSelector() {
+    const grid = document.getElementById('characterGrid');
+    if (!grid) return;
+
+    grid.innerHTML = '';
+
+    // Characters 1-7 are for players
+    for (let i = 1; i <= 7; i++) {
+        const option = document.createElement('div');
+        option.className = 'character-option' + (i === selectedCharacter ? ' selected' : '');
+        option.dataset.character = i;
+
+        // Create canvas for character preview
+        const canvas = document.createElement('canvas');
+        canvas.width = 48;  // 16 * 3 scale
+        canvas.height = 64; // 32 * 2 scale (partial height for preview)
+        option.appendChild(canvas);
+
+        // Draw character preview
+        drawCharacterPreview(canvas, i);
+
+        option.addEventListener('click', () => selectCharacter(i));
+        grid.appendChild(option);
+    }
+}
+
+// Draw a character preview on a canvas
+function drawCharacterPreview(canvas, characterNum) {
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = false;
+
+    // Check if character sprites are loaded
+    if (typeof characterSprites === 'undefined' || !characterSprites || !characterSprites.loaded) {
+        // Fallback: draw a colored circle
+        const colors = ['#e74c3c', '#3498db', '#2ecc71', '#f1c40f', '#9b59b6', '#1abc9c', '#e67e22'];
+        ctx.fillStyle = colors[(characterNum - 1) % colors.length];
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, canvas.height / 2, 16, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#333';
+        ctx.font = '14px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(characterNum, canvas.width / 2, canvas.height / 2 + 5);
+        return;
+    }
+
+    const charName = 'character_' + characterNum.toString().padStart(2, '0');
+    const sprite = characterSprites.sprites.get(charName);
+    if (!sprite) return;
+
+    // Draw idle_down frame 0
+    const frameWidth = 16;
+    const frameHeight = 32;
+    const srcX = 18 * frameWidth; // idle_down starts at frame 18
+    const srcY = 1 * frameHeight; // row 1 is idle
+
+    ctx.drawImage(
+        sprite.image,
+        srcX, srcY, frameWidth, frameHeight,
+        0, 0, canvas.width, canvas.height
+    );
+}
+
+// Select a character
+function selectCharacter(num) {
+    selectedCharacter = num;
+    localStorage.setItem('selectedCharacter', num);
+
+    // Update UI
+    document.querySelectorAll('.character-option').forEach(opt => {
+        opt.classList.toggle('selected', parseInt(opt.dataset.character) === num);
+    });
 }
 
 // Screen management
@@ -44,6 +120,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         document.getElementById('username').value = savedUsername;
     }
 
+    // Check for saved character selection
+    const savedCharacter = localStorage.getItem('selectedCharacter');
+    if (savedCharacter) {
+        selectedCharacter = parseInt(savedCharacter) || 1;
+        // Clamp to valid range (1-7 for players)
+        if (selectedCharacter < 1 || selectedCharacter > 7) {
+            selectedCharacter = 1;
+        }
+    }
+
     // Load tilesets and character sprites in the background
     try {
         if (typeof initTilesets === 'function') {
@@ -57,6 +143,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     } catch (err) {
         console.warn('Failed to load tilesets/sprites, will use fallback rendering:', err);
     }
+
+    // Initialize character selection grid after sprites are loaded
+    initCharacterSelector();
 });
 
 function setupEventListeners() {
@@ -115,8 +204,8 @@ function setupEventListeners() {
                 
                 const roomId = 'room-' + Math.random().toString(36).substring(2, 11);
                 const playerId = 'player-' + Math.random().toString(36).substring(2, 11);
-                
-                networkManager.joinRoom(roomId, playerId, username);
+
+                networkManager.joinRoom(roomId, playerId, username, selectedCharacter);
                 
                 document.getElementById('roomCode').textContent = roomId;
                 
@@ -244,7 +333,8 @@ function setupNetworkHandlers() {
                     game.zone.startY,
                     color,
                     data.playerId,
-                    playerInfo.username
+                    playerInfo.username,
+                    playerInfo.character
                 );
                 game.players.push(newPlayer);
             }
@@ -498,9 +588,9 @@ async function joinExistingRoom(roomId) {
             await networkManager.connect();
             
             const playerId = 'player-' + Math.random().toString(36).substring(2, 11);
-            
-            networkManager.joinRoom(roomId, playerId, currentUsername);
-            
+
+            networkManager.joinRoom(roomId, playerId, currentUsername, selectedCharacter);
+
             document.getElementById('roomCode').textContent = roomId;
             
             setupNetworkHandlers();
@@ -630,8 +720,8 @@ function startGame(zoneName) {
     }
 
     const playerId = networkManager ? networkManager.playerId : 'player1';
-    console.log('Starting game:', { zoneName, playerId, isHost: currentHostId === playerId });
-    game.init(zoneName, currentUsername, playerId);
+    console.log('Starting game:', { zoneName, playerId, isHost: currentHostId === playerId, character: selectedCharacter });
+    game.init(zoneName, currentUsername, playerId, selectedCharacter);
     game.onPortalEnter = (targetZoneId) => {
         if (networkManager && networkManager.connected) {
             networkManager.enterZone(targetZoneId);

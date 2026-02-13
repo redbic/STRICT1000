@@ -20,12 +20,13 @@ class Player {
     /**
      * Create a new player
      * @param {number} x - Initial x position
-     * @param {number} y - Initial y position  
+     * @param {number} y - Initial y position
      * @param {string} color - Hex color code for player
      * @param {string} id - Unique player identifier
      * @param {string} username - Display name for player
+     * @param {number} characterNum - Character sprite number (1-7 for players)
      */
-    constructor(x, y, color, id, username) {
+    constructor(x, y, color, id, username, characterNum = null) {
         this.x = x;
         this.y = y;
         this.width = PLAYER_SIZE;
@@ -35,6 +36,8 @@ class Player {
         this.username = username || 'Player';
         this.avatarUrl = '';
         this.avatarImg = null;
+        // Character sprite number (1-7 for players, 8-20 reserved for NPCs)
+        this.characterNum = (characterNum && characterNum >= 1 && characterNum <= 7) ? characterNum : null;
         
         // Physics
         this.velocityX = 0;
@@ -258,13 +261,14 @@ class Player {
             animState = 'idle_' + (this.lastDirection || 'down');
         }
 
-        // Assign a character based on player ID hash (consistent per player)
+        // Use assigned character (1-7) or fall back to hash for legacy/NPCs
         if (!this.characterNum) {
             let hash = 0;
             for (let i = 0; i < this.id.length; i++) {
                 hash = ((hash << 5) - hash) + this.id.charCodeAt(i);
             }
-            this.characterNum = (Math.abs(hash) % 20) + 1;
+            // Fall back to characters 1-7 for players without explicit selection
+            this.characterNum = (Math.abs(hash) % 7) + 1;
         }
         const charName = 'character_' + this.characterNum.toString().padStart(2, '0');
 

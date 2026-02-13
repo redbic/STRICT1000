@@ -78,7 +78,8 @@ function setupNetworkCallbacks(networkManager, state, handlers = {}) {
           state.game.zone.startY,
           color,
           data.playerId,
-          playerInfo.username
+          playerInfo.username,
+          playerInfo.character
         );
         state.game.players.push(newPlayer);
       }

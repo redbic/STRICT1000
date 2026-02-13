@@ -246,14 +246,19 @@ class Game {
         vctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
     
-    init(zoneName, playerName, playerId) {
+    init(zoneName, playerName, playerId, characterNum = null) {
         // Load zone
         const zoneData = ZONES[zoneName];
         if (!zoneData) {
             console.error('Zone not found:', zoneName);
             return;
         }
-        
+
+        // Store character selection for local player
+        if (characterNum) {
+            this.localCharacter = characterNum;
+        }
+
         this.zone = new Zone(zoneData);
         this.zoneId = zoneName; // Store the zone key for network matching
         this.players = [];
@@ -286,7 +291,8 @@ class Game {
             this.zone.startY,
             colors[0],
             playerId || 'player1',
-            playerName
+            playerName,
+            this.localCharacter
         );
         this.players.push(this.localPlayer);
         this.renderInventoryUI();
@@ -719,7 +725,8 @@ class Game {
 
     transitionZone(zoneName, roster = [], localId = '') {
         const playerId = localId || (this.localPlayer ? this.localPlayer.id : '');
-        this.init(zoneName, this.localPlayer ? this.localPlayer.username : 'Player', playerId);
+        const characterNum = this.localPlayer ? this.localPlayer.characterNum : this.localCharacter;
+        this.init(zoneName, this.localPlayer ? this.localPlayer.username : 'Player', playerId, characterNum);
         this.syncMultiplayerPlayers(roster, localId);
     }
 
@@ -738,7 +745,8 @@ class Game {
                 this.zone.startY + 40,
                 color,
                 playerInfo.id,
-                playerInfo.username
+                playerInfo.username,
+                playerInfo.character
             );
             this.players.push(remotePlayer);
         });

@@ -89,6 +89,7 @@ class RoomManager {
       id: p.id,
       username: p.username,
       zone: p.zone,
+      character: p.character || 1,
     }));
   }
 

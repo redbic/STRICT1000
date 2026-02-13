@@ -379,7 +379,7 @@ wss.on('connection', (ws, request) => {
 });
 
 function handleJoinRoom(ws, data) {
-  const { roomId, playerId, username } = data;
+  const { roomId, playerId, username, character } = data;
 
   if (!isValidRoomId(roomId) || !isValidPlayerId(playerId) || !isValidUsername(username)) {
     return;
@@ -388,6 +388,10 @@ function handleJoinRoom(ws, data) {
   const nRoomId = normalizeSafeString(roomId);
   const nPlayerId = normalizeSafeString(playerId);
   const nUsername = normalizeSafeString(username);
+  // Validate character number (1-7 for players)
+  const nCharacter = (typeof character === 'number' && character >= 1 && character <= 7)
+    ? character
+    : 1;
 
   if (!rooms.hasRoom(nRoomId)) {
     rooms.createRoom(nRoomId);
@@ -406,12 +410,14 @@ function handleJoinRoom(ws, data) {
     username: nUsername,
     ws,
     zone: 'hub',
+    character: nCharacter,
   };
 
   rooms.addPlayer(nRoomId, player);
   ws.roomId = nRoomId;
   ws.playerId = nPlayerId;
   ws.username = nUsername;
+  ws.character = nCharacter;
 
   rooms.broadcastToRoom(nRoomId, {
     type: 'room_update',

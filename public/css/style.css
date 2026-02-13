@@ -133,6 +133,61 @@ body {
     background: #fffbe6;
 }
 
+/* Character Selector */
+.character-selector {
+    margin: 15px 0;
+    padding: 15px;
+    background: rgba(212, 200, 176, 0.4);
+    border: 1px solid rgba(139, 115, 85, 0.3);
+    border-radius: 4px;
+}
+
+.character-selector-label {
+    font-size: 14px;
+    color: #5a5550;
+    margin-bottom: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.character-grid {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.character-option {
+    width: 56px;
+    height: 72px;
+    border: 2px solid rgba(139, 115, 85, 0.3);
+    border-radius: 4px;
+    background: rgba(255, 251, 240, 0.8);
+    cursor: pointer;
+    transition: all 0.2s;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.character-option:hover {
+    border-color: rgba(139, 115, 85, 0.6);
+    transform: translateY(-2px);
+    box-shadow: 0 3px 8px rgba(80, 70, 55, 0.2);
+}
+
+.character-option.selected {
+    border-color: #8b7355;
+    border-width: 3px;
+    background: rgba(255, 245, 220, 0.95);
+    box-shadow: 0 0 12px rgba(139, 115, 85, 0.4);
+}
+
+.character-option canvas {
+    image-rendering: pixelated;
+}
+
 .menu-btn {
     padding: 15px 30px;
     font-size: 16px;
