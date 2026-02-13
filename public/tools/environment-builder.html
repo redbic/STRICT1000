@@ -402,16 +402,9 @@
             </label>
             <button onclick="resizeRoom()">Apply Size</button>
             <select id="existingRooms" onchange="loadExistingRoom(this.value)">
-                <option value="">-- Load Existing --</option>
-                <optgroup label="Hardcoded">
-                    <option value="hub">Hub Lobby</option>
-                    <option value="training">Training Room</option>
-                    <option value="elevator">Elevator</option>
-                </optgroup>
-                <optgroup label="Server Zones" id="serverZonesGroup">
-                </optgroup>
+                <option value="">-- Load Zone --</option>
             </select>
-            <button onclick="refreshServerZones()" title="Refresh server zones list">↻</button>
+            <button onclick="refreshServerZones()" title="Refresh zones list">↻</button>
             <button onclick="showLoadModal()">Import Code</button>
             <button class="danger" onclick="clearRoom()">Clear All</button>
             <span style="margin-left:20px;border-left:1px solid #555;padding-left:20px;">
@@ -1286,212 +1279,42 @@ const MYZONE_FLOOR = {
             }
         });
 
-        // Load existing room from predefined data or server
-        async function loadExistingRoom(roomId) {
-            if (!roomId) return;
+        // Load zone from server
+        async function loadExistingRoom(zoneId) {
+            if (!zoneId) return;
 
             // Reset dropdown
             document.getElementById('existingRooms').value = '';
 
-            // Check if it's a server zone
-            if (roomId.startsWith('server:')) {
-                const zoneId = roomId.substring(7);
-                await loadServerZone(zoneId);
-                return;
-            }
-
-            // Fetch room data from track.js definitions
-            const roomDefs = await fetchExistingRooms();
-            const room = roomDefs[roomId];
-
-            if (!room) {
-                alert('Room not found: ' + roomId);
-                return;
-            }
-
-            // Set room dimensions (convert from world units to tiles)
-            const tileWorldSize = 48; // 16px * 3 scale
-            roomWidth = Math.ceil(room.width / tileWorldSize);
-            roomHeight = Math.ceil(room.height / tileWorldSize);
-            document.getElementById('roomWidth').value = roomWidth;
-            document.getElementById('roomHeight').value = roomHeight;
-            document.getElementById('zoneName').value = roomId;
-
-            // Clear existing data
-            roomData = { floor: {}, walls: [], objects: {} };
-
-            // Load floor tiles
-            if (room.floorTiles) {
-                room.floorTiles.forEach(tile => {
-                    const key = `${tile.x},${tile.y}`;
-                    roomData.floor[key] = {
-                        tileset: tile.tileset,
-                        tileX: tile.tileX,
-                        tileY: tile.tileY,
-                        flipH: tile.flipH || false,
-                        flipV: tile.flipV || false
-                    };
-                });
-            }
-
-            // Load objects
-            if (room.objectTiles) {
-                room.objectTiles.forEach(tile => {
-                    const key = `${tile.x},${tile.y}`;
-                    roomData.objects[key] = {
-                        tileset: tile.tileset,
-                        tileX: tile.tileX,
-                        tileY: tile.tileY,
-                        flipH: tile.flipH || false,
-                        flipV: tile.flipV || false,
-                        physical: tile.physical || false
-                    };
-                });
-            }
-
-            // Load walls (convert from world coords)
-            if (room.walls) {
-                roomData.walls = room.walls.slice();
-            }
-
-            // Load all required tilesets
-            const usedTilesets = new Set();
-            Object.values(roomData.floor).forEach(t => usedTilesets.add(t.tileset));
-            Object.values(roomData.objects).forEach(t => usedTilesets.add(t.tileset));
-
-            await Promise.all([...usedTilesets].map(ts => {
-                if (!tilesetImages[ts] && TILESETS[ts]) {
-                    return loadTileset(ts);
-                }
-                return Promise.resolve();
-            }));
-
-            resizeRoom();
-            document.getElementById('statusBar').textContent = `Loaded room: ${room.name}`;
-            setTimeout(updateStatus, 2000);
-        }
-
-        // Fetch existing room definitions (embedded for now, could be from API)
-        async function fetchExistingRooms() {
-            // Hub lobby floor data (from track.js HUB_FLOOR)
-            const HUB_FLOOR_TILES = [
-                { x: 0, y: 14, tileset: 'floors', tileX: 8, tileY: 6, flipV: true },
-                { x: 0, y: 13, tileset: 'floors', tileX: 8, tileY: 7 },
-                { x: 0, y: 12, tileset: 'floors', tileX: 8, tileY: 7 },
-                { x: 0, y: 11, tileset: 'floors', tileX: 8, tileY: 7 },
-                { x: 0, y: 10, tileset: 'floors', tileX: 8, tileY: 7 },
-                { x: 0, y: 9, tileset: 'floors', tileX: 8, tileY: 7 },
-                { x: 0, y: 8, tileset: 'floors', tileX: 8, tileY: 7 },
-                { x: 0, y: 7, tileset: 'floors', tileX: 8, tileY: 7 },
-                { x: 0, y: 6, tileset: 'floors', tileX: 8, tileY: 7 },
-                { x: 0, y: 5, tileset: 'floors', tileX: 8, tileY: 7 },
-                { x: 0, y: 4, tileset: 'floors', tileX: 8, tileY: 7 },
-                { x: 0, y: 3, tileset: 'floors', tileX: 8, tileY: 7 },
-                { x: 0, y: 2, tileset: 'floors', tileX: 8, tileY: 7 },
-                { x: 0, y: 1, tileset: 'floors', tileX: 8, tileY: 7 },
-                { x: 0, y: 0, tileset: 'floors', tileX: 8, tileY: 6 },
-                { x: 19, y: 14, tileset: 'floors', tileX: 9, tileY: 6, flipV: true },
-                { x: 19, y: 0, tileset: 'floors', tileX: 9, tileY: 6 },
-                { x: 1, y: 0, tileset: 'floors', tileX: 9, tileY: 6 },
-                { x: 2, y: 0, tileset: 'floors', tileX: 9, tileY: 6 },
-                { x: 3, y: 0, tileset: 'floors', tileX: 9, tileY: 6 },
-                { x: 4, y: 0, tileset: 'floors', tileX: 9, tileY: 6 },
-                { x: 5, y: 0, tileset: 'floors', tileX: 9, tileY: 6 },
-                { x: 6, y: 0, tileset: 'floors', tileX: 9, tileY: 6 },
-                { x: 7, y: 0, tileset: 'floors', tileX: 9, tileY: 6 },
-                { x: 8, y: 0, tileset: 'floors', tileX: 9, tileY: 6 },
-                { x: 9, y: 0, tileset: 'floors', tileX: 9, tileY: 6 },
-                { x: 10, y: 0, tileset: 'floors', tileX: 9, tileY: 6 },
-                { x: 11, y: 0, tileset: 'floors', tileX: 9, tileY: 6 },
-                { x: 12, y: 0, tileset: 'floors', tileX: 9, tileY: 6 },
-                { x: 13, y: 0, tileset: 'floors', tileX: 9, tileY: 6 },
-                { x: 14, y: 0, tileset: 'floors', tileX: 9, tileY: 6 },
-                { x: 15, y: 0, tileset: 'floors', tileX: 9, tileY: 6 },
-                { x: 16, y: 0, tileset: 'floors', tileX: 9, tileY: 6 },
-                { x: 17, y: 0, tileset: 'floors', tileX: 9, tileY: 6 },
-                { x: 18, y: 0, tileset: 'floors', tileX: 9, tileY: 6 },
-                { x: 20, y: 0, tileset: 'floors', tileX: 8, tileY: 6, flipH: true },
-                { x: 20, y: 14, tileset: 'floors', tileX: 8, tileY: 6, flipH: true, flipV: true }
-            ];
-
-            // Fill in the rest of the hub floor (simplified - interior tiles)
-            for (let y = 1; y < 14; y++) {
-                for (let x = 1; x < 20; x++) {
-                    // Skip if already defined by border
-                    if (!HUB_FLOOR_TILES.find(t => t.x === x && t.y === y)) {
-                        HUB_FLOOR_TILES.push({ x, y, tileset: 'floors', tileX: 9, tileY: 7 });
-                    }
-                }
-                // Right border
-                HUB_FLOOR_TILES.push({ x: 20, y, tileset: 'floors', tileX: 8, tileY: 7, flipH: true });
-            }
-            // Bottom border
-            for (let x = 1; x < 20; x++) {
-                if (!HUB_FLOOR_TILES.find(t => t.x === x && t.y === 14)) {
-                    HUB_FLOOR_TILES.push({ x, y: 14, tileset: 'floors', tileX: 9, tileY: 6, flipV: true });
-                }
-            }
-
-            return {
-                hub: {
-                    name: 'Hub Lobby',
-                    width: 1008,
-                    height: 720,
-                    floorTiles: HUB_FLOOR_TILES,
-                    walls: []
-                },
-                training: {
-                    name: 'Training Room',
-                    width: 1000,
-                    height: 800,
-                    floorTiles: [],  // Uses default carpet
-                    walls: [
-                        { x: 0, y: 0, width: 1000, height: 40 },
-                        { x: 0, y: 0, width: 40, height: 800 },
-                        { x: 0, y: 760, width: 1000, height: 40 },
-                        { x: 960, y: 0, width: 40, height: 800 }
-                    ]
-                },
-                elevator: {
-                    name: 'Elevator',
-                    width: 400,
-                    height: 400,
-                    floorTiles: [],
-                    walls: [
-                        { x: 0, y: 0, width: 400, height: 40 },
-                        { x: 0, y: 0, width: 40, height: 400 },
-                        { x: 0, y: 360, width: 400, height: 40 },
-                        { x: 360, y: 0, width: 40, height: 400 }
-                    ]
-                }
-            };
+            await loadServerZone(zoneId);
         }
 
         // Refresh server zones list
         async function refreshServerZones() {
-            const group = document.getElementById('serverZonesGroup');
-            group.innerHTML = '<option value="" disabled>Loading...</option>';
+            const select = document.getElementById('existingRooms');
+            select.innerHTML = '<option value="">-- Load Zone --</option><option value="" disabled>Loading...</option>';
 
             try {
                 const response = await fetch('/api/zones');
                 if (response.ok) {
-                    const zones = await response.json();
-                    group.innerHTML = '';
+                    const data = await response.json();
+                    const zones = data.zones || data;
+                    select.innerHTML = '<option value="">-- Load Zone --</option>';
                     if (zones.length === 0) {
-                        group.innerHTML = '<option value="" disabled>No saved zones</option>';
+                        select.innerHTML += '<option value="" disabled>No saved zones</option>';
                     } else {
                         zones.forEach(zone => {
                             const opt = document.createElement('option');
-                            opt.value = 'server:' + zone;
+                            opt.value = zone;
                             opt.textContent = zone;
-                            group.appendChild(opt);
+                            select.appendChild(opt);
                         });
                     }
                 } else {
-                    group.innerHTML = '<option value="" disabled>Failed to load</option>';
+                    select.innerHTML = '<option value="">-- Load Zone --</option><option value="" disabled>Failed to load</option>';
                 }
             } catch (err) {
-                group.innerHTML = '<option value="" disabled>Error loading zones</option>';
+                select.innerHTML = '<option value="">-- Load Zone --</option><option value="" disabled>Error loading zones</option>';
             }
         }
 
@@ -1577,17 +1400,13 @@ const MYZONE_FLOOR = {
 
         // Save zone to server
         async function saveToServer() {
-            console.log('saveToServer called');
             const zoneIdInput = document.getElementById('zoneId');
-            console.log('zoneId input element:', zoneIdInput);
-
             if (!zoneIdInput) {
                 alert('Error: zoneId input not found');
                 return;
             }
 
             const zoneId = zoneIdInput.value.trim();
-            console.log('zoneId value:', zoneId);
 
             if (!zoneId) {
                 alert('Please enter a zone ID');
@@ -1648,33 +1467,24 @@ const MYZONE_FLOOR = {
             };
 
             document.getElementById('statusBar').textContent = 'Saving to server...';
-            console.log('Sending zone data:', zoneData);
 
             try {
-                console.log('Fetching /api/zones/' + zoneId);
                 const response = await fetch(`/api/zones/${zoneId}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(zoneData)
                 });
 
-                console.log('Response status:', response.status);
-                console.log('Response ok:', response.ok);
-
                 if (response.ok) {
-                    const result = await response.json();
-                    console.log('Save result:', result);
                     document.getElementById('statusBar').textContent = `Zone "${zoneId}" saved successfully!`;
                     refreshServerZones();
                     setTimeout(updateStatus, 3000);
                 } else {
                     const error = await response.text();
-                    console.error('Save failed:', error);
                     alert('Failed to save zone: ' + error);
                     updateStatus();
                 }
             } catch (err) {
-                console.error('Save error:', err);
                 alert('Error saving zone: ' + err.message);
                 updateStatus();
             }
