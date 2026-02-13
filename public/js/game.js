@@ -5,6 +5,10 @@ class Game {
         this.ctx = this.canvas.getContext('2d');
         this.gameContainer = document.getElementById('game');
         this.resizeCanvas();
+
+        // Pre-render vignette effect for noir atmosphere
+        this.vignetteCanvas = null;
+        this.createVignetteCanvas();
         
         this.players = [];
         this.localPlayer = null;
@@ -186,6 +190,31 @@ class Game {
     resizeCanvas() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
+        // Recreate vignette when canvas size changes
+        this.createVignetteCanvas();
+    }
+
+    createVignetteCanvas() {
+        this.vignetteCanvas = document.createElement('canvas');
+        this.vignetteCanvas.width = this.canvas.width;
+        this.vignetteCanvas.height = this.canvas.height;
+        const vctx = this.vignetteCanvas.getContext('2d');
+
+        // Create radial gradient for vignette effect
+        const centerX = this.canvas.width / 2;
+        const centerY = this.canvas.height / 2;
+        const outerRadius = Math.max(this.canvas.width, this.canvas.height) * 0.7;
+
+        const gradient = vctx.createRadialGradient(
+            centerX, centerY, this.canvas.width * 0.2,
+            centerX, centerY, outerRadius
+        );
+        gradient.addColorStop(0, 'rgba(0, 0, 0, 0)');
+        gradient.addColorStop(0.5, 'rgba(0, 0, 0, 0.2)');
+        gradient.addColorStop(1, 'rgba(0, 0, 0, 0.7)');
+
+        vctx.fillStyle = gradient;
+        vctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
     }
     
     init(zoneName, playerName, playerId) {
@@ -559,10 +588,14 @@ class Game {
             const screenY = spark.y - this.cameraY;
             const alpha = Math.min(1, spark.life * 3);
 
-            this.ctx.fillStyle = `rgba(255, 220, 100, ${alpha})`;
+            // Noir style: red/orange sparks
+            this.ctx.fillStyle = `rgba(255, 80, 40, ${alpha})`;
+            this.ctx.shadowColor = '#ff4400';
+            this.ctx.shadowBlur = 6;
             this.ctx.beginPath();
-            this.ctx.arc(screenX, screenY, 2, 0, Math.PI * 2);
+            this.ctx.arc(screenX, screenY, 3, 0, Math.PI * 2);
             this.ctx.fill();
+            this.ctx.shadowBlur = 0;
         }
     }
 
@@ -739,12 +772,17 @@ class Game {
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
         }
 
-        // Draw FPS counter (top-left, small)
+        // Draw noir vignette effect (atmospheric dark edges)
+        if (this.vignetteCanvas) {
+            this.ctx.drawImage(this.vignetteCanvas, 0, 0);
+        }
+
+        // Draw FPS counter (top-left, small, noir style)
         const fps = Math.round(1 / (this.deltaTime || 0.016));
-        this.ctx.fillStyle = fps < 30 ? '#ff4444' : '#44ff44';
-        this.ctx.font = '12px monospace';
+        this.ctx.fillStyle = fps < 30 ? '#8b0000' : '#4a0000';
+        this.ctx.font = '11px monospace';
         this.ctx.textAlign = 'left';
-        this.ctx.fillText(`FPS: ${fps} | Physics: 60Hz fixed`, 10, 20);
+        this.ctx.fillText(`FPS: ${fps}`, 10, 20);
     }
     
     

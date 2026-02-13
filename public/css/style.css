@@ -6,8 +6,8 @@
 
 body {
     font-family: 'Arial', sans-serif;
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
-    color: white;
+    background: linear-gradient(135deg, #0a0505 0%, #1a0a0a 50%, #0d0505 100%);
+    color: #ccc;
     overflow: hidden;
 }
 
@@ -27,10 +27,11 @@ body {
 }
 
 .menu-container {
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(10, 5, 5, 0.95);
+    border: 1px solid rgba(139, 0, 0, 0.3);
     border-radius: 20px;
     padding: 40px;
-    box-shadow: 0 10px 50px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 10px 50px rgba(139, 0, 0, 0.2);
     text-align: center;
     max-width: 600px;
     width: 90%;
@@ -39,7 +40,8 @@ body {
 .game-title {
     font-size: 3em;
     margin-bottom: 30px;
-    text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+    color: #8b0000;
+    text-shadow: 0 0 20px rgba(139, 0, 0, 0.5);
     animation: pulse 2s infinite;
 }
 
@@ -58,7 +60,8 @@ body {
     display: flex;
     align-items: center;
     gap: 12px;
-    background: rgba(0, 0, 0, 0.6);
+    background: rgba(20, 5, 5, 0.8);
+    border: 1px solid rgba(139, 0, 0, 0.2);
     padding: 12px 16px;
     border-radius: 12px;
     margin: 10px auto 20px;
@@ -69,7 +72,7 @@ body {
     width: 44px;
     height: 44px;
     border-radius: 10px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(139, 0, 0, 0.15);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -119,9 +122,9 @@ body {
 .menu-btn {
     padding: 15px 30px;
     font-size: 18px;
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-    color: white;
-    border: none;
+    background: linear-gradient(135deg, #4a0000 0%, #8b0000 100%);
+    color: #ccc;
+    border: 1px solid rgba(139, 0, 0, 0.5);
     border-radius: 10px;
     cursor: pointer;
     transition: transform 0.2s, box-shadow 0.2s;
@@ -130,7 +133,8 @@ body {
 
 .menu-btn:hover {
     transform: translateY(-3px);
-    box-shadow: 0 5px 20px rgba(245, 87, 108, 0.5);
+    box-shadow: 0 5px 20px rgba(139, 0, 0, 0.5);
+    background: linear-gradient(135deg, #6b0000 0%, #aa0000 100%);
 }
 
 .menu-btn:active {
@@ -139,7 +143,7 @@ body {
 
 
 #game {
-    background: black;
+    background: #050505;
 }
 
 #gameCanvas {
@@ -147,7 +151,7 @@ body {
     margin: 0;
     width: 100vw;
     height: 100vh;
-    background: #1a2a1a;
+    background: #050505;
 }
 
 #gameUI {
@@ -162,7 +166,8 @@ body {
 #gameInfo {
     display: flex;
     gap: 20px;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(10, 5, 5, 0.85);
+    border: 1px solid rgba(139, 0, 0, 0.3);
     padding: 15px;
     border-radius: 10px;
 }
@@ -170,6 +175,7 @@ body {
 .ui-element {
     font-size: 20px;
     font-weight: bold;
+    color: #999;
 }
 
 .hud-profile {
@@ -180,7 +186,8 @@ body {
     align-items: center;
     gap: 10px;
     padding: 8px 12px;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(10, 5, 5, 0.85);
+    border: 1px solid rgba(139, 0, 0, 0.3);
     border-radius: 10px;
 }
 
@@ -188,7 +195,7 @@ body {
     width: 36px;
     height: 36px;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(139, 0, 0, 0.15);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -201,19 +208,22 @@ body {
     display: flex;
     align-items: center;
     gap: 6px;
+    color: #999;
 }
 
 #controlsInfo {
     position: absolute;
     bottom: 20px;
     left: 20px;
-    background: rgba(0, 0, 0, 0.7);
+    background: rgba(10, 5, 5, 0.85);
+    border: 1px solid rgba(139, 0, 0, 0.2);
     padding: 12px 14px;
     border-radius: 10px;
     font-size: 14px;
     line-height: 1.4;
     max-width: 220px;
     z-index: 1001;
+    color: #888;
 }
 
 .hotbar {
@@ -221,7 +231,8 @@ body {
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: rgba(0, 0, 0, 0.75);
+    background: rgba(10, 5, 5, 0.85);
+    border: 1px solid rgba(139, 0, 0, 0.2);
     border-radius: 10px;
     padding: 8px 12px;
 }
@@ -243,8 +254,8 @@ body {
 .inventory-slot {
     width: 44px;
     height: 44px;
-    border: 1px solid rgba(255, 255, 255, 0.35);
-    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(139, 0, 0, 0.3);
+    background: rgba(20, 5, 5, 0.6);
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -257,8 +268,8 @@ body {
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    background: rgba(0, 0, 0, 0.88);
-    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(10, 5, 5, 0.95);
+    border: 1px solid rgba(139, 0, 0, 0.4);
     border-radius: 12px;
     padding: 16px;
     display: none;
@@ -290,6 +301,7 @@ body {
     font-size: 16px;
     font-weight: bold;
     margin-bottom: 6px;
+    color: #8b0000;
 }
 
 .controls-item {
@@ -301,6 +313,7 @@ body {
 .controls-key {
     font-weight: bold;
     white-space: nowrap;
+    color: #aa5555;
 }
 
 .recall-btn {
@@ -308,8 +321,8 @@ body {
     width: 100%;
     padding: 10px 14px;
     font-size: 14px;
-    background: linear-gradient(135deg, #6bb7ff 0%, #8ed6ff 100%);
-    color: #0f1b2b;
+    background: linear-gradient(135deg, #3a0000 0%, #5a0000 100%);
+    color: #999;
 }
 
 
@@ -380,12 +393,12 @@ body {
 .room-list-item .join-label {
     font-weight: bold;
     font-size: 14px;
-    color: #f5576c;
+    color: #8b0000;
 }
 
 .room-status {
     font-size: 12px;
-    color: #f1c40f;
+    color: #8b0000;
     opacity: 0.9;
 }
 

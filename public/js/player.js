@@ -5,7 +5,7 @@ const PLAYER_MAX_SPEED = 350;           // pixels per second
 const PLAYER_ACCELERATION = 2200;       // pixels per second squared
 const PLAYER_FRICTION = 8;              // friction factor (higher = more friction)
 const PLAYER_DEFAULT_HP = 100;
-const PLAYER_SIZE = 20;
+const PLAYER_SIZE = 30;                 // 50% larger (was 20)
 const PLAYER_STUN_FRICTION = 12;        // higher friction when stunned
 
 // Gun constants
@@ -197,85 +197,165 @@ class Player {
      */
     draw(ctx, cameraX, cameraY) {
         ctx.save();
-        
+
         const screenX = this.x - cameraX;
         const screenY = this.y - cameraY;
-        
+
+        // Check if sprite is available
+        if (typeof spriteManager !== 'undefined' && spriteManager.has('player')) {
+            this.drawWithSprite(ctx, screenX, screenY);
+        } else {
+            this.drawFallback(ctx, screenX, screenY);
+        }
+
+        ctx.restore();
+
+        // Draw avatar + username above character
+        const labelY = screenY - 36;
+        if (this.avatarImg && this.avatarImg.complete) {
+            const size = 20;
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(this.avatarImg, screenX - size / 2, labelY - size, size, size);
+        } else {
+            ctx.fillStyle = '#cc0000';
+            ctx.font = '12px Arial';
+            ctx.textAlign = 'center';
+            ctx.fillText('👽', screenX, labelY - 6);
+        }
+
+        ctx.fillStyle = '#999999';
+        ctx.font = '12px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(this.username, screenX, labelY + 12);
+    }
+
+    /**
+     * Draw player using sprite image
+     */
+    drawWithSprite(ctx, screenX, screenY) {
         const now = performance.now() / 1000;
         const moveIntensity = Math.min(1, this.speed / this.maxSpeed);
-        const bob = Math.sin(now * 10) * moveIntensity * 1.4;
+
+        ctx.save();
+        ctx.translate(screenX, screenY);
+        ctx.rotate(this.angle);
+
+        const sprite = spriteManager.get('player');
+        const size = PLAYER_SIZE;
+        ctx.drawImage(sprite, -size/2, -size/2, size, size);
+
+        ctx.restore();
+
+        // Draw gun and effects on top
+        this.drawGun(ctx, screenX, screenY);
+        this.drawUI(ctx, screenX, screenY);
+    }
+
+    /**
+     * Draw player using canvas primitives (noir style fallback)
+     */
+    drawFallback(ctx, screenX, screenY) {
+        const now = performance.now() / 1000;
+        const moveIntensity = Math.min(1, this.speed / this.maxSpeed);
+        const bob = Math.sin(now * 10) * moveIntensity * 2;
         const bodyY = screenY + bob;
 
-        // Body shadow
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
+        // Noir color palette
+        const primaryColor = typeof COLORS !== 'undefined' ? COLORS.PLAYER_BODY : '#1a1a2e';
+        const accentColor = typeof COLORS !== 'undefined' ? COLORS.BLOOD_RED : '#8b0000';
+        const shadowColor = typeof COLORS !== 'undefined' ? COLORS.SHADOW : 'rgba(0, 0, 0, 0.8)';
+
+        // Body shadow (larger for bigger player)
+        ctx.fillStyle = shadowColor;
         ctx.beginPath();
-        ctx.ellipse(screenX, screenY + 11, 9, 4, 0, 0, Math.PI * 2);
+        ctx.ellipse(screenX, screenY + 16, 14, 6, 0, 0, Math.PI * 2);
         ctx.fill();
 
-        // Torso - flash red when taking damage
-        const bodyColor = this.damageFlashTimer > 0 ? '#ff4444' : (this.stunned ? '#666' : this.color);
+        // Torso - flash red when taking damage, noir colors
+        let bodyColor = primaryColor;
+        if (this.damageFlashTimer > 0) {
+            bodyColor = '#ff0000';
+        } else if (this.stunned) {
+            bodyColor = '#333333';
+        }
         ctx.fillStyle = bodyColor;
         ctx.beginPath();
-        ctx.ellipse(screenX, bodyY + 1, 9, 7, 0, 0, Math.PI * 2);
+        ctx.ellipse(screenX, bodyY + 2, 14, 11, 0, 0, Math.PI * 2);
         ctx.fill();
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.75)';
-        ctx.lineWidth = 1.5;
+
+        // Red accent stripe on torso
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(screenX, bodyY - 8);
+        ctx.lineTo(screenX, bodyY + 10);
         ctx.stroke();
 
-        // Head
-        ctx.fillStyle = this.stunned ? '#888' : '#f8d6c3';
+        // Subtle outline
+        ctx.strokeStyle = 'rgba(139, 0, 0, 0.5)';
+        ctx.lineWidth = 1.5;
         ctx.beginPath();
-        ctx.arc(screenX, bodyY - 8, 5, 0, Math.PI * 2);
+        ctx.ellipse(screenX, bodyY + 2, 14, 11, 0, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Head (dark/shadowed)
+        ctx.fillStyle = this.stunned ? '#444' : '#2a2a2a';
+        ctx.beginPath();
+        ctx.arc(screenX, bodyY - 12, 8, 0, Math.PI * 2);
         ctx.fill();
 
-        // Eyes
-        ctx.fillStyle = '#1f2d3d';
+        // Red glowing eyes
+        ctx.fillStyle = accentColor;
+        ctx.shadowColor = accentColor;
+        ctx.shadowBlur = 6;
         ctx.beginPath();
-        ctx.arc(screenX - 2, bodyY - 8, 0.8, 0, Math.PI * 2);
-        ctx.arc(screenX + 2, bodyY - 8, 0.8, 0, Math.PI * 2);
+        ctx.arc(screenX - 3, bodyY - 12, 1.5, 0, Math.PI * 2);
+        ctx.arc(screenX + 3, bodyY - 12, 1.5, 0, Math.PI * 2);
         ctx.fill();
+        ctx.shadowBlur = 0;
 
-        // Facing indicator/nose
-        const dirX = screenX + Math.cos(this.angle) * 6;
-        const dirY = bodyY - 8 + Math.sin(this.angle) * 3;
-        ctx.fillStyle = '#f0bca0';
+        // Facing indicator (subtle red glow direction)
+        const dirX = screenX + Math.cos(this.angle) * 10;
+        const dirY = bodyY - 12 + Math.sin(this.angle) * 5;
+        ctx.fillStyle = 'rgba(139, 0, 0, 0.4)';
         ctx.beginPath();
-        ctx.arc(dirX, dirY, 1.2, 0, Math.PI * 2);
+        ctx.arc(dirX, dirY, 3, 0, Math.PI * 2);
         ctx.fill();
 
         // Feet (simple walk cycle)
-        const stride = Math.sin(now * 16) * moveIntensity * 2.4;
-        ctx.strokeStyle = '#f5f5f5';
-        ctx.lineWidth = 2;
+        const stride = Math.sin(now * 16) * moveIntensity * 3.5;
+        ctx.strokeStyle = '#1a1a1a';
+        ctx.lineWidth = 3;
         ctx.lineCap = 'round';
         ctx.beginPath();
-        ctx.moveTo(screenX - 3, bodyY + 6);
-        ctx.lineTo(screenX - 3 + stride, bodyY + 10);
-        ctx.moveTo(screenX + 3, bodyY + 6);
-        ctx.lineTo(screenX + 3 - stride, bodyY + 10);
+        ctx.moveTo(screenX - 5, bodyY + 10);
+        ctx.lineTo(screenX - 5 + stride, bodyY + 16);
+        ctx.moveTo(screenX + 5, bodyY + 10);
+        ctx.lineTo(screenX + 5 - stride, bodyY + 16);
         ctx.stroke();
 
-        // Gun rendering
+        // Draw gun and UI
+        this.drawGun(ctx, screenX, bodyY);
+        this.drawUI(ctx, screenX, screenY);
+    }
+
+    /**
+     * Draw gun weapon
+     */
+    drawGun(ctx, screenX, bodyY) {
         const gunAngle = this.angle;
-        const gripOffset = 7;
+        const gripOffset = 11;
         const handX = screenX + Math.cos(gunAngle) * gripOffset;
         const handY = bodyY + Math.sin(gunAngle) * gripOffset;
 
-        // Off-hand for stability
-        const offHandAngle = gunAngle + Math.PI * 0.5;
-        ctx.fillStyle = '#ffd9c3';
-        ctx.beginPath();
-        ctx.arc(screenX + Math.cos(offHandAngle) * 4, bodyY + Math.sin(offHandAngle) * 3, 2, 0, Math.PI * 2);
-        ctx.fill();
-
         // Gun body (rectangle along angle)
-        const gunLength = 22;
-        const gunWidth = 5;
+        const gunLength = 28;
+        const gunWidth = 6;
         const barrelTipX = handX + Math.cos(gunAngle) * gunLength;
         const barrelTipY = handY + Math.sin(gunAngle) * gunLength;
 
-        // Gun body
-        ctx.strokeStyle = this.gun.reloading ? '#666' : '#444';
+        // Gun body - dark with red accents
+        ctx.strokeStyle = this.gun.reloading ? '#333' : '#1a1a1a';
         ctx.lineWidth = gunWidth;
         ctx.lineCap = 'round';
         ctx.beginPath();
@@ -283,45 +363,53 @@ class Player {
         ctx.lineTo(barrelTipX, barrelTipY);
         ctx.stroke();
 
-        // Gun barrel highlight
-        ctx.strokeStyle = '#888';
+        // Gun barrel highlight (red)
+        ctx.strokeStyle = '#4a0000';
         ctx.lineWidth = 2;
         ctx.beginPath();
-        ctx.moveTo(handX + Math.cos(gunAngle) * 8, handY + Math.sin(gunAngle) * 8);
+        ctx.moveTo(handX + Math.cos(gunAngle) * 10, handY + Math.sin(gunAngle) * 10);
         ctx.lineTo(barrelTipX, barrelTipY);
         ctx.stroke();
 
-        // Hand on grip
-        ctx.fillStyle = '#ffe3d2';
+        // Hand on grip (dark)
+        ctx.fillStyle = '#2a2a2a';
         ctx.beginPath();
-        ctx.arc(handX, handY, 2.2, 0, Math.PI * 2);
+        ctx.arc(handX, handY, 3, 0, Math.PI * 2);
         ctx.fill();
 
-        // Muzzle flash effect
+        // Muzzle flash effect (brighter red/orange)
         if (this.muzzleFlash.active && this.muzzleFlash.timer > 0) {
-            const flashX = barrelTipX + Math.cos(gunAngle) * 5;
-            const flashY = barrelTipY + Math.sin(gunAngle) * 5;
+            const flashX = barrelTipX + Math.cos(gunAngle) * 6;
+            const flashY = barrelTipY + Math.sin(gunAngle) * 6;
             const flashProgress = this.muzzleFlash.timer / this.muzzleFlash.duration;
-            const flashSize = 8 * flashProgress;
+            const flashSize = 10 * flashProgress;
 
-            ctx.fillStyle = `rgba(255, 220, 100, ${flashProgress})`;
+            ctx.fillStyle = `rgba(255, 100, 50, ${flashProgress})`;
+            ctx.shadowColor = '#ff4400';
+            ctx.shadowBlur = 15;
             ctx.beginPath();
             ctx.arc(flashX, flashY, flashSize, 0, Math.PI * 2);
             ctx.fill();
 
-            ctx.fillStyle = `rgba(255, 255, 200, ${flashProgress * 0.8})`;
+            ctx.fillStyle = `rgba(255, 200, 100, ${flashProgress * 0.8})`;
             ctx.beginPath();
             ctx.arc(flashX, flashY, flashSize * 0.5, 0, Math.PI * 2);
             ctx.fill();
+            ctx.shadowBlur = 0;
         }
+    }
 
-        // Ammo indicator (small dots above player when low)
+    /**
+     * Draw player UI elements (ammo, reload)
+     */
+    drawUI(ctx, screenX, screenY) {
+        // Ammo indicator (red dots when low)
         if (this.gun.ammo <= 2 && !this.gun.reloading) {
-            const indicatorY = screenY - 40;
+            const indicatorY = screenY - 55;
             for (let i = 0; i < this.gun.ammo; i++) {
-                ctx.fillStyle = '#f1c40f';
+                ctx.fillStyle = '#cc0000';
                 ctx.beginPath();
-                ctx.arc(screenX - 4 + i * 6, indicatorY, 2, 0, Math.PI * 2);
+                ctx.arc(screenX - 5 + i * 8, indicatorY, 3, 0, Math.PI * 2);
                 ctx.fill();
             }
         }
@@ -329,40 +417,19 @@ class Player {
         // Reload indicator
         if (this.gun.reloading) {
             const reloadProgress = 1 - (this.gun.reloadTimer / this.gun.reloadTime);
-            ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
-            ctx.font = '10px Arial';
+            ctx.fillStyle = 'rgba(139, 0, 0, 0.9)';
+            ctx.font = '11px Arial';
             ctx.textAlign = 'center';
-            ctx.fillText('RELOADING', screenX, screenY - 40);
+            ctx.fillText('RELOADING', screenX, screenY - 55);
 
-            // Progress bar
-            const barWidth = 30;
-            const barHeight = 3;
-            ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-            ctx.fillRect(screenX - barWidth / 2, screenY - 36, barWidth, barHeight);
-            ctx.fillStyle = '#f1c40f';
-            ctx.fillRect(screenX - barWidth / 2, screenY - 36, barWidth * reloadProgress, barHeight);
+            // Progress bar (red)
+            const barWidth = 40;
+            const barHeight = 4;
+            ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+            ctx.fillRect(screenX - barWidth / 2, screenY - 50, barWidth, barHeight);
+            ctx.fillStyle = '#8b0000';
+            ctx.fillRect(screenX - barWidth / 2, screenY - 50, barWidth * reloadProgress, barHeight);
         }
-
-        ctx.restore();
-        
-        // Draw avatar + username above character
-        const labelY = screenY - 26;
-        if (this.avatarImg && this.avatarImg.complete) {
-            const size = 20;
-            ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(this.avatarImg, screenX - size / 2, labelY - size, size, size);
-        } else {
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '12px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('👽', screenX, labelY - 6);
-        }
-
-        ctx.fillStyle = 'white';
-        ctx.font = '12px Arial';
-        ctx.textAlign = 'center';
-        ctx.fillText(this.username, screenX, labelY + 12);
-        
     }
     /**
      * Set player avatar image
