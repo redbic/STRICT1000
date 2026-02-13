@@ -409,7 +409,6 @@
             </select>
             <button onclick="showLoadModal()">Import Code</button>
             <button class="danger" onclick="clearRoom()">Clear All</button>
-            <label style="margin-left:15px;"><input type="checkbox" id="autoWalls" checked> Auto Walls</label>
         </div>
     </div>
 
@@ -827,32 +826,9 @@ const MYZONE_FLOOR = {
             gridCanvas.width = canvas.width;
             gridCanvas.height = canvas.height;
 
-            // Auto-add boundary walls if enabled and walls are empty
-            const autoWalls = document.getElementById('autoWalls').checked;
-            if (autoWalls && roomData.walls.length === 0) {
-                addBoundaryWalls();
-            }
-
             renderRoom();
             renderGrid();
             updateExport();
-        }
-
-        function addBoundaryWalls() {
-            const worldWidth = roomWidth * TILE_SIZE * 3;  // 48px per tile
-            const worldHeight = roomHeight * TILE_SIZE * 3;
-            const wallThickness = 40;
-
-            roomData.walls = [
-                // Top wall
-                { x: 0, y: 0, width: worldWidth, height: wallThickness },
-                // Left wall
-                { x: 0, y: 0, width: wallThickness, height: worldHeight },
-                // Bottom wall
-                { x: 0, y: worldHeight - wallThickness, width: worldWidth, height: wallThickness },
-                // Right wall
-                { x: worldWidth - wallThickness, y: 0, width: wallThickness, height: worldHeight }
-            ];
         }
 
         function renderRoom() {
