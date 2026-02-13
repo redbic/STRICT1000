@@ -294,6 +294,13 @@ function setupNetworkHandlers() {
         if (game && data.zoneId && data.playerId === networkManager.playerId) {
             const zonePlayers = data.zonePlayers || [];
             await game.transitionZone(data.zoneId, zonePlayers, networkManager.playerId);
+
+            // Update our own zone in currentRoomPlayers BEFORE checking zone host status
+            const selfInRoster = currentRoomPlayers.find(p => p.id === networkManager.playerId);
+            if (selfInRoster) {
+                selfInRoster.zone = data.zoneId;
+            }
+
             // Update zone host status after zone change
             updateZoneHostStatus();
         }
@@ -371,8 +378,12 @@ function setupNetworkHandlers() {
     };
     
     networkManager.onEnemySync = (data) => {
-        // Only apply enemy sync if we're not running our own enemy AI
-        if (game && !game.isHost && !game.isZoneHost) {
+        // Apply enemy sync if we're not authoritative, OR during grace period after zone transition
+        // Grace period allows zone host to hand off enemy state when main host enters their zone
+        const inGracePeriod = game && game.zoneTransitionGrace > 0;
+        const isAuthoritative = game && (game.isHost || game.isZoneHost);
+
+        if (game && (!isAuthoritative || inGracePeriod)) {
             game.applyEnemySync(data.enemies);
         }
     };
@@ -477,8 +488,11 @@ function startEnemySyncInterval() {
     stopEnemySyncInterval();
     enemySyncInterval = setInterval(() => {
         // Both main host and zone host should send enemy syncs
+        // But not during grace period (allows receiving handoff from previous zone host)
         const isAuthoritative = game && game.running && (game.isHost || game.isZoneHost);
-        if (isAuthoritative && networkManager && networkManager.connected) {
+        const inGracePeriod = game && game.zoneTransitionGrace > 0;
+
+        if (isAuthoritative && !inGracePeriod && networkManager && networkManager.connected) {
             // Always send sync, even if empty (so clients know all enemies are dead)
             networkManager.sendEnemySync(game.enemies.map(e => ({
                 id: e.id,

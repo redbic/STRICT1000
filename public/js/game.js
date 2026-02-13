@@ -43,6 +43,7 @@ class Game {
         this.onEnemyKilled = null; // Callback for when an enemy is killed
         this.isHost = false; // Whether this client is the host (authoritative for enemies)
         this.isZoneHost = false; // Whether this client is authoritative for enemies in current zone
+        this.zoneTransitionGrace = 0; // Grace period after zone transition to receive enemy syncs
         this.onEnemyDamage = null; // Callback for sending enemy damage to host (non-host players)
         this.onPlayerDeath = null; // Callback for when the local player dies
         this.onPlayerFire = null; // Callback for when local player fires (to sync to others)
@@ -269,6 +270,10 @@ class Game {
         this.lastPortalId = null;
         this.portalCooldown = 0;
         this.keys = {};
+
+        // Grace period after zone transition - accept enemy syncs even if host
+        // This allows the previous zone host to hand off their enemy state
+        this.zoneTransitionGrace = 0.5; // 500ms grace period
         
         // Spawn enemies from zone data
         if (zoneData.enemies && Array.isArray(zoneData.enemies)) {
@@ -322,6 +327,11 @@ class Game {
             if (this.screenFlash.timer <= 0) {
                 this.screenFlash.active = false;
             }
+        }
+
+        // Update zone transition grace period
+        if (this.zoneTransitionGrace > 0) {
+            this.zoneTransitionGrace -= frameDt;
         }
 
         // Track HP before all updates to detect damage
