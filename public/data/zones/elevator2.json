@@ -1,5 +1,5 @@
 {
-  "name": "elevator",
+  "name": "elevator2",
   "width": 288,
   "height": 288,
   "startX": 144,
@@ -380,7 +380,7 @@
   "walls": [],
   "portals": [
     {
-      "id": "hallway",
+      "id": "hub",
       "x": 96,
       "y": 0,
       "width": 96,
