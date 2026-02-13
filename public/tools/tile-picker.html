@@ -294,12 +294,45 @@
         <div class="control-group">
             <label for="tilesetSelect">Tileset:</label>
             <select id="tilesetSelect">
-                <option value="floors">Room Builder - Floors</option>
-                <option value="walls">Room Builder - Walls</option>
-                <option value="generic">1 - Generic</option>
-                <option value="livingRoom">2 - Living Room</option>
-                <option value="bedroom">4 - Bedroom</option>
-                <option value="conference">13 - Conference Hall</option>
+                <optgroup label="Room Builder">
+                    <option value="floors">Floors</option>
+                    <option value="walls">Walls</option>
+                    <option value="walls3d">3D Walls</option>
+                    <option value="arches">Arched Entryways</option>
+                    <option value="baseboards">Baseboards</option>
+                    <option value="borders">Borders</option>
+                    <option value="floorConnectors">Floor Connectors</option>
+                    <option value="floorPaths">Floor Paths</option>
+                    <option value="floorShadows">Floor Shadows</option>
+                </optgroup>
+                <optgroup label="Theme Packs">
+                    <option value="t01_generic">01 - Generic</option>
+                    <option value="t02_livingRoom">02 - Living Room</option>
+                    <option value="t03_bathroom">03 - Bathroom</option>
+                    <option value="t04_bedroom">04 - Bedroom</option>
+                    <option value="t05_classroom">05 - Classroom & Library</option>
+                    <option value="t06_music">06 - Music & Sport</option>
+                    <option value="t07_art">07 - Art</option>
+                    <option value="t08_gym">08 - Gym</option>
+                    <option value="t09_fishing">09 - Fishing</option>
+                    <option value="t10_birthday">10 - Birthday Party</option>
+                    <option value="t11_halloween">11 - Halloween</option>
+                    <option value="t12_kitchen">12 - Kitchen</option>
+                    <option value="t13_conference">13 - Conference Hall</option>
+                    <option value="t14_basement">14 - Basement</option>
+                    <option value="t15_christmas">15 - Christmas</option>
+                    <option value="t16_grocery">16 - Grocery Store</option>
+                    <option value="t17_upstairs">17 - Upstairs System</option>
+                    <option value="t18_jail">18 - Jail</option>
+                    <option value="t19_hospital">19 - Hospital</option>
+                    <option value="t20_japanese">20 - Japanese</option>
+                    <option value="t21_clothing">21 - Clothing Store</option>
+                    <option value="t22_museum">22 - Museum</option>
+                    <option value="t23_tvStudio">23 - TV & Film Studio</option>
+                    <option value="t24_iceCream">24 - Ice Cream Shop</option>
+                    <option value="t25_shooting">25 - Shooting Range</option>
+                    <option value="t26_condo">26 - Condominium</option>
+                </optgroup>
             </select>
         </div>
         <div class="control-group">
@@ -363,12 +396,43 @@
 
     <script>
         const TILESETS = {
-            floors: { path: '/assets/tiles/Room_Builder_Floors_16x16.png', name: 'Floors' },
-            walls: { path: '/assets/tiles/Room_Builder_Walls_16x16.png', name: 'Walls' },
-            generic: { path: '/assets/tiles/1_Generic_16x16.png', name: 'Generic' },
-            livingRoom: { path: '/assets/tiles/2_LivingRoom_16x16.png', name: 'Living Room' },
-            bedroom: { path: '/assets/tiles/4_Bedroom_16x16.png', name: 'Bedroom' },
-            conference: { path: '/assets/tiles/13_Conference_Hall_16x16.png', name: 'Conference Hall' }
+            // Room Builder tilesets
+            floors: { path: '/assets/tiles/Room_Builder_Floors_16x16.png', name: 'RB - Floors' },
+            walls: { path: '/assets/tiles/Room_Builder_Walls_16x16.png', name: 'RB - Walls' },
+            walls3d: { path: '/assets/tiles/Room_Builder_3d_walls_16x16.png', name: 'RB - 3D Walls' },
+            arches: { path: '/assets/tiles/Room_Builder_Arched_Entryways_16x16.png', name: 'RB - Arched Entryways' },
+            baseboards: { path: '/assets/tiles/Room_Builder_Baseboards_16x16.png', name: 'RB - Baseboards' },
+            borders: { path: '/assets/tiles/Room_Builder_borders_16x16.png', name: 'RB - Borders' },
+            floorConnectors: { path: '/assets/tiles/Room_Builder_Floor_Connectors_16x16.png', name: 'RB - Floor Connectors' },
+            floorPaths: { path: '/assets/tiles/Room_Builder_Floor_Paths_16x16.png', name: 'RB - Floor Paths' },
+            floorShadows: { path: '/assets/tiles/Room_Builder_Floor_Shadows_16x16.png', name: 'RB - Floor Shadows' },
+            // Theme tilesets (1-26)
+            t01_generic: { path: '/assets/tiles/1_Generic_16x16.png', name: '01 - Generic' },
+            t02_livingRoom: { path: '/assets/tiles/2_LivingRoom_16x16.png', name: '02 - Living Room' },
+            t03_bathroom: { path: '/assets/tiles/3_Bathroom_16x16.png', name: '03 - Bathroom' },
+            t04_bedroom: { path: '/assets/tiles/4_Bedroom_16x16.png', name: '04 - Bedroom' },
+            t05_classroom: { path: '/assets/tiles/5_Classroom_and_library_16x16.png', name: '05 - Classroom & Library' },
+            t06_music: { path: '/assets/tiles/6_Music_and_sport_16x16.png', name: '06 - Music & Sport' },
+            t07_art: { path: '/assets/tiles/7_Art_16x16.png', name: '07 - Art' },
+            t08_gym: { path: '/assets/tiles/8_Gym_16x16.png', name: '08 - Gym' },
+            t09_fishing: { path: '/assets/tiles/9_Fishing_16x16.png', name: '09 - Fishing' },
+            t10_birthday: { path: '/assets/tiles/10_Birthday_party_16x16.png', name: '10 - Birthday Party' },
+            t11_halloween: { path: '/assets/tiles/11_Halloween_16x16.png', name: '11 - Halloween' },
+            t12_kitchen: { path: '/assets/tiles/12_Kitchen_16x16.png', name: '12 - Kitchen' },
+            t13_conference: { path: '/assets/tiles/13_Conference_Hall_16x16.png', name: '13 - Conference Hall' },
+            t14_basement: { path: '/assets/tiles/14_Basement_16x16.png', name: '14 - Basement' },
+            t15_christmas: { path: '/assets/tiles/15_Christmas_16x16.png', name: '15 - Christmas' },
+            t16_grocery: { path: '/assets/tiles/16_Grocery_store_16x16.png', name: '16 - Grocery Store' },
+            t17_upstairs: { path: '/assets/tiles/17_Visibile_Upstairs_System_16x16.png', name: '17 - Upstairs System' },
+            t18_jail: { path: '/assets/tiles/18_Jail_16x16.png', name: '18 - Jail' },
+            t19_hospital: { path: '/assets/tiles/19_Hospital_16x16.png', name: '19 - Hospital' },
+            t20_japanese: { path: '/assets/tiles/20_Japanese_interiors.png', name: '20 - Japanese' },
+            t21_clothing: { path: '/assets/tiles/21_Clothing_Store.png', name: '21 - Clothing Store' },
+            t22_museum: { path: '/assets/tiles/22_Museum.png', name: '22 - Museum' },
+            t23_tvStudio: { path: '/assets/tiles/23_Television_and_Film_Studio.png', name: '23 - TV & Film Studio' },
+            t24_iceCream: { path: '/assets/tiles/24_Ice_Cream_Shop.png', name: '24 - Ice Cream Shop' },
+            t25_shooting: { path: '/assets/tiles/25_Shooting_Range.png', name: '25 - Shooting Range' },
+            t26_condo: { path: '/assets/tiles/26_Condominium.png', name: '26 - Condominium' }
         };
 
         const TILE_SIZE = 16;
