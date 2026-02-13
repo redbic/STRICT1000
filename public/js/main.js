@@ -768,16 +768,17 @@ async function startGame(zoneName) {
     if (currentProfile && Array.isArray(currentProfile.inventory)) {
         game.setInventory(currentProfile.inventory);
     }
-    
+
+    // Apply host status BEFORE starting game loop (fixes first shots not dealing damage)
+    if (networkManager && currentHostId) {
+        updateHostStatus(currentHostId);
+    }
+
     showScreen('game');
     game.start();
-    
+
     // Send updates to server
     if (networkManager) {
-        // Apply stored host status (room_update may have arrived before game was created)
-        if (currentHostId) {
-            updateHostStatus(currentHostId);
-        }
         
         // Only sync players in the same zone (hub for initial game start)
         const localZoneId = game.zoneId || 'hub';
