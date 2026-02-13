@@ -1,0 +1,392 @@
+{
+  "name": "elevator",
+  "width": 288,
+  "height": 288,
+  "startX": 144,
+  "startY": 144,
+  "floor": {
+    "width": 6,
+    "height": 6,
+    "tiles": [
+      {
+        "x": 1,
+        "y": 5,
+        "tileset": "floors",
+        "tileX": 5,
+        "tileY": 31
+      },
+      {
+        "x": 2,
+        "y": 5,
+        "tileset": "floors",
+        "tileX": 5,
+        "tileY": 31
+      },
+      {
+        "x": 3,
+        "y": 5,
+        "tileset": "floors",
+        "tileX": 5,
+        "tileY": 31
+      },
+      {
+        "x": 4,
+        "y": 5,
+        "tileset": "floors",
+        "tileX": 5,
+        "tileY": 31
+      },
+      {
+        "x": 4,
+        "y": 4,
+        "tileset": "floors",
+        "tileX": 5,
+        "tileY": 31
+      },
+      {
+        "x": 4,
+        "y": 3,
+        "tileset": "floors",
+        "tileX": 5,
+        "tileY": 31
+      },
+      {
+        "x": 4,
+        "y": 2,
+        "tileset": "floors",
+        "tileX": 5,
+        "tileY": 31
+      },
+      {
+        "x": 3,
+        "y": 2,
+        "tileset": "floors",
+        "tileX": 5,
+        "tileY": 31
+      },
+      {
+        "x": 3,
+        "y": 3,
+        "tileset": "floors",
+        "tileX": 5,
+        "tileY": 31
+      },
+      {
+        "x": 3,
+        "y": 4,
+        "tileset": "floors",
+        "tileX": 5,
+        "tileY": 31
+      },
+      {
+        "x": 2,
+        "y": 4,
+        "tileset": "floors",
+        "tileX": 5,
+        "tileY": 31
+      },
+      {
+        "x": 2,
+        "y": 3,
+        "tileset": "floors",
+        "tileX": 5,
+        "tileY": 31
+      },
+      {
+        "x": 1,
+        "y": 3,
+        "tileset": "floors",
+        "tileX": 5,
+        "tileY": 31
+      },
+      {
+        "x": 1,
+        "y": 4,
+        "tileset": "floors",
+        "tileX": 5,
+        "tileY": 31
+      },
+      {
+        "x": 1,
+        "y": 2,
+        "tileset": "floors",
+        "tileX": 5,
+        "tileY": 31
+      },
+      {
+        "x": 2,
+        "y": 2,
+        "tileset": "floors",
+        "tileX": 5,
+        "tileY": 31
+      },
+      {
+        "x": 2,
+        "y": 0,
+        "tileset": "t01_generic",
+        "tileX": 3,
+        "tileY": 31
+      }
+    ]
+  },
+  "objects": {
+    "width": 6,
+    "height": 6,
+    "tiles": [
+      {
+        "x": 1,
+        "y": 0,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 2,
+        "physical": true
+      },
+      {
+        "x": 2,
+        "y": 0,
+        "tileset": "t01_generic",
+        "tileX": 3,
+        "tileY": 31,
+        "physical": true
+      },
+      {
+        "x": 3,
+        "y": 0,
+        "tileset": "t01_generic",
+        "tileX": 4,
+        "tileY": 31,
+        "physical": true
+      },
+      {
+        "x": 4,
+        "y": 0,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 2,
+        "physical": true
+      },
+      {
+        "x": 1,
+        "y": 1,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 3,
+        "physical": true
+      },
+      {
+        "x": 2,
+        "y": 1,
+        "tileset": "t01_generic",
+        "tileX": 4,
+        "tileY": 32
+      },
+      {
+        "x": 3,
+        "y": 1,
+        "tileset": "t01_generic",
+        "tileX": 4,
+        "tileY": 32
+      },
+      {
+        "x": 4,
+        "y": 1,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 3,
+        "physical": true
+      },
+      {
+        "x": 0,
+        "y": 0,
+        "tileset": "walls3d",
+        "tileX": 10,
+        "tileY": 0,
+        "physical": true
+      },
+      {
+        "x": 5,
+        "y": 0,
+        "tileset": "walls3d",
+        "tileX": 13,
+        "tileY": 0,
+        "physical": true
+      },
+      {
+        "x": 5,
+        "y": 1,
+        "tileset": "walls3d",
+        "tileX": 13,
+        "tileY": 1,
+        "physical": true
+      },
+      {
+        "x": 0,
+        "y": 1,
+        "tileset": "walls3d",
+        "tileX": 10,
+        "tileY": 1,
+        "physical": true
+      },
+      {
+        "x": 0,
+        "y": 2,
+        "tileset": "walls3d",
+        "tileX": 10,
+        "tileY": 2,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 0,
+        "y": 3,
+        "tileset": "walls3d",
+        "tileX": 10,
+        "tileY": 2,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 0,
+        "y": 4,
+        "tileset": "walls3d",
+        "tileX": 10,
+        "tileY": 1,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 0,
+        "y": 5,
+        "tileset": "walls3d",
+        "tileX": 10,
+        "tileY": 0,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 5,
+        "y": 2,
+        "tileset": "walls3d",
+        "tileX": 10,
+        "tileY": 2,
+        "flipH": true,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 5,
+        "y": 3,
+        "tileset": "walls3d",
+        "tileX": 10,
+        "tileY": 2,
+        "flipH": true,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 5,
+        "y": 4,
+        "tileset": "walls3d",
+        "tileX": 10,
+        "tileY": 1,
+        "flipH": true,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 5,
+        "y": 5,
+        "tileset": "walls3d",
+        "tileX": 10,
+        "tileY": 0,
+        "flipH": true,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 4,
+        "y": 5,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 2,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 3,
+        "y": 5,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 2,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 2,
+        "y": 5,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 2,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 1,
+        "y": 5,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 2,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 1,
+        "y": 4,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 3,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 2,
+        "y": 4,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 3,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 3,
+        "y": 4,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 3,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 4,
+        "y": 4,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 3,
+        "flipV": true,
+        "physical": true
+      }
+    ]
+  },
+  "walls": [],
+  "portals": [
+    {
+      "id": "hub",
+      "x": 96,
+      "y": 0,
+      "width": 96,
+      "height": 96
+    }
+  ],
+  "npcs": [],
+  "enemies": []
+}
