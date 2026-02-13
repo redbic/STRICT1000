@@ -20,6 +20,8 @@ class Game {
         this.gameStarted = false;
         this.lastFrameTime = 0;
         this.deltaTime = 1/60; // Initialize to 60fps equivalent to prevent undefined on first frame
+        this.physicsAccumulator = 0; // For fixed timestep physics
+        this.PHYSICS_DT = 1/60; // Fixed 60Hz physics updates
         
         this.cameraX = 0;
         this.cameraY = 0;
@@ -237,11 +239,11 @@ class Game {
     update() {
         if (!this.gameStarted) return;
 
-        const dt = this.deltaTime || 1/60;
+        const frameDt = this.deltaTime || 1/60;
 
-        // Update screen flash timer
+        // Update screen flash timer (can use frame dt for visual effects)
         if (this.screenFlash.active) {
-            this.screenFlash.timer -= dt;
+            this.screenFlash.timer -= frameDt;
             if (this.screenFlash.timer <= 0) {
                 this.screenFlash.active = false;
             }
@@ -250,26 +252,50 @@ class Game {
         // Track HP before all updates to detect damage
         const hpBeforeUpdate = this.localPlayer ? this.localPlayer.hp : 0;
 
-        // Update local player
-        if (this.localPlayer) {
-            // Skip movement updates if dead
-            if (!this.localPlayer.isDead) {
-                this.localPlayer.update(this.keys, this.zone, dt);
-                this.handlePickupCollision();
-            } else {
-                // Still update gun/flash timers when dead
-                this.localPlayer.updateGun(dt);
-                if (this.localPlayer.damageFlashTimer > 0) {
-                    this.localPlayer.damageFlashTimer -= dt;
-                }
-            }
+        // Fixed timestep physics - ensures consistent behavior at any FPS
+        this.physicsAccumulator += frameDt;
+
+        // Cap accumulator to prevent spiral of death if game lags
+        if (this.physicsAccumulator > 0.2) {
+            this.physicsAccumulator = 0.2;
         }
 
-        // Interpolate remote players toward their latest server state
+        // Run physics at fixed 60Hz
+        while (this.physicsAccumulator >= this.PHYSICS_DT) {
+            const dt = this.PHYSICS_DT;
+
+            // Update local player with fixed timestep
+            if (this.localPlayer) {
+                if (!this.localPlayer.isDead) {
+                    this.localPlayer.update(this.keys, this.zone, dt);
+                } else {
+                    this.localPlayer.updateGun(dt);
+                    if (this.localPlayer.damageFlashTimer > 0) {
+                        this.localPlayer.damageFlashTimer -= dt;
+                    }
+                }
+            }
+
+            // Update enemies with fixed timestep (only if authoritative)
+            if (this.isHost || this.isZoneHost) {
+                this.enemies.forEach(enemy => {
+                    const nearestPlayer = this.getNearestPlayer(enemy);
+                    enemy.update(this.zone, nearestPlayer, dt);
+                });
+            }
+
+            this.physicsAccumulator -= this.PHYSICS_DT;
+        }
+
+        // Pickup collision check (once per frame is fine)
+        if (this.localPlayer && !this.localPlayer.isDead) {
+            this.handlePickupCollision();
+        }
+
+        // Interpolate remote players (can use frame dt for smooth visuals)
         this.players.forEach(player => {
-            // Use ID check to avoid interpolating local player (even if reference differs)
             if (this.localPlayer && player.id !== this.localPlayer.id) {
-                player.interpolateRemote(dt);
+                player.interpolateRemote(frameDt);
             }
         });
 
@@ -282,20 +308,13 @@ class Game {
             }
         }
 
-        // Update projectiles
-        this.updateProjectiles(dt);
+        // Update projectiles (use frame dt for smooth visuals)
+        this.updateProjectiles(frameDt);
 
         // Update hit sparks
-        this.updateHitSparks(dt);
+        this.updateHitSparks(frameDt);
 
-        // Only the host (or zone host) runs enemy AI; non-host clients receive synced state
-        if (this.isHost || this.isZoneHost) {
-            // Find the nearest player for each enemy to chase (all players, not just local)
-            this.enemies.forEach(enemy => {
-                const nearestPlayer = this.getNearestPlayer(enemy);
-                enemy.update(this.zone, nearestPlayer, dt);
-            });
-        }
+        // Enemy AI is now updated in the fixed timestep loop above
 
         // Check enemy defeats (only authoritative player removes enemies and reports kills)
         if (this.isHost || this.isZoneHost) {
@@ -724,7 +743,7 @@ class Game {
         this.ctx.fillStyle = fps < 30 ? '#ff4444' : '#44ff44';
         this.ctx.font = '12px monospace';
         this.ctx.textAlign = 'left';
-        this.ctx.fillText(`FPS: ${fps} | Host: ${this.isHost} | ZoneHost: ${this.isZoneHost}`, 10, 20);
+        this.ctx.fillText(`FPS: ${fps} | Physics: 60Hz fixed`, 10, 20);
     }
     
     
