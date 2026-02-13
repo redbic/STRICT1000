@@ -621,48 +621,19 @@ const ZONES = {
         wallColor: '#c9b896',     // Beige walls
         floorColor: '#b5a589',    // Carpet beige
         totalLevels: 1,
-        decorations: {
-            clock: { x: 200, y: 200 },
-            chandelier: { x: 900, y: 200 },
-            portraits: [
-                { x: 150, y: 100 },
-                { x: 1650, y: 100 }
-            ],
-            elevator: { x: 1500, y: 1000, locked: true }
-        },
         walls: [
-            // Outer boundary
+            // Outer boundary only
             { x: 0, y: 0, width: 1800, height: 50 },
             { x: 0, y: 0, width: 50, height: 1400 },
             { x: 0, y: 1350, width: 1800, height: 50 },
-            { x: 1750, y: 0, width: 50, height: 1400 },
-            // Reception desk (horizontal wall near top-center)
-            { x: 750, y: 300, width: 300, height: 20 },
-            // Pillars/columns (decorative) - marked for special rendering
-            { x: 300, y: 400, width: 30, height: 30, isPillar: true },
-            { x: 1470, y: 400, width: 30, height: 30, isPillar: true },
-            { x: 300, y: 900, width: 30, height: 30, isPillar: true },
-            { x: 1470, y: 900, width: 30, height: 30, isPillar: true },
-            // Elevator doors (collision boxes)
-            { x: 1500, y: 1000, width: 60, height: 100 }, // Left door
-            { x: 1560, y: 1000, width: 60, height: 100 }, // Right door
-            // Corridor partitions
-            { x: 600, y: 1100, width: 100, height: 15 },
-            { x: 1100, y: 1100, width: 100, height: 15 }
-        ],
-        nodes: [
-            { x: 860, y: 660, width: 80, height: 80 }
+            { x: 1750, y: 0, width: 50, height: 1400 }
         ],
         portals: [
-            // Training room portal
-            { id: 'training', x: 400, y: 900, width: 60, height: 80, label: 'Room 101' }
+            { id: 'training', x: 200, y: 650, width: 60, height: 80, label: 'Training' },
+            { id: 'elevator', x: 1540, y: 650, width: 60, height: 80, label: 'Elevator' }
         ],
         npcs: [
-            { x: 900, y: 400, name: 'Receptionist', color: '#8b7355' }
-        ],
-        items: [
-            { id: 'old-key', name: 'Room Key', icon: '🗝️', x: 820, y: 760 },
-            { id: 'energy-tonic', name: 'Water Bottle', icon: '💧', x: 1010, y: 760 }
+            { x: 900, y: 400, name: 'Concierge', color: '#8b7355' }
         ]
     },
     training: {
@@ -690,6 +661,26 @@ const ZONES = {
         items: [
             { id: 'flashlight', name: 'Flashlight', icon: '🔦', x: 530, y: 520 },
             { id: 'battery', name: 'Battery', icon: '🔋', x: 420, y: 320 }
+        ]
+    },
+    elevator: {
+        name: 'Elevator',
+        width: 400,
+        height: 400,
+        startX: 200,
+        startY: 300,
+        wallColor: '#8a8078',     // Metal walls
+        floorColor: '#5a5550',    // Dark floor
+        totalLevels: 1,
+        walls: [
+            // Outer boundary (small elevator room)
+            { x: 0, y: 0, width: 400, height: 40 },
+            { x: 0, y: 0, width: 40, height: 400 },
+            { x: 0, y: 360, width: 400, height: 40 },
+            { x: 360, y: 0, width: 40, height: 400 }
+        ],
+        portals: [
+            { id: 'hub', x: 170, y: 320, width: 60, height: 80, label: 'Lobby' }
         ]
     }
 };
