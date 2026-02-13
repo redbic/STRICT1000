@@ -1,8 +1,8 @@
 // Player class for adventure character
 
 // Constants (time-based, units per second)
-const PLAYER_MAX_SPEED = 264;           // pixels per second (doubled for faster gameplay)
-const PLAYER_ACCELERATION = 1600;       // pixels per second squared (doubled)
+const PLAYER_MAX_SPEED = 350;           // pixels per second
+const PLAYER_ACCELERATION = 2200;       // pixels per second squared
 const PLAYER_FRICTION = 8;              // friction factor (higher = more friction)
 const PLAYER_DEFAULT_HP = 100;
 const PLAYER_SIZE = 20;
