@@ -231,9 +231,10 @@ class Player {
      * Draw player using LimeZu tileset character sprites
      */
     drawWithTilesetSprite(ctx, screenX, screenY) {
-        // Track animation time
+        // Track animation time (wrap to prevent floating point issues)
         if (!this.animTime) this.animTime = 0;
         this.animTime += 1/60; // Approximate dt
+        if (this.animTime > 100) this.animTime = 0; // Reset periodically
 
         // Determine animation state based on movement
         const speed = Math.hypot(this.velocityX, this.velocityY);

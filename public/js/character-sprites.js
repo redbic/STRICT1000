@@ -8,17 +8,18 @@ class CharacterSpriteManager {
         this.scale = 3; // Scale up to 48x96
         this.loaded = false;
 
-        // Animation definitions based on LimeZu sprite sheet layout
-        // Row indices for different animations (each row is 32px tall)
+        // Animation definitions based on LimeZu premade character sprite sheet layout
+        // Row order: down, left, right, up (LimeZu standard)
+        // Each row is 32px tall, 6 frames per animation
         this.animations = {
-            idle_down: { row: 0, frames: 6, speed: 0.15 },
-            idle_right: { row: 1, frames: 6, speed: 0.15 },
-            idle_up: { row: 2, frames: 6, speed: 0.15 },
-            idle_left: { row: 3, frames: 6, speed: 0.15 },
-            walk_down: { row: 4, frames: 6, speed: 0.1 },
-            walk_right: { row: 5, frames: 6, speed: 0.1 },
-            walk_up: { row: 6, frames: 6, speed: 0.1 },
-            walk_left: { row: 7, frames: 6, speed: 0.1 },
+            idle_down:  { row: 0, frames: 6, speed: 0.15 },
+            idle_left:  { row: 1, frames: 6, speed: 0.15 },
+            idle_right: { row: 2, frames: 6, speed: 0.15 },
+            idle_up:    { row: 3, frames: 6, speed: 0.15 },
+            walk_down:  { row: 4, frames: 6, speed: 0.1 },
+            walk_left:  { row: 5, frames: 6, speed: 0.1 },
+            walk_right: { row: 6, frames: 6, speed: 0.1 },
+            walk_up:    { row: 7, frames: 6, speed: 0.1 },
         };
     }
 
