@@ -201,8 +201,12 @@ class Player {
         const screenX = this.x - cameraX;
         const screenY = this.y - cameraY;
 
-        // Check if sprite is available
-        if (typeof spriteManager !== 'undefined' && spriteManager.has('player')) {
+        // Try to use LimeZu character sprites first
+        if (typeof characterSprites !== 'undefined' && characterSprites && characterSprites.loaded) {
+            this.drawWithTilesetSprite(ctx, screenX, screenY);
+        }
+        // Fall back to custom sprite if available
+        else if (typeof spriteManager !== 'undefined' && spriteManager.has('player')) {
             this.drawWithSprite(ctx, screenX, screenY);
         } else {
             this.drawFallback(ctx, screenX, screenY);
@@ -210,23 +214,72 @@ class Player {
 
         ctx.restore();
 
-        // Draw avatar + username above character
-        const labelY = screenY - 36;
-        if (this.avatarImg && this.avatarImg.complete) {
-            const size = 20;
-            ctx.imageSmoothingEnabled = false;
-            ctx.drawImage(this.avatarImg, screenX - size / 2, labelY - size, size, size);
-        } else {
-            ctx.fillStyle = '#cc0000';
-            ctx.font = '12px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('👽', screenX, labelY - 6);
-        }
+        // Draw username above character
+        const labelY = screenY - 32;
+        ctx.fillStyle = '#4a4540';
+        ctx.font = '11px Arial';
+        ctx.textAlign = 'center';
+        ctx.fillText(this.username, screenX, labelY);
 
         ctx.fillStyle = '#999999';
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
         ctx.fillText(this.username, screenX, labelY + 12);
+    }
+
+    /**
+     * Draw player using LimeZu tileset character sprites
+     */
+    drawWithTilesetSprite(ctx, screenX, screenY) {
+        // Track animation time
+        if (!this.animTime) this.animTime = 0;
+        this.animTime += 1/60; // Approximate dt
+
+        // Determine animation state based on movement
+        const speed = Math.hypot(this.velocityX, this.velocityY);
+        let animState = 'idle_down';
+
+        if (speed > 20) {
+            // Moving - determine direction from velocity
+            const angle = Math.atan2(this.velocityY, this.velocityX);
+            const deg = (angle * 180 / Math.PI + 360) % 360;
+
+            if (deg >= 315 || deg < 45) animState = 'walk_right';
+            else if (deg >= 45 && deg < 135) animState = 'walk_down';
+            else if (deg >= 135 && deg < 225) animState = 'walk_left';
+            else animState = 'walk_up';
+
+            // Store last direction for idle
+            this.lastDirection = animState.replace('walk_', '');
+        } else {
+            // Idle - use last direction
+            animState = 'idle_' + (this.lastDirection || 'down');
+        }
+
+        // Assign a character based on player ID hash (consistent per player)
+        if (!this.characterNum) {
+            let hash = 0;
+            for (let i = 0; i < this.id.length; i++) {
+                hash = ((hash << 5) - hash) + this.id.charCodeAt(i);
+            }
+            this.characterNum = (Math.abs(hash) % 20) + 1;
+        }
+        const charName = 'character_' + this.characterNum.toString().padStart(2, '0');
+
+        // Draw the character sprite
+        const drawn = characterSprites.draw(ctx, charName, screenX, screenY, animState, this.animTime);
+
+        if (!drawn) {
+            // Fallback if character sprite fails
+            this.drawFallback(ctx, screenX, screenY);
+            return;
+        }
+
+        // Draw gun on top (optional - might look odd with pixel art)
+        // this.drawGun(ctx, screenX, screenY);
+
+        // Draw UI elements
+        this.drawUI(ctx, screenX, screenY);
     }
 
     /**

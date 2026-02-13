@@ -52,8 +52,12 @@ class Zone {
         const floorCol = typeof COLORS !== 'undefined' ? COLORS.FLOOR_COLOR : this.floorColor;
         const wallCol = typeof COLORS !== 'undefined' ? COLORS.WALL_COLOR : this.wallColor;
 
-        // Draw ground with tiled texture effect
-        if (typeof spriteManager !== 'undefined' && spriteManager.has('floorTile')) {
+        // Try to use LimeZu tileset for floor
+        if (typeof tilesetManager !== 'undefined' && tilesetManager && tilesetManager.loaded) {
+            this.drawTilesetFloor(ctx, cameraX, cameraY);
+        }
+        // Fall back to custom sprite if available
+        else if (typeof spriteManager !== 'undefined' && spriteManager.has('floorTile')) {
             this.drawTiledFloor(ctx, cameraX, cameraY);
         } else {
             // Fallback - liminal carpet with subtle pattern
@@ -196,6 +200,54 @@ class Zone {
         for (let x = startX; x < ctx.canvas.width + tileSize; x += tileSize) {
             for (let y = startY; y < ctx.canvas.height + tileSize; y += tileSize) {
                 ctx.drawImage(tile, x, y, tileSize, tileSize);
+            }
+        }
+    }
+
+    /**
+     * Draw floor using LimeZu tileset
+     */
+    drawTilesetFloor(ctx, cameraX, cameraY) {
+        // Choose floor tile based on zone (could be configured per zone)
+        // Using beige carpet for lobby, green for rooms
+        const floorTile = this.isHub
+            ? { tileset: 'floors', tileX: 1, tileY: 4 }  // Beige carpet
+            : { tileset: 'floors', tileX: 4, tileY: 4 }; // Different carpet
+
+        const scale = tilesetManager.scale;
+        const tileSize = tilesetManager.tileSize * scale; // 48px
+
+        const startTileX = Math.floor(cameraX / tileSize);
+        const startTileY = Math.floor(cameraY / tileSize);
+        const tilesX = Math.ceil(ctx.canvas.width / tileSize) + 2;
+        const tilesY = Math.ceil(ctx.canvas.height / tileSize) + 2;
+
+        ctx.imageSmoothingEnabled = false; // Pixel-perfect
+
+        for (let ty = 0; ty < tilesY; ty++) {
+            for (let tx = 0; tx < tilesX; tx++) {
+                const worldTileX = startTileX + tx;
+                const worldTileY = startTileY + ty;
+
+                // Only draw within zone bounds
+                const worldX = worldTileX * tileSize;
+                const worldY = worldTileY * tileSize;
+                if (worldX < 0 || worldX >= this.width || worldY < 0 || worldY >= this.height) {
+                    continue;
+                }
+
+                const screenX = worldTileX * tileSize - cameraX;
+                const screenY = worldTileY * tileSize - cameraY;
+
+                tilesetManager.drawTile(
+                    ctx,
+                    floorTile.tileset,
+                    floorTile.tileX,
+                    floorTile.tileY,
+                    screenX,
+                    screenY,
+                    scale
+                );
             }
         }
     }

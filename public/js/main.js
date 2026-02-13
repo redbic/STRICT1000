@@ -30,13 +30,27 @@ function showScreen(screenId) {
 }
 
 // Initialize
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     setupEventListeners();
-    
+
     // Check for saved username
     const savedUsername = localStorage.getItem('username');
     if (savedUsername) {
         document.getElementById('username').value = savedUsername;
+    }
+
+    // Load tilesets and character sprites in the background
+    try {
+        if (typeof initTilesets === 'function') {
+            await initTilesets();
+            console.log('Tilesets initialized');
+        }
+        if (typeof initCharacterSprites === 'function') {
+            await initCharacterSprites();
+            console.log('Character sprites initialized');
+        }
+    } catch (err) {
+        console.warn('Failed to load tilesets/sprites, will use fallback rendering:', err);
     }
 });
 
