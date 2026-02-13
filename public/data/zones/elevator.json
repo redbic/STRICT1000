@@ -142,238 +142,229 @@
         "physical": true
       },
       {
-        "x": 2,
+        "x": 4,
         "y": 0,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 2,
+        "physical": true
+      },
+      {
+        "x": 1,
+        "y": 1,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 3,
+        "physical": true
+      },
+      {
+        "x": 4,
+        "y": 1,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 3,
+        "physical": true
+      },
+      {
+        "x": 0,
+        "y": 0,
+        "tileset": "walls3d",
+        "tileX": 10,
+        "tileY": 0,
+        "physical": true
+      },
+      {
+        "x": 5,
+        "y": 0,
+        "tileset": "walls3d",
+        "tileX": 13,
+        "tileY": 0,
+        "physical": true
+      },
+      {
+        "x": 5,
+        "y": 1,
+        "tileset": "walls3d",
+        "tileX": 13,
+        "tileY": 1,
+        "physical": true
+      },
+      {
+        "x": 0,
+        "y": 1,
+        "tileset": "walls3d",
+        "tileX": 10,
+        "tileY": 1,
+        "physical": true
+      },
+      {
+        "x": 0,
+        "y": 2,
+        "tileset": "walls3d",
+        "tileX": 10,
+        "tileY": 2,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 0,
+        "y": 3,
+        "tileset": "walls3d",
+        "tileX": 10,
+        "tileY": 2,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 0,
+        "y": 4,
+        "tileset": "walls3d",
+        "tileX": 10,
+        "tileY": 1,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 0,
+        "y": 5,
+        "tileset": "walls3d",
+        "tileX": 10,
+        "tileY": 0,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 5,
+        "y": 2,
+        "tileset": "walls3d",
+        "tileX": 10,
+        "tileY": 2,
+        "flipH": true,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 5,
+        "y": 3,
+        "tileset": "walls3d",
+        "tileX": 10,
+        "tileY": 2,
+        "flipH": true,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 5,
+        "y": 4,
+        "tileset": "walls3d",
+        "tileX": 10,
+        "tileY": 1,
+        "flipH": true,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 5,
+        "y": 5,
+        "tileset": "walls3d",
+        "tileX": 10,
+        "tileY": 0,
+        "flipH": true,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 4,
+        "y": 5,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 2,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 3,
+        "y": 5,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 2,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 2,
+        "y": 5,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 2,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 1,
+        "y": 5,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 2,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 1,
+        "y": 4,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 3,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 2,
+        "y": 4,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 3,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 3,
+        "y": 4,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 3,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 4,
+        "y": 4,
+        "tileset": "walls3d",
+        "tileX": 11,
+        "tileY": 3,
+        "flipV": true,
+        "physical": true
+      },
+      {
+        "x": 2,
+        "y": 1,
         "tileset": "t01_generic",
         "tileX": 3,
-        "tileY": 31,
-        "physical": true
-      },
-      {
-        "x": 3,
-        "y": 0,
-        "tileset": "t01_generic",
-        "tileX": 4,
-        "tileY": 31,
-        "physical": true
-      },
-      {
-        "x": 4,
-        "y": 0,
-        "tileset": "walls3d",
-        "tileX": 11,
-        "tileY": 2,
-        "physical": true
-      },
-      {
-        "x": 1,
-        "y": 1,
-        "tileset": "walls3d",
-        "tileX": 11,
-        "tileY": 3,
-        "physical": true
-      },
-      {
-        "x": 2,
-        "y": 1,
-        "tileset": "t01_generic",
-        "tileX": 4,
         "tileY": 32
       },
       {
         "x": 3,
         "y": 1,
         "tileset": "t01_generic",
-        "tileX": 4,
+        "tileX": 3,
         "tileY": 32
       },
       {
-        "x": 4,
-        "y": 1,
-        "tileset": "walls3d",
-        "tileX": 11,
-        "tileY": 3,
-        "physical": true
-      },
-      {
-        "x": 0,
-        "y": 0,
-        "tileset": "walls3d",
-        "tileX": 10,
-        "tileY": 0,
-        "physical": true
-      },
-      {
-        "x": 5,
-        "y": 0,
-        "tileset": "walls3d",
-        "tileX": 13,
-        "tileY": 0,
-        "physical": true
-      },
-      {
-        "x": 5,
-        "y": 1,
-        "tileset": "walls3d",
-        "tileX": 13,
-        "tileY": 1,
-        "physical": true
-      },
-      {
-        "x": 0,
-        "y": 1,
-        "tileset": "walls3d",
-        "tileX": 10,
-        "tileY": 1,
-        "physical": true
-      },
-      {
-        "x": 0,
-        "y": 2,
-        "tileset": "walls3d",
-        "tileX": 10,
-        "tileY": 2,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 0,
-        "y": 3,
-        "tileset": "walls3d",
-        "tileX": 10,
-        "tileY": 2,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 0,
-        "y": 4,
-        "tileset": "walls3d",
-        "tileX": 10,
-        "tileY": 1,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 0,
-        "y": 5,
-        "tileset": "walls3d",
-        "tileX": 10,
-        "tileY": 0,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 5,
-        "y": 2,
-        "tileset": "walls3d",
-        "tileX": 10,
-        "tileY": 2,
-        "flipH": true,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 5,
-        "y": 3,
-        "tileset": "walls3d",
-        "tileX": 10,
-        "tileY": 2,
-        "flipH": true,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 5,
-        "y": 4,
-        "tileset": "walls3d",
-        "tileX": 10,
-        "tileY": 1,
-        "flipH": true,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 5,
-        "y": 5,
-        "tileset": "walls3d",
-        "tileX": 10,
-        "tileY": 0,
-        "flipH": true,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 4,
-        "y": 5,
-        "tileset": "walls3d",
-        "tileX": 11,
-        "tileY": 2,
-        "flipV": true,
-        "physical": true
-      },
-      {
         "x": 3,
-        "y": 5,
-        "tileset": "walls3d",
-        "tileX": 11,
-        "tileY": 2,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 2,
-        "y": 5,
-        "tileset": "walls3d",
-        "tileX": 11,
-        "tileY": 2,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 1,
-        "y": 5,
-        "tileset": "walls3d",
-        "tileX": 11,
-        "tileY": 2,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 1,
-        "y": 4,
-        "tileset": "walls3d",
-        "tileX": 11,
-        "tileY": 3,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 2,
-        "y": 4,
-        "tileset": "walls3d",
-        "tileX": 11,
-        "tileY": 3,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 3,
-        "y": 4,
-        "tileset": "walls3d",
-        "tileX": 11,
-        "tileY": 3,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 4,
-        "y": 4,
-        "tileset": "walls3d",
-        "tileX": 11,
-        "tileY": 3,
-        "flipV": true,
-        "physical": true
+        "y": 0,
+        "tileset": "t01_generic",
+        "tileX": 4,
+        "tileY": 31
       }
     ]
   },

@@ -1,61 +1,43 @@
 # STRICT1000
 
-Browser-based multiplayer top-down adventure game set in a hostile, shifting hotel.
-
-## Stack
-- Frontend: Vanilla JavaScript + HTML5 Canvas
-- Backend: Node.js + Express
-- Realtime: `ws`
-- Persistence: PostgreSQL (`pg`)
+Browser-based multiplayer top-down adventure game.
 
 ## Quick Start
-1. Install dependencies:
-   ```bash
-   npm ci
-   ```
-2. Copy environment file:
-   ```bash
-   cp .env.example .env
-   ```
-3. Run development server:
-   ```bash
-   npm run dev
-   ```
-4. Open `http://localhost:3000`.
+
+```bash
+npm ci
+cp .env.example .env   # Set APP_PASSWORD
+npm run dev
+```
+
+Open `http://localhost:3000` and login with your `APP_PASSWORD`.
+
+## Stack
+
+- **Frontend:** Vanilla JS + HTML5 Canvas
+- **Backend:** Node.js + Express + WebSocket (`ws`)
+- **Database:** PostgreSQL (optional in dev)
 
 ## Environment Variables
-- `PORT` (default `3000`)
-- `NODE_ENV` (`development` or `production`)
-- `DATABASE_URL` (required in production)
-- `APP_ORIGIN` (required for strict WebSocket origin allowlist in production)
-- `APP_PASSWORD` (required in all environments for HTTP + WebSocket basic auth)
 
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `APP_PASSWORD` | Yes | Login password |
+| `SESSION_SECRET` | Production | Session signing key |
+| `DATABASE_URL` | Production | PostgreSQL connection string |
+| `APP_ORIGIN` | Production | WebSocket origin allowlist |
+| `PORT` | No | Server port (default: 3000) |
 
-## Access Authentication
-STRICT1000 is protected with HTTP Basic authentication. Set `APP_PASSWORD` and sign in with:
-- Username: `strict1000`
-- Password: value of `APP_PASSWORD`
+## Project Structure
 
-Authentication applies to both HTTP requests and WebSocket connections.
-
-## Multiplayer Model (Current)
-- Room host is authoritative for enemy simulation broadcast (`enemy_sync`).
-- Server is authoritative for room membership, zone filtering, and currency crediting.
-- Enemy kill rewards are debounced per room+zone+enemy key.
-
-## Security Controls (Current)
-- HTTP rate limiting on `/api/*`
-- WebSocket message rate limiting per connection
-- WebSocket payload size limit (64KB)
-- WebSocket connection cap per IP
-- Request/body input sanitization + validation
-- Basic response security headers
-
-## Important Directories
-- `server.js`: HTTP + WebSocket entrypoint
-- `server/`: currency, room management, validation
-- `public/js/`: game/client runtime
-- `public/css/`: styling
+```
+server.js           # HTTP + WebSocket server
+server/             # Auth, rooms, currency, validation
+public/js/          # Game client
+public/data/zones/  # Zone JSON files
+public/tools/       # Environment builder
+```
 
 ## Deployment
-See `DEPLOYMENT.md`.
+
+See `DEPLOYMENT.md` for Render deployment instructions.
