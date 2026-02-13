@@ -18,6 +18,16 @@ class Zone {
         this.visibilityRadius = zoneData.visibilityRadius || null;
         this.isHub = zoneData.isHub || false;
 
+        // Floor tiles (from JSON)
+        this.floor = zoneData.floor || null;
+        this.floorMap = zoneData.floorMap || null;
+        if (!this.floorMap && this.floor && this.floor.tiles) {
+            this.floorMap = new Map();
+            this.floor.tiles.forEach(tile => {
+                this.floorMap.set(`${tile.x},${tile.y}`, tile);
+            });
+        }
+
         // Objects layer (furniture, decorations with optional collision)
         this.objects = zoneData.objects || null;
         this.objectsMap = null;
@@ -251,23 +261,22 @@ class Zone {
                 const screenX = worldTileX * tileSize - cameraX;
                 const screenY = worldTileY * tileSize - cameraY;
 
-                if (this.isHub) {
-                    // Use custom floor map for hub
-                    const tile = HUB_FLOOR_MAP.get(`${worldTileX},${worldTileY}`);
-                    if (tile) {
-                        tilesetManager.drawTile(
-                            ctx,
-                            tile.tileset,
-                            tile.tileX,
-                            tile.tileY,
-                            screenX,
-                            screenY,
-                            scale,
-                            tile.flipH || false,
-                            tile.flipV || false
-                        );
-                    }
+                // Use zone's floor map if available
+                const tile = this.floorMap ? this.floorMap.get(`${worldTileX},${worldTileY}`) : null;
+                if (tile) {
+                    tilesetManager.drawTile(
+                        ctx,
+                        tile.tileset,
+                        tile.tileX,
+                        tile.tileY,
+                        screenX,
+                        screenY,
+                        scale,
+                        tile.flipH || false,
+                        tile.flipV || false
+                    );
                 } else {
+                    // Fallback to default floor tile
                     tilesetManager.drawTile(
                         ctx,
                         otherFloorTile.tileset,
