@@ -12,7 +12,7 @@ const PLAYER_STUN_FRICTION = 12;        // higher friction when stunned
 const PLAYER_GUN_FIRE_RATE = 0.75;      // shots per second (slow, tactical)
 const PLAYER_GUN_DAMAGE = 25;           // damage per shot (4 shots kills 100hp enemy)
 const PLAYER_GUN_MAGAZINE_SIZE = 5;     // shots before reload
-const PLAYER_GUN_RELOAD_TIME = 3.5;     // seconds to reload (punishing)
+const PLAYER_GUN_RELOAD_TIME = 1.75;    // seconds to reload
 const PLAYER_GUN_BARREL_LENGTH = 20;    // visual barrel offset
 
 class Player {
