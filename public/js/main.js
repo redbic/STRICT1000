@@ -238,6 +238,9 @@ function setupNetworkHandlers() {
     
     networkManager.onEnemyRespawn = (data) => {
         if (game && data.enemyId && data.zone) {
+            // Only respawn if player is in the same zone
+            if (game.zoneId !== data.zone) return;
+
             // Re-add the enemy to the game
             // Note: Zone IDs are lowercase keys (e.g., 'hub', 'training')
             const zoneData = ZONES[data.zone];
