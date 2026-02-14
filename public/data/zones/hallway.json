@@ -8,1296 +8,168 @@
     "width": 8,
     "height": 15,
     "tiles": [
-      {
-        "x": 0,
-        "y": 0,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 1,
-        "y": 0,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 2,
-        "y": 0,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 3,
-        "y": 0,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 4,
-        "y": 0,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 5,
-        "y": 0,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 6,
-        "y": 0,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 7,
-        "y": 0,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 0,
-        "y": 1,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 1,
-        "y": 1,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 2,
-        "y": 1,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 3,
-        "y": 1,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 4,
-        "y": 1,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 5,
-        "y": 1,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 6,
-        "y": 1,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 7,
-        "y": 1,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 0,
-        "y": 2,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 1,
-        "y": 2,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 2,
-        "y": 2,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 3,
-        "y": 2,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 4,
-        "y": 2,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 5,
-        "y": 2,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 6,
-        "y": 2,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 7,
-        "y": 2,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 0,
-        "y": 3,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 1,
-        "y": 3,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 2,
-        "y": 3,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 3,
-        "y": 3,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 4,
-        "y": 3,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 5,
-        "y": 3,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 6,
-        "y": 3,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 7,
-        "y": 3,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 0,
-        "y": 4,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 1,
-        "y": 4,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 2,
-        "y": 4,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 3,
-        "y": 4,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 4,
-        "y": 4,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 5,
-        "y": 4,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 6,
-        "y": 4,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 7,
-        "y": 4,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 0,
-        "y": 5,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 1,
-        "y": 5,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 2,
-        "y": 5,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 3,
-        "y": 5,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 4,
-        "y": 5,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 5,
-        "y": 5,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 6,
-        "y": 5,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 7,
-        "y": 5,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 0,
-        "y": 6,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 1,
-        "y": 6,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 2,
-        "y": 6,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 3,
-        "y": 6,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 4,
-        "y": 6,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 5,
-        "y": 6,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 6,
-        "y": 6,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 7,
-        "y": 6,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 0,
-        "y": 7,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 1,
-        "y": 7,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 2,
-        "y": 7,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 3,
-        "y": 7,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 4,
-        "y": 7,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 5,
-        "y": 7,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 6,
-        "y": 7,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 7,
-        "y": 7,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 0,
-        "y": 8,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 1,
-        "y": 8,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 2,
-        "y": 8,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 3,
-        "y": 8,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 4,
-        "y": 8,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 5,
-        "y": 8,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 6,
-        "y": 8,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 7,
-        "y": 8,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 0,
-        "y": 9,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 1,
-        "y": 9,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 2,
-        "y": 9,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 3,
-        "y": 9,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 4,
-        "y": 9,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 5,
-        "y": 9,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 6,
-        "y": 9,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 7,
-        "y": 9,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 0,
-        "y": 10,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 1,
-        "y": 10,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 2,
-        "y": 10,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 3,
-        "y": 10,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 4,
-        "y": 10,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 5,
-        "y": 10,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 6,
-        "y": 10,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 7,
-        "y": 10,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 0,
-        "y": 11,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 1,
-        "y": 11,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 2,
-        "y": 11,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 3,
-        "y": 11,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 4,
-        "y": 11,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 5,
-        "y": 11,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 6,
-        "y": 11,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 7,
-        "y": 11,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 0,
-        "y": 12,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 1,
-        "y": 12,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 2,
-        "y": 12,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 3,
-        "y": 12,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 4,
-        "y": 12,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 5,
-        "y": 12,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 6,
-        "y": 12,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 7,
-        "y": 12,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 0,
-        "y": 13,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 1,
-        "y": 13,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 2,
-        "y": 13,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 3,
-        "y": 13,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 4,
-        "y": 13,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 5,
-        "y": 13,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 6,
-        "y": 13,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 7,
-        "y": 13,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 0,
-        "y": 14,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 1,
-        "y": 14,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 2,
-        "y": 14,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 3,
-        "y": 14,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 4,
-        "y": 14,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 5,
-        "y": 14,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 6,
-        "y": 14,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      },
-      {
-        "x": 7,
-        "y": 14,
-        "tileset": "floors",
-        "tileX": 9,
-        "tileY": 7
-      }
+      { "x": 0, "y": 0, "tileset": "walls3d", "tileX": 11, "tileY": 14 },
+      { "x": 1, "y": 0, "tileset": "walls3d", "tileX": 12, "tileY": 16 },
+      { "x": 2, "y": 0, "tileset": "walls3d", "tileX": 12, "tileY": 16 },
+      { "x": 3, "y": 0, "tileset": "walls3d", "tileX": 12, "tileY": 16 },
+      { "x": 4, "y": 0, "tileset": "walls3d", "tileX": 12, "tileY": 16 },
+      { "x": 5, "y": 0, "tileset": "walls3d", "tileX": 12, "tileY": 16 },
+      { "x": 6, "y": 0, "tileset": "walls3d", "tileX": 11, "tileY": 16 },
+      { "x": 7, "y": 0, "tileset": "walls3d", "tileX": 11, "tileY": 14, "flipH": true },
+      { "x": 0, "y": 1, "tileset": "walls3d", "tileX": 11, "tileY": 15 },
+      { "x": 1, "y": 1, "tileset": "walls3d", "tileX": 11, "tileY": 17 },
+      { "x": 2, "y": 1, "tileset": "walls3d", "tileX": 11, "tileY": 17 },
+      { "x": 3, "y": 1, "tileset": "walls3d", "tileX": 11, "tileY": 17 },
+      { "x": 4, "y": 1, "tileset": "walls3d", "tileX": 11, "tileY": 17 },
+      { "x": 5, "y": 1, "tileset": "walls3d", "tileX": 11, "tileY": 17 },
+      { "x": 6, "y": 1, "tileset": "walls3d", "tileX": 11, "tileY": 17 },
+      { "x": 7, "y": 1, "tileset": "walls3d", "tileX": 11, "tileY": 15, "flipH": true },
+      { "x": 0, "y": 2, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 1, "y": 2, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 2, "y": 2, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 3, "y": 2, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 4, "y": 2, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 5, "y": 2, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 6, "y": 2, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 7, "y": 2, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 0, "y": 3, "tileset": "walls3d", "tileX": 9, "tileY": 19 },
+      { "x": 1, "y": 3, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 2, "y": 3, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 3, "y": 3, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 4, "y": 3, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 5, "y": 3, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 6, "y": 3, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 7, "y": 3, "tileset": "walls3d", "tileX": 9, "tileY": 19, "flipH": true },
+      { "x": 0, "y": 4, "tileset": "walls3d", "tileX": 9, "tileY": 19 },
+      { "x": 1, "y": 4, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 2, "y": 4, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 3, "y": 4, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 4, "y": 4, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 5, "y": 4, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 6, "y": 4, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 7, "y": 4, "tileset": "walls3d", "tileX": 9, "tileY": 19, "flipH": true },
+      { "x": 0, "y": 5, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 1, "y": 5, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 2, "y": 5, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 3, "y": 5, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 4, "y": 5, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 5, "y": 5, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 6, "y": 5, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 7, "y": 5, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 0, "y": 6, "tileset": "walls3d", "tileX": 9, "tileY": 19 },
+      { "x": 1, "y": 6, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 2, "y": 6, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 3, "y": 6, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 4, "y": 6, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 5, "y": 6, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 6, "y": 6, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 7, "y": 6, "tileset": "walls3d", "tileX": 9, "tileY": 19, "flipH": true },
+      { "x": 0, "y": 7, "tileset": "walls3d", "tileX": 9, "tileY": 19 },
+      { "x": 1, "y": 7, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 2, "y": 7, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 3, "y": 7, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 4, "y": 7, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 5, "y": 7, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 6, "y": 7, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 7, "y": 7, "tileset": "walls3d", "tileX": 9, "tileY": 19, "flipH": true },
+      { "x": 0, "y": 8, "tileset": "walls3d", "tileX": 9, "tileY": 19 },
+      { "x": 1, "y": 8, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 2, "y": 8, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 3, "y": 8, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 4, "y": 8, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 5, "y": 8, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 6, "y": 8, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 7, "y": 8, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 0, "y": 9, "tileset": "walls3d", "tileX": 9, "tileY": 19 },
+      { "x": 1, "y": 9, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 2, "y": 9, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 3, "y": 9, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 4, "y": 9, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 5, "y": 9, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 6, "y": 9, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 7, "y": 9, "tileset": "walls3d", "tileX": 9, "tileY": 19, "flipH": true },
+      { "x": 0, "y": 10, "tileset": "walls3d", "tileX": 9, "tileY": 19 },
+      { "x": 1, "y": 10, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 2, "y": 10, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 3, "y": 10, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 4, "y": 10, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 5, "y": 10, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 6, "y": 10, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 7, "y": 10, "tileset": "walls3d", "tileX": 9, "tileY": 19, "flipH": true },
+      { "x": 0, "y": 11, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 1, "y": 11, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 2, "y": 11, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 3, "y": 11, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 4, "y": 11, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 5, "y": 11, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 6, "y": 11, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 7, "y": 11, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 0, "y": 12, "tileset": "walls3d", "tileX": 9, "tileY": 19 },
+      { "x": 1, "y": 12, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 2, "y": 12, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 3, "y": 12, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 4, "y": 12, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 5, "y": 12, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 6, "y": 12, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 7, "y": 12, "tileset": "walls3d", "tileX": 9, "tileY": 19, "flipH": true },
+      { "x": 0, "y": 13, "tileset": "walls3d", "tileX": 11, "tileY": 15, "flipV": true },
+      { "x": 1, "y": 13, "tileset": "walls3d", "tileX": 11, "tileY": 17, "flipV": true },
+      { "x": 2, "y": 13, "tileset": "walls3d", "tileX": 11, "tileY": 17, "flipV": true },
+      { "x": 3, "y": 13, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 4, "y": 13, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 5, "y": 13, "tileset": "walls3d", "tileX": 11, "tileY": 17, "flipV": true },
+      { "x": 6, "y": 13, "tileset": "walls3d", "tileX": 11, "tileY": 17, "flipV": true },
+      { "x": 7, "y": 13, "tileset": "walls3d", "tileX": 11, "tileY": 15, "flipH": true, "flipV": true },
+      { "x": 0, "y": 14, "tileset": "walls3d", "tileX": 11, "tileY": 14, "flipV": true },
+      { "x": 1, "y": 14, "tileset": "walls3d", "tileX": 11, "tileY": 16, "flipV": true },
+      { "x": 2, "y": 14, "tileset": "walls3d", "tileX": 11, "tileY": 16, "flipV": true },
+      { "x": 3, "y": 14, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 4, "y": 14, "tileset": "floors", "tileX": 9, "tileY": 7 },
+      { "x": 5, "y": 14, "tileset": "walls3d", "tileX": 11, "tileY": 16, "flipV": true },
+      { "x": 6, "y": 14, "tileset": "walls3d", "tileX": 11, "tileY": 16, "flipV": true },
+      { "x": 7, "y": 14, "tileset": "walls3d", "tileX": 11, "tileY": 14, "flipH": true, "flipV": true }
     ]
   },
   "objects": {
     "width": 8,
     "height": 15,
     "tiles": [
-      {
-        "x": 0,
-        "y": 0,
-        "tileset": "walls3d",
-        "tileX": 11,
-        "tileY": 14,
-        "physical": true
-      },
-      {
-        "x": 0,
-        "y": 1,
-        "tileset": "walls3d",
-        "tileX": 11,
-        "tileY": 15,
-        "physical": true
-      },
-      {
-        "x": 0,
-        "y": 2,
-        "tileset": "walls3d",
-        "tileX": 9,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 0,
-        "y": 3,
-        "tileset": "walls3d",
-        "tileX": 9,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 0,
-        "y": 4,
-        "tileset": "walls3d",
-        "tileX": 9,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 0,
-        "y": 5,
-        "tileset": "walls3d",
-        "tileX": 9,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 0,
-        "y": 6,
-        "tileset": "walls3d",
-        "tileX": 9,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 0,
-        "y": 7,
-        "tileset": "walls3d",
-        "tileX": 9,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 0,
-        "y": 8,
-        "tileset": "walls3d",
-        "tileX": 9,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 0,
-        "y": 9,
-        "tileset": "walls3d",
-        "tileX": 9,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 0,
-        "y": 10,
-        "tileset": "walls3d",
-        "tileX": 9,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 0,
-        "y": 11,
-        "tileset": "walls3d",
-        "tileX": 9,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 0,
-        "y": 12,
-        "tileset": "walls3d",
-        "tileX": 9,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 0,
-        "y": 14,
-        "tileset": "walls3d",
-        "tileX": 11,
-        "tileY": 14,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 0,
-        "y": 13,
-        "tileset": "walls3d",
-        "tileX": 11,
-        "tileY": 15,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 1,
-        "y": 13,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 17,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 2,
-        "y": 13,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 17,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 3,
-        "y": 13,
-        "tileset": "t01_generic",
-        "tileX": 3,
-        "tileY": 32,
-        "flipV": true
-      },
-      {
-        "x": 4,
-        "y": 13,
-        "tileset": "t01_generic",
-        "tileX": 3,
-        "tileY": 32,
-        "flipV": true
-      },
-      {
-        "x": 5,
-        "y": 13,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 17,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 6,
-        "y": 13,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 17,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 1,
-        "y": 14,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 16,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 2,
-        "y": 14,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 16,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 3,
-        "y": 14,
-        "tileset": "t01_generic",
-        "tileX": 3,
-        "tileY": 31,
-        "flipV": true
-      },
-      {
-        "x": 4,
-        "y": 14,
-        "tileset": "t01_generic",
-        "tileX": 3,
-        "tileY": 31,
-        "flipV": true
-      },
-      {
-        "x": 5,
-        "y": 14,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 16,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 6,
-        "y": 14,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 16,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 7,
-        "y": 14,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 14,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 7,
-        "y": 13,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 15,
-        "flipV": true,
-        "physical": true
-      },
-      {
-        "x": 7,
-        "y": 12,
-        "tileset": "walls3d",
-        "tileX": 14,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 7,
-        "y": 11,
-        "tileset": "walls3d",
-        "tileX": 14,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 7,
-        "y": 10,
-        "tileset": "walls3d",
-        "tileX": 14,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 7,
-        "y": 9,
-        "tileset": "walls3d",
-        "tileX": 14,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 7,
-        "y": 8,
-        "tileset": "walls3d",
-        "tileX": 14,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 7,
-        "y": 7,
-        "tileset": "walls3d",
-        "tileX": 14,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 7,
-        "y": 6,
-        "tileset": "walls3d",
-        "tileX": 14,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 7,
-        "y": 5,
-        "tileset": "walls3d",
-        "tileX": 14,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 7,
-        "y": 4,
-        "tileset": "walls3d",
-        "tileX": 14,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 7,
-        "y": 3,
-        "tileset": "walls3d",
-        "tileX": 14,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 7,
-        "y": 2,
-        "tileset": "walls3d",
-        "tileX": 14,
-        "tileY": 19,
-        "physical": true
-      },
-      {
-        "x": 7,
-        "y": 1,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 15,
-        "physical": true
-      },
-      {
-        "x": 7,
-        "y": 0,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 14,
-        "physical": true
-      },
-      {
-        "x": 6,
-        "y": 1,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 17,
-        "physical": true
-      },
-      {
-        "x": 5,
-        "y": 1,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 17,
-        "physical": true
-      },
-      {
-        "x": 4,
-        "y": 1,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 17,
-        "physical": true
-      },
-      {
-        "x": 3,
-        "y": 1,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 17,
-        "physical": true
-      },
-      {
-        "x": 2,
-        "y": 1,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 17,
-        "physical": true
-      },
-      {
-        "x": 1,
-        "y": 1,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 17,
-        "physical": true
-      },
-      {
-        "x": 1,
-        "y": 0,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 16,
-        "physical": true
-      },
-      {
-        "x": 2,
-        "y": 0,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 16,
-        "physical": true
-      },
-      {
-        "x": 3,
-        "y": 0,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 16,
-        "physical": true
-      },
-      {
-        "x": 4,
-        "y": 0,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 16,
-        "physical": true
-      },
-      {
-        "x": 5,
-        "y": 0,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 16,
-        "physical": true
-      },
-      {
-        "x": 6,
-        "y": 0,
-        "tileset": "walls3d",
-        "tileX": 12,
-        "tileY": 16,
-        "physical": true
-      }
+      { "x": 0, "y": 11, "tileset": "t01_generic", "tileX": 2, "tileY": 43 },
+      { "x": 3, "y": 13, "tileset": "t01_generic", "tileX": 3, "tileY": 32, "flipV": true },
+      { "x": 4, "y": 13, "tileset": "t01_generic", "tileX": 3, "tileY": 32, "flipV": true },
+      { "x": 3, "y": 14, "tileset": "t01_generic", "tileX": 3, "tileY": 31, "flipV": true },
+      { "x": 4, "y": 14, "tileset": "t01_generic", "tileX": 3, "tileY": 31, "flipV": true },
+      { "x": 4, "y": 10, "tileset": "t01_generic", "tileX": 10, "tileY": 27 },
+      { "x": 4, "y": 9, "tileset": "t01_generic", "tileX": 10, "tileY": 26 },
+      { "x": 3, "y": 9, "tileset": "t01_generic", "tileX": 9, "tileY": 26 },
+      { "x": 3, "y": 8, "tileset": "t01_generic", "tileX": 9, "tileY": 25 },
+      { "x": 4, "y": 8, "tileset": "t01_generic", "tileX": 10, "tileY": 25 },
+      { "x": 3, "y": 11, "tileset": "t01_generic", "tileX": 9, "tileY": 28 },
+      { "x": 4, "y": 11, "tileset": "t01_generic", "tileX": 10, "tileY": 28 },
+      { "x": 3, "y": 10, "tileset": "t01_generic", "tileX": 9, "tileY": 27 },
+      { "x": 3, "y": 6, "tileset": "t01_generic", "tileX": 9, "tileY": 28 },
+      { "x": 4, "y": 6, "tileset": "t01_generic", "tileX": 10, "tileY": 28 },
+      { "x": 3, "y": 5, "tileset": "t01_generic", "tileX": 9, "tileY": 27 },
+      { "x": 4, "y": 5, "tileset": "t01_generic", "tileX": 10, "tileY": 27 },
+      { "x": 3, "y": 4, "tileset": "t01_generic", "tileX": 9, "tileY": 26 },
+      { "x": 4, "y": 4, "tileset": "t01_generic", "tileX": 10, "tileY": 26 },
+      { "x": 3, "y": 3, "tileset": "t01_generic", "tileX": 9, "tileY": 25 },
+      { "x": 4, "y": 3, "tileset": "t01_generic", "tileX": 10, "tileY": 25 },
+      { "x": 7, "y": 11, "tileset": "t01_generic", "tileX": 2, "tileY": 43 },
+      { "x": 0, "y": 8, "tileset": "t01_generic", "tileX": 2, "tileY": 43 },
+      { "x": 0, "y": 5, "tileset": "t01_generic", "tileX": 2, "tileY": 43 },
+      { "x": 0, "y": 2, "tileset": "t01_generic", "tileX": 2, "tileY": 43 },
+      { "x": 7, "y": 2, "tileset": "t01_generic", "tileX": 2, "tileY": 43 },
+      { "x": 7, "y": 5, "tileset": "t01_generic", "tileX": 2, "tileY": 43 },
+      { "x": 7, "y": 8, "tileset": "t01_generic", "tileX": 2, "tileY": 43 },
+      { "x": 7, "y": 10, "tileset": "t01_generic", "tileX": 2, "tileY": 42 },
+      { "x": 0, "y": 4, "tileset": "t01_generic", "tileX": 2, "tileY": 42 },
+      { "x": 0, "y": 1, "tileset": "t01_generic", "tileX": 2, "tileY": 42 },
+      { "x": 7, "y": 1, "tileset": "t01_generic", "tileX": 2, "tileY": 42 },
+      { "x": 7, "y": 4, "tileset": "t01_generic", "tileX": 2, "tileY": 42 },
+      { "x": 7, "y": 7, "tileset": "t01_generic", "tileX": 2, "tileY": 42 },
+      { "x": 0, "y": 10, "tileset": "t01_generic", "tileX": 2, "tileY": 42 },
+      { "x": 0, "y": 7, "tileset": "t01_generic", "tileX": 2, "tileY": 42 }
     ]
   },
   "walls": [],
