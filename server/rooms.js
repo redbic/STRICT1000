@@ -30,7 +30,8 @@ const WebSocket = require('ws');
  * @property {Set<string>} killedEnemies - Set of "zone-enemyId" keys for killed enemies
  * @property {Map<string, NodeJS.Timeout>} respawnTimers - Timers for enemy respawns
  * @property {string|null} hostId - Player ID of the room host (authoritative for enemies)
- * @property {Map<string, EnemyState[]>} zoneEnemies - Enemy state per zone (server-authoritative)
+ * @property {Map<string, EnemyState[]>} zoneEnemies - Enemy state per zone (legacy, used for initial load)
+ * @property {Map<string, import('./zone-session').ZoneSession>} zoneSessions - Active zone simulation sessions
  */
 
 const MAX_PARTY_SIZE = 6;
@@ -74,7 +75,8 @@ class RoomManager {
       killedEnemies: new Set(),
       respawnTimers: new Map(),
       hostId: null,
-      zoneEnemies: new Map(), // Server-authoritative enemy state per zone
+      zoneEnemies: new Map(), // Legacy enemy state per zone (used for initial load)
+      zoneSessions: new Map(), // Active zone simulation sessions
     };
     this.rooms.set(roomId, room);
     return room;
@@ -86,8 +88,15 @@ class RoomManager {
    */
   deleteRoom(roomId) {
     const room = this.rooms.get(roomId);
-    if (room && room.respawnTimers) {
-      room.respawnTimers.forEach(timer => clearTimeout(timer));
+    if (room) {
+      if (room.respawnTimers) {
+        room.respawnTimers.forEach(timer => clearTimeout(timer));
+      }
+      // Shut down all active zone sessions
+      if (room.zoneSessions) {
+        room.zoneSessions.forEach(session => session.shutdown());
+        room.zoneSessions.clear();
+      }
     }
     this.rooms.delete(roomId);
   }
