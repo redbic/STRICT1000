@@ -21,6 +21,7 @@ class NetworkManager {
         this.onPlayerFire = null; // Callback when another player fires
         this.onEnemyStateUpdate = null; // Callback for server-authoritative enemy HP update
         this.onEnemyKilledSync = null; // Callback when server confirms enemy death
+        this.onEnemyAttack = null; // Callback when server-authoritative enemy attacks this player
         this.onChatMessage = null; // Callback for chat messages from other players
     }
     
@@ -119,6 +120,9 @@ class NetworkManager {
             case 'enemy_killed_sync':
                 if (this.onEnemyKilledSync) this.onEnemyKilledSync(data);
                 break;
+            case 'enemy_attack':
+                if (this.onEnemyAttack) this.onEnemyAttack(data);
+                break;
             case 'chat_message':
                 if (this.onChatMessage) this.onChatMessage(data);
                 break;
@@ -176,29 +180,14 @@ class NetworkManager {
         });
     }
     
-    sendEnemyKilled(enemyId, zone) {
-        if (!this.connected) return;
-        this.send({
-            type: 'enemy_killed',
-            enemyId: enemyId,
-            zone: zone
-        });
-    }
-    
-    sendEnemySync(enemies) {
-        if (!this.connected) return;
-        this.send({
-            type: 'enemy_sync',
-            enemies: enemies
-        });
-    }
-    
-    sendEnemyDamage(enemyId, damage) {
+    sendEnemyDamage(enemyId, damage, fromX, fromY) {
         if (!this.connected) return;
         this.send({
             type: 'enemy_damage',
             enemyId: enemyId,
-            damage: damage
+            damage: damage,
+            fromX: fromX,
+            fromY: fromY
         });
     }
     

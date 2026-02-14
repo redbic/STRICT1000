@@ -15,8 +15,7 @@ const gameState = {
     currentRoomPlayers: [],
     currentProfile: null,
     playerUpdateInterval: null, // Track interval to prevent leaks
-    enemySyncInterval: null, // Track enemy sync interval
-    currentHostId: null, // Track the current host ID across game creation
+    currentHostId: null, // Track the current host ID for UI (party leader)
     browseManager: null, // Separate connection for browsing room list
     inventorySaveTimeout: null,
     selectedCharacter: 1 // Default to character 1 (range: 1-7 for players)
@@ -243,7 +242,6 @@ function setupEventListeners() {
             clearInterval(gameState.playerUpdateInterval);
             gameState.playerUpdateInterval = null;
         }
-        stopEnemySyncInterval();
         // Clean up game instance to prevent memory leaks from event listeners
         if (gameState.game) {
             gameState.game.destroy();
@@ -269,9 +267,9 @@ function setupNetworkHandlers() {
             gameState.game.syncMultiplayerPlayers(zonePlayers, gameState.networkManager.playerId);
             hydrateRoomAvatars(zonePlayers);
         }
-        // Update host status from room_update
-        if (data.hostId && gameState.networkManager) {
-            updateHostStatus(data.hostId);
+        // Track host for UI purposes (party leader display)
+        if (data.hostId) {
+            gameState.currentHostId = data.hostId;
         }
     };
 
@@ -319,14 +317,11 @@ function setupNetworkHandlers() {
                 await gameState.game.transitionZone(data.zoneId, zonePlayers, gameState.networkManager.playerId, serverEnemies);
             }
 
-            // Update our own zone in currentRoomPlayers BEFORE checking zone host status
+            // Update our own zone in currentRoomPlayers
             const selfInRoster = gameState.currentRoomPlayers.find(p => p.id === gameState.networkManager.playerId);
             if (selfInRoster) {
                 selfInRoster.zone = data.zoneId;
             }
-
-            // Update zone host status after zone change
-            updateZoneHostStatus();
         }
     };
 
@@ -338,11 +333,6 @@ function setupNetworkHandlers() {
         const playerInfo = gameState.currentRoomPlayers.find(p => p.id === data.playerId);
         if (playerInfo) {
             playerInfo.zone = data.zoneId;
-        }
-
-        // If the host changed zones, update zone host status
-        if (data.playerId === gameState.currentHostId) {
-            updateZoneHostStatus();
         }
 
         // If they left our zone, remove them from game.players
@@ -441,27 +431,24 @@ function setupNetworkHandlers() {
     };
 
     gameState.networkManager.onEnemySync = (data) => {
-        // Apply enemy sync if we're not authoritative, OR during grace period after zone transition
-        // Grace period allows zone host to hand off enemy state when main host enters their zone
-        const inGracePeriod = gameState.game && gameState.game.zoneTransitionGrace > 0;
-        const isAuthoritative = gameState.game && (gameState.game.isHost || gameState.game.isZoneHost);
-
-        if (gameState.game && (!isAuthoritative || inGracePeriod)) {
+        // Server-authoritative: always apply enemy sync
+        if (gameState.game) {
             gameState.game.applyEnemySync(data.enemies);
         }
     };
 
     gameState.networkManager.onHostAssigned = (data) => {
-        if (data.hostId && gameState.networkManager) {
-            updateHostStatus(data.hostId);
+        // Track host for UI purposes (party leader display)
+        if (data.hostId) {
+            gameState.currentHostId = data.hostId;
         }
     };
 
-    // Note: onEnemyDamage is no longer used - server handles all damage
-    // Kept for potential backward compatibility with legacy messages
-    gameState.networkManager.onEnemyDamage = () => {
-        // Server-authoritative: damage is handled server-side now
-        // Client receives enemy_state_update with new HP
+    // Server-authoritative enemy melee attacks
+    gameState.networkManager.onEnemyAttack = (data) => {
+        if (!gameState.game || !gameState.game.localPlayer) return;
+        if (!gameState.networkManager || data.targetPlayerId !== gameState.networkManager.playerId) return;
+        gameState.game.localPlayer.takeDamage(data.damage);
     };
 
     gameState.networkManager.onPlayerLeft = (data) => {
@@ -499,106 +486,6 @@ function setupNetworkHandlers() {
         // Add to chat history
         appendChatMessage(data.username, data.text);
     };
-}
-
-function updateHostStatus(hostId) {
-    gameState.currentHostId = hostId;
-    if (!gameState.game || !gameState.networkManager) return;
-    const wasHost = gameState.game.isHost;
-    gameState.game.isHost = (gameState.networkManager.playerId === hostId);
-
-    if (gameState.game.isHost && !wasHost) {
-        // Start enemy sync interval when becoming host
-        startEnemySyncInterval();
-    } else if (!gameState.game.isHost && wasHost) {
-        // Stop enemy sync interval when losing host status
-        stopEnemySyncInterval();
-    }
-
-    // Update zone host status
-    updateZoneHostStatus();
-}
-
-function updateZoneHostStatus() {
-    if (!gameState.game || !gameState.networkManager) return;
-
-    // If we're the main host, we're authoritative for our zone
-    if (gameState.game.isHost) {
-        gameState.game.isZoneHost = false; // isHost takes precedence
-        return;
-    }
-
-    // Check if the main host is in our zone
-    const localZone = gameState.game.zoneId || 'hub';
-    const hostPlayer = gameState.currentRoomPlayers.find(p => p.id === gameState.currentHostId);
-    const hostZone = hostPlayer ? hostPlayer.zone : 'hub';
-
-    const wasZoneHost = gameState.game.isZoneHost;
-
-    // If host is in our zone, we're not zone host
-    if (hostZone === localZone) {
-        gameState.game.isZoneHost = false;
-    } else {
-        // Host is in a different zone - select ONE zone host deterministically
-        // The player with the smallest ID in this zone becomes zone host
-        const playersInMyZone = gameState.currentRoomPlayers
-            .filter(p => p.zone === localZone && p.id !== gameState.currentHostId)
-            .sort((a, b) => a.id.localeCompare(b.id));
-
-        const zoneHostId = playersInMyZone.length > 0 ? playersInMyZone[0].id : null;
-        gameState.game.isZoneHost = (zoneHostId === gameState.networkManager.playerId);
-    }
-
-    // Start/stop enemy sync based on zone host status change
-    if (gameState.game.isZoneHost && !wasZoneHost) {
-        console.log('Became zone host for zone:', localZone);
-        startEnemySyncInterval();
-    } else if (!gameState.game.isZoneHost && wasZoneHost && !gameState.game.isHost) {
-        console.log('Lost zone host status - sending final enemy sync for handoff');
-        // Send ONE final enemy sync to hand off position/AI state to the new authoritative player
-        // Note: HP is server-authoritative, so we don't need to include it
-        if (gameState.networkManager && gameState.networkManager.connected && gameState.game.enemies) {
-            gameState.networkManager.sendEnemySync(gameState.game.enemies.map(e => ({
-                id: e.id,
-                x: e.x,
-                y: e.y,
-                stunned: e.stunned,
-                stunnedTime: e.stunnedTime,
-                attackCooldown: e.attackCooldown
-            })));
-        }
-        stopEnemySyncInterval();
-    }
-}
-
-function startEnemySyncInterval() {
-    stopEnemySyncInterval();
-    gameState.enemySyncInterval = setInterval(() => {
-        // Both main host and zone host should send enemy syncs for position/AI state
-        // But not during grace period (allows receiving handoff from previous zone host)
-        const isAuthoritative = gameState.game && gameState.game.running && (gameState.game.isHost || gameState.game.isZoneHost);
-        const inGracePeriod = gameState.game && gameState.game.zoneTransitionGrace > 0;
-
-        if (isAuthoritative && !inGracePeriod && gameState.networkManager && gameState.networkManager.connected) {
-            // Sync position and AI state only - HP is server-authoritative
-            gameState.networkManager.sendEnemySync(gameState.game.enemies.map(e => ({
-                id: e.id,
-                x: e.x,
-                y: e.y,
-                // Note: HP excluded - server is authoritative for HP via enemy_state_update
-                stunned: e.stunned,
-                stunnedTime: e.stunnedTime,
-                attackCooldown: e.attackCooldown
-            })));
-        }
-    }, 100); // 10 sync updates per second for enemies
-}
-
-function stopEnemySyncInterval() {
-    if (gameState.enemySyncInterval) {
-        clearInterval(gameState.enemySyncInterval);
-        gameState.enemySyncInterval = null;
-    }
 }
 
 async function startRoomBrowsing() {
@@ -840,17 +727,10 @@ async function startGame(zoneName) {
         }
     };
 
-    // Wire up enemy kill callback
-    gameState.game.onEnemyKilled = (enemyId, zone) => {
+    // Send enemy damage to server with hit position for knockback
+    gameState.game.onEnemyDamage = (enemyId, damage, fromX, fromY) => {
         if (gameState.networkManager && gameState.networkManager.connected) {
-            gameState.networkManager.sendEnemyKilled(enemyId, zone);
-        }
-    };
-
-    // Wire up enemy damage callback for non-host players
-    gameState.game.onEnemyDamage = (enemyId, damage) => {
-        if (gameState.networkManager && gameState.networkManager.connected) {
-            gameState.networkManager.sendEnemyDamage(enemyId, damage);
+            gameState.networkManager.sendEnemyDamage(enemyId, damage, fromX, fromY);
         }
     };
     gameState.game.onInventoryChanged = (inventory) => {
@@ -877,11 +757,6 @@ async function startGame(zoneName) {
 
     if (gameState.currentProfile && Array.isArray(gameState.currentProfile.inventory)) {
         gameState.game.setInventory(gameState.currentProfile.inventory);
-    }
-
-    // Apply host status BEFORE starting game loop (fixes first shots not dealing damage)
-    if (gameState.networkManager && gameState.currentHostId) {
-        updateHostStatus(gameState.currentHostId);
     }
 
     showScreen('game');

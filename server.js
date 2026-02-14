@@ -19,7 +19,7 @@ const {
 } = require('./server/validation');
 const { createPool } = require('./server/db/pool');
 const { broadcastToZone, safeSend } = require('./server/websocket/broadcast');
-const { getZoneHost, getMainHostZone } = require('./server/websocket/zone-host');
+const { ZoneSession } = require('./server/zone-session');
 require('dotenv').config();
 
 const app = express();
@@ -61,7 +61,8 @@ const WS_MESSAGE_TYPES = new Set([
 ]);
 // Outbound message types (server -> client):
 // room_update, player_state, game_start, zone_enter, player_zone,
-// balance_update, enemy_sync, enemy_respawn, host_assigned, player_left, room_list, room_full
+// balance_update, enemy_sync, enemy_state_update, enemy_killed_sync, enemy_respawn,
+// enemy_attack, host_assigned, player_left, room_list, room_full, player_fire, chat_message
 const HTTP_BODY_SIZE_LIMIT = '5mb';
 const WS_MAX_ENEMY_SYNC_COUNT = 64;
 const WS_MAX_CONNECTIONS_PER_IP = 5;
@@ -256,28 +257,6 @@ async function loadZoneData(zoneId) {
     }
     return null;
   }
-}
-
-/**
- * Initialize enemy state for a zone from zone data
- * @param {string} zoneId
- * @param {Object} zoneData
- * @returns {Array}
- */
-function createEnemyStateFromZone(zoneId, zoneData) {
-  if (!zoneData || !Array.isArray(zoneData.enemies)) {
-    return [];
-  }
-
-  return zoneData.enemies.map((enemyData, index) => ({
-    id: `${zoneId}-enemy-${index}`,
-    x: enemyData.x,
-    y: enemyData.y,
-    hp: enemyData.hp || 100,
-    maxHp: enemyData.maxHp || enemyData.hp || 100,
-    stationary: enemyData.stationary || false,
-    passive: enemyData.passive || false,
-  }));
 }
 
 // Save zone data
@@ -572,16 +551,31 @@ function handleJoinRoom(ws, data) {
 function handleLeaveRoom(ws) {
   if (!ws.roomId) return;
 
+  // Remove player from zone session before removing from room
+  const room = rooms.getRoom(ws.roomId);
+  if (room) {
+    const player = room.players.find(p => p.id === ws.playerId);
+    if (player && player.zone && room.zoneSessions) {
+      const session = room.zoneSessions.get(player.zone);
+      if (session) {
+        const isEmpty = session.removePlayer(ws.playerId);
+        if (isEmpty) {
+          room.zoneSessions.delete(player.zone);
+        }
+      }
+    }
+  }
+
   const result = rooms.removePlayer(ws.roomId, ws.playerId);
   if (result) {
-    const { room, newHostId } = result;
+    const { room: updatedRoom, newHostId } = result;
     if (newHostId) {
       rooms.broadcastToRoom(ws.roomId, { type: 'host_assigned', hostId: newHostId });
     }
     rooms.broadcastToRoom(ws.roomId, {
       type: 'room_update',
-      players: rooms.getPlayerRoster(room),
-      hostId: room.hostId,
+      players: rooms.getPlayerRoster(updatedRoom),
+      hostId: updatedRoom.hostId,
     });
   }
 
@@ -614,6 +608,18 @@ function handlePlayerUpdate(ws, data) {
     playerId: ws.playerId,
     state: data.state,
   }, ws);
+
+  // Forward player position to zone session for enemy AI targeting
+  const session = room.zoneSessions && room.zoneSessions.get(sender.zone);
+  if (session && data.state) {
+    session.updatePlayerPosition(
+      ws.playerId,
+      data.state.x,
+      data.state.y,
+      data.state.hp,
+      data.state.isDead
+    );
+  }
 }
 
 function handleGameStart(ws) {
@@ -630,7 +636,7 @@ function handleGameStart(ws) {
 // Zone Transition Pattern:
 // Client initiates zone_enter, server validates and broadcasts player_zone to room,
 // then sends zone_enter back to the client with list of players in that zone.
-// Server is authoritative for enemy state - sends current enemy HP when player enters zone.
+// Server runs authoritative enemy simulation per zone via ZoneSession.
 async function handleZoneEnter(ws, data) {
   if (!ws.roomId || !data.zoneId) {
     debugLog('zone_enter', 'missing roomId or zoneId');
@@ -646,22 +652,40 @@ async function handleZoneEnter(ws, data) {
   if (!room) return;
 
   const player = room.players.find(p => p.id === ws.playerId);
-  if (player) player.zone = zoneId;
+  if (!player) return;
 
-  // Initialize enemy state for this zone if not already done
-  let enemies = rooms.getZoneEnemies(ws.roomId, zoneId);
-  if (!enemies) {
-    const zoneData = await loadZoneData(zoneId);
-    enemies = createEnemyStateFromZone(zoneId, zoneData);
-    rooms.setZoneEnemies(ws.roomId, zoneId, enemies);
-    debugLog('zone_enter', `initialized ${enemies.length} enemies for zone ${zoneId}`);
+  // Remove player from previous zone session (if they were in a different zone)
+  const prevZone = player.zone;
+  if (prevZone && prevZone !== zoneId && room.zoneSessions) {
+    const prevSession = room.zoneSessions.get(prevZone);
+    if (prevSession) {
+      const isEmpty = prevSession.removePlayer(ws.playerId);
+      if (isEmpty) {
+        room.zoneSessions.delete(prevZone);
+      }
+    }
   }
 
-  // Filter out killed enemies that haven't respawned yet
-  const aliveEnemies = enemies.filter(e => {
-    const enemyKey = `${zoneId}-${e.id}`;
-    return !room.killedEnemies.has(enemyKey);
-  });
+  player.zone = zoneId;
+
+  // Get or create zone session for this room+zone
+  if (!room.zoneSessions) room.zoneSessions = new Map();
+  let session = room.zoneSessions.get(zoneId);
+
+  if (!session) {
+    const zoneData = await loadZoneData(zoneId);
+    session = new ZoneSession(ws.roomId, zoneId, zoneData || {}, {
+      onEnemyDeath: handleZoneEnemyDeath,
+    });
+    room.zoneSessions.set(zoneId, session);
+    debugLog('zone_enter', `created zone session for ${zoneId} with ${session.enemies.length} enemies`);
+  }
+
+  // Add player to zone session
+  session.addPlayer(ws.playerId, ws, ws.username);
+
+  // Get current alive enemies from the session
+  const aliveEnemies = session.getAliveEnemies();
 
   rooms.broadcastToRoom(ws.roomId, {
     type: 'player_zone',
@@ -673,53 +697,24 @@ async function handleZoneEnter(ws, data) {
     .filter(p => p.zone === zoneId && p.id !== ws.playerId)
     .map(p => ({ id: p.id, username: p.username, zone: p.zone }));
 
-  // Send zone enter with current enemy state
+  // Send zone enter with current enemy state from zone session
   safeSend(ws, {
     type: 'zone_enter',
     zoneId,
     playerId: ws.playerId,
     zonePlayers: zoneMates,
-    enemies: aliveEnemies, // Server-authoritative enemy state
+    enemies: aliveEnemies,
   });
 }
 
-async function handleEnemyKilled(ws, data) {
-  // Legacy handler - enemy kills are now handled server-side when HP reaches 0
-  // This is kept for backward compatibility but shouldn't be called in the new system
-  const { enemyId, zone } = data;
-  const zoneKey = (typeof zone === 'string' ? zone.trim().toLowerCase() : '') || 'unknown';
-
-  if (!ws.roomId || !ws.username || !enemyId || typeof enemyId !== 'string') return;
-
-  // Delegate to the new server-side death handler
-  await handleEnemyDeath(ws.roomId, zoneKey, enemyId, ws.username);
+function handleEnemyKilled(ws, data) {
+  // Legacy handler - no longer used. Enemy kills are handled by ZoneSession when HP reaches 0.
+  debugLog('enemy_killed', 'ignoring legacy enemy_killed message');
 }
 
 function handleEnemySync(ws, data) {
-  if (!ws.roomId || !Array.isArray(data.enemies)) {
-    debugLog('enemy_sync', 'missing roomId or enemies');
-    return;
-  }
-  if (data.enemies.length > WS_MAX_ENEMY_SYNC_COUNT) {
-    debugLog('enemy_sync', 'too many enemies', { count: data.enemies.length });
-    return;
-  }
-
-  const room = rooms.getRoom(ws.roomId);
-  if (!room) return;
-
-  const sender = room.players.find(p => p.id === ws.playerId);
-  if (!sender) return;
-
-  const hostZone = getMainHostZone(room);
-
-  // Allow sync from main host, or from zone hosts (players in zones without the host)
-  const isMainHost = ws.playerId === room.hostId;
-  const isZoneHostPlayer = sender.zone !== hostZone;
-
-  if (!isMainHost && !isZoneHostPlayer) return;
-
-  broadcastToZone(room, sender.zone, { type: 'enemy_sync', enemies: data.enemies }, ws);
+  // No-op: server now runs enemy simulation via ZoneSession.
+  // Client-sent enemy syncs are no longer accepted.
 }
 
 function handleEnemyDamage(ws, data) {
@@ -740,96 +735,32 @@ function handleEnemyDamage(ws, data) {
 
   const zoneId = sender.zone;
 
-  // Update server-side enemy state
-  const enemy = rooms.updateEnemy(ws.roomId, zoneId, data.enemyId, {});
-  if (!enemy) {
-    debugLog('enemy_damage', 'enemy not found', { enemyId: data.enemyId, zone: zoneId });
+  // Delegate to zone session for damage + knockback + death handling
+  const session = room.zoneSessions && room.zoneSessions.get(zoneId);
+  if (!session) {
+    debugLog('enemy_damage', 'no zone session', { zone: zoneId });
     return;
   }
 
-  // Apply damage on server
-  enemy.hp = Math.max(0, enemy.hp - data.damage);
-  debugLog('enemy_damage', `${data.enemyId} took ${data.damage} damage, hp: ${enemy.hp}`);
+  const fromX = Number.isFinite(data.fromX) ? data.fromX : undefined;
+  const fromY = Number.isFinite(data.fromY) ? data.fromY : undefined;
 
-  // Broadcast updated enemy state to ALL players in zone
-  broadcastToZone(room, zoneId, {
-    type: 'enemy_state_update',
-    enemyId: data.enemyId,
-    hp: enemy.hp,
-    maxHp: enemy.maxHp,
-  });
-
-  // If enemy died, handle it server-side
-  if (enemy.hp <= 0) {
-    handleEnemyDeath(ws.roomId, zoneId, data.enemyId, ws.username);
-  }
+  session.applyDamage(data.enemyId, data.damage, fromX, fromY, ws.username, ws);
 }
 
 /**
- * Handle enemy death server-side
+ * Handle enemy death from ZoneSession - awards coins to killer
+ * Called by ZoneSession.deps.onEnemyDeath
  */
-async function handleEnemyDeath(roomId, zoneId, enemyId, killerUsername) {
-  const room = rooms.getRoom(roomId);
-  if (!room) return;
-
-  const enemyKey = `${zoneId}-${enemyId}`;
-  if (room.killedEnemies.has(enemyKey)) return; // Already dead
-
-  room.killedEnemies.add(enemyKey);
-
-  // Remove enemy from active state
-  const removedEnemy = rooms.removeEnemy(roomId, zoneId, enemyId);
-
-  // Broadcast enemy death to all players in zone
-  broadcastToZone(room, zoneId, {
-    type: 'enemy_killed_sync',
-    enemyId,
-    zone: zoneId,
-  });
-
-  // Award coins to killer if we can find their socket
-  for (const player of room.players) {
-    if (player.username === killerUsername) {
-      const newBalance = await currency.addBalance(
-        pool, killerUsername, ENEMY_KILL_REWARD, 'enemy_kill',
-        { game: 'strict1000', enemy: enemyId, zone: zoneId }
-      );
-      if (newBalance !== null) {
-        safeSend(player.ws, { type: 'balance_update', balance: newBalance });
-      }
-      break;
-    }
+async function handleZoneEnemyDeath(roomId, zoneId, enemyId, killerUsername, killerWs) {
+  // Award coins to killer
+  const newBalance = await currency.addBalance(
+    pool, killerUsername, ENEMY_KILL_REWARD, 'enemy_kill',
+    { game: 'strict1000', enemy: enemyId, zone: zoneId }
+  );
+  if (newBalance !== null && killerWs) {
+    safeSend(killerWs, { type: 'balance_update', balance: newBalance });
   }
-
-  // Set up respawn timer
-  if (room.respawnTimers.has(enemyKey)) {
-    clearTimeout(room.respawnTimers.get(enemyKey));
-  }
-
-  const timerId = setTimeout(() => {
-    const currentRoom = rooms.getRoom(roomId);
-    if (!currentRoom) return;
-
-    currentRoom.killedEnemies.delete(enemyKey);
-
-    // Re-add enemy with full HP
-    if (removedEnemy) {
-      removedEnemy.hp = removedEnemy.maxHp;
-      rooms.addEnemy(roomId, zoneId, removedEnemy);
-    }
-
-    // Broadcast respawn to all players in zone
-    broadcastToZone(currentRoom, zoneId, {
-      type: 'enemy_respawn',
-      enemyId,
-      zone: zoneId,
-      enemy: removedEnemy, // Send full enemy state
-    });
-
-    currentRoom.respawnTimers.delete(enemyKey);
-  }, ENEMY_RESPAWN_DELAY_MS);
-
-  room.respawnTimers.set(enemyKey, timerId);
 }
 
 function handlePlayerFire(ws, data) {
@@ -856,6 +787,22 @@ function handleDisconnect(ws) {
   if (!ws.roomId) return;
 
   const roomId = ws.roomId;
+
+  // Remove player from zone session before removing from room
+  const room = rooms.getRoom(roomId);
+  if (room) {
+    const player = room.players.find(p => p.id === ws.playerId);
+    if (player && player.zone && room.zoneSessions) {
+      const session = room.zoneSessions.get(player.zone);
+      if (session) {
+        const isEmpty = session.removePlayer(ws.playerId);
+        if (isEmpty) {
+          room.zoneSessions.delete(player.zone);
+        }
+      }
+    }
+  }
+
   const result = rooms.removePlayerByWs(roomId, ws);
 
   if (result) {
