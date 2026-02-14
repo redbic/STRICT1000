@@ -425,10 +425,17 @@ function setupNetworkHandlers() {
         }
     };
 
-    // Server confirms enemy death - remove from game
+    // Server confirms enemy death - spawn death effects, then remove from game
     gameState.networkManager.onEnemyKilledSync = (data) => {
         if (!gameState.game || !data.enemyId) return;
         if (data.zone && gameState.game.zoneId !== data.zone) return;
+
+        // Capture position before removal for death particles
+        const enemy = gameState.game.enemies.find(e => e.id === data.enemyId);
+        if (enemy) {
+            gameState.game.spawnDeathParticles(enemy.x, enemy.y);
+            gameState.game.triggerScreenShake(CONFIG.SCREEN_SHAKE_ENEMY_KILL, 0.1);
+        }
 
         gameState.game.enemies = gameState.game.enemies.filter(e => e.id !== data.enemyId);
     };

@@ -48,6 +48,10 @@ class Enemy {
         // Training dummy options
         this.stationary = options.stationary || false;
         this.passive = options.passive || false;
+
+        // Knockback state
+        this.knockbackVX = 0;
+        this.knockbackVY = 0;
     }
     /**
      * Update enemy AI - chase and attack target
@@ -56,6 +60,24 @@ class Enemy {
      * @param {number} dt - Delta time in seconds
      */
     update(zone, target, dt = 1/60) {
+        // Apply knockback velocity (decays rapidly)
+        const kbDecay = typeof CONFIG !== 'undefined' ? CONFIG.KNOCKBACK_DECAY : 0.85;
+        if (Math.abs(this.knockbackVX) > 1 || Math.abs(this.knockbackVY) > 1) {
+            const oldX = this.x;
+            const oldY = this.y;
+            this.x += this.knockbackVX * dt;
+            this.y += this.knockbackVY * dt;
+            if (zone && zone.checkCollision(this)) {
+                this.x = oldX;
+                this.y = oldY;
+            }
+            this.knockbackVX *= kbDecay;
+            this.knockbackVY *= kbDecay;
+        } else {
+            this.knockbackVX = 0;
+            this.knockbackVY = 0;
+        }
+
         if (!target) return;
 
         // Stationary enemies don't move
@@ -104,6 +126,20 @@ class Enemy {
      */
     takeDamage(amount) {
         this.hp = Math.max(0, this.hp - amount);
+    }
+    /**
+     * Apply knockback impulse away from a point
+     * @param {number} fromX - Source x position
+     * @param {number} fromY - Source y position
+     * @param {number} force - Knockback force in pixels/sec
+     */
+    applyKnockback(fromX, fromY, force) {
+        const dx = this.x - fromX;
+        const dy = this.y - fromY;
+        const dist = Math.hypot(dx, dy);
+        if (dist === 0) return;
+        this.knockbackVX = (dx / dist) * force;
+        this.knockbackVY = (dy / dist) * force;
     }
     /**
      * Draw enemy on canvas

@@ -35,7 +35,13 @@ class Game {
         
         this.cameraX = 0;
         this.cameraY = 0;
-        
+        this.cameraTargetX = 0;
+        this.cameraTargetY = 0;
+        this.cameraShake = { offsetX: 0, offsetY: 0, intensity: 0, duration: 0, timer: 0 };
+        this.hitStop = { timer: 0 };
+        this.damageNumbers = [];
+        this.deathParticles = [];
+
         this.enemies = [];
         this.projectiles = []; // Projectile weapon system
         this.hitSparks = []; // Visual effects for projectile hits
@@ -267,6 +273,8 @@ class Game {
         this.enemies = [];
         this.projectiles = []; // Clear projectiles on zone change
         this.hitSparks = []; // Clear hit sparks
+        this.damageNumbers = [];
+        this.deathParticles = [];
         this.npcs = (zoneData.npcs || []).map(n => new NPC(n.x, n.y, n.name, n.color));
         this.lastPortalId = null;
         this.portalCooldown = 0;
@@ -318,6 +326,12 @@ class Game {
         this.players.push(this.localPlayer);
         this.renderInventoryUI();
 
+        // Snap camera to player on zone transition (prevents lerping from old zone)
+        this.cameraX = this.localPlayer.x - this.canvas.width / 2;
+        this.cameraY = this.localPlayer.y - this.canvas.height / 2;
+        this.cameraTargetX = this.cameraX;
+        this.cameraTargetY = this.cameraY;
+
         // Build PixiJS zone graphics (with error handling to ensure game starts)
         if (this.pixiReady && pixiRenderer) {
             try {
@@ -336,6 +350,21 @@ class Game {
         if (!this.gameStarted) return;
 
         const frameDt = this.deltaTime || 1/60;
+
+        // Hit stop - freeze all game logic for a brief moment on impact
+        if (this.hitStop.timer > 0) {
+            this.hitStop.timer -= frameDt;
+            // Still update camera and visual effects during hit stop
+            this.updateCamera(frameDt);
+            if (this.screenFlash.active) {
+                this.screenFlash.timer -= frameDt;
+                if (this.screenFlash.timer <= 0) this.screenFlash.active = false;
+            }
+            this.updateDamageNumbers(frameDt);
+            this.updateDeathParticles(frameDt);
+            this.updateHitSparks(frameDt);
+            return;
+        }
 
         // Update screen flash timer (can use frame dt for visual effects)
         if (this.screenFlash.active) {
@@ -416,6 +445,10 @@ class Game {
         // Update hit sparks
         this.updateHitSparks(frameDt);
 
+        // Update juice effects
+        this.updateDamageNumbers(frameDt);
+        this.updateDeathParticles(frameDt);
+
         // Enemy AI is now updated in the fixed timestep loop above
 
         // Server-authoritative: enemy deaths are handled by server
@@ -427,6 +460,7 @@ class Game {
         if (this.localPlayer && !this.localPlayer.isDead) {
             if (this.localPlayer.hp < hpBeforeUpdate) {
                 this.screenFlash = { active: true, timer: 0.1, color: 'rgba(176, 64, 64, 0.25)' };
+                this.triggerScreenShake(CONFIG.SCREEN_SHAKE_DAMAGE_TAKEN, 0.15);
             }
             // Check if player just died
             if (this.localPlayer.hp <= 0) {
@@ -435,11 +469,8 @@ class Game {
             }
         }
 
-        // Update camera (follow local player)
-        if (this.localPlayer) {
-            this.cameraX = this.localPlayer.x - this.canvas.width / 2;
-            this.cameraY = this.localPlayer.y - this.canvas.height / 2;
-        }
+        // Update camera (smooth follow + screen shake)
+        this.updateCamera(frameDt);
         
         // Update UI
         this.updateUI();
@@ -572,6 +603,12 @@ class Game {
                         // Create hit spark effect
                         this.createHitSpark(proj.x, proj.y);
 
+                        // Game feel: damage number, shake, hit stop, knockback
+                        this.spawnDamageNumber(proj.x, proj.y - 10, proj.damage);
+                        this.triggerScreenShake(CONFIG.SCREEN_SHAKE_DAMAGE_DEALT, 0.08);
+                        this.triggerHitStop(CONFIG.HIT_STOP_DURATION);
+                        enemy.applyKnockback(proj.x, proj.y, CONFIG.KNOCKBACK_FORCE);
+
                         // Server-authoritative: always send damage to server
                         // Server updates state and broadcasts to all players
                         if (this.onEnemyDamage) {
@@ -670,6 +707,137 @@ class Game {
             this.ctx.arc(screenX, screenY, 3, 0, Math.PI * 2);
             this.ctx.fill();
             this.ctx.shadowBlur = 0;
+        }
+    }
+
+    // =====================
+    // Game Feel / Juice
+    // =====================
+
+    updateCamera(dt) {
+        if (!this.localPlayer) return;
+
+        this.cameraTargetX = this.localPlayer.x - this.canvas.width / 2;
+        this.cameraTargetY = this.localPlayer.y - this.canvas.height / 2;
+
+        // Frame-rate independent lerp
+        const lerpBase = CONFIG.CAMERA_LERP_SPEED || 0.05;
+        const lerpFactor = 1 - Math.pow(lerpBase, dt);
+        this.cameraX += (this.cameraTargetX - this.cameraX) * lerpFactor;
+        this.cameraY += (this.cameraTargetY - this.cameraY) * lerpFactor;
+
+        // Screen shake
+        if (this.cameraShake.timer > 0) {
+            this.cameraShake.timer -= dt;
+            const shakeProgress = Math.max(0, this.cameraShake.timer / this.cameraShake.duration);
+            const currentIntensity = this.cameraShake.intensity * shakeProgress;
+            this.cameraX += (Math.random() * 2 - 1) * currentIntensity;
+            this.cameraY += (Math.random() * 2 - 1) * currentIntensity;
+        }
+    }
+
+    triggerScreenShake(intensity, duration) {
+        const remaining = this.cameraShake.duration > 0
+            ? this.cameraShake.intensity * (this.cameraShake.timer / this.cameraShake.duration)
+            : 0;
+        if (intensity > remaining) {
+            this.cameraShake.intensity = intensity;
+            this.cameraShake.duration = duration;
+            this.cameraShake.timer = duration;
+        }
+    }
+
+    triggerHitStop(duration) {
+        this.hitStop.timer = Math.max(this.hitStop.timer, duration);
+    }
+
+    spawnDamageNumber(x, y, amount) {
+        const lifetime = CONFIG.DAMAGE_NUMBER_LIFETIME || 0.8;
+        this.damageNumbers.push({
+            x: x,
+            y: y,
+            amount: amount,
+            timer: lifetime,
+            maxTimer: lifetime,
+            vy: -(CONFIG.DAMAGE_NUMBER_SPEED || 60)
+        });
+    }
+
+    updateDamageNumbers(dt) {
+        for (let i = this.damageNumbers.length - 1; i >= 0; i--) {
+            const dn = this.damageNumbers[i];
+            dn.y += dn.vy * dt;
+            dn.timer -= dt;
+            if (dn.timer <= 0) {
+                this.damageNumbers.splice(i, 1);
+            }
+        }
+    }
+
+    drawDamageNumbers() {
+        for (const dn of this.damageNumbers) {
+            const screenX = dn.x - this.cameraX;
+            const screenY = dn.y - this.cameraY;
+            const progress = dn.timer / dn.maxTimer;
+            const alpha = Math.min(1, progress * 2);
+            const scale = 0.8 + 0.4 * (1 - progress);
+
+            this.ctx.save();
+            this.ctx.font = `bold ${Math.round(14 * scale)}px monospace`;
+            this.ctx.textAlign = 'center';
+            this.ctx.strokeStyle = `rgba(80, 40, 0, ${alpha})`;
+            this.ctx.lineWidth = 2;
+            this.ctx.strokeText(dn.amount.toString(), screenX, screenY);
+            this.ctx.fillStyle = `rgba(255, 220, 120, ${alpha})`;
+            this.ctx.fillText(dn.amount.toString(), screenX, screenY);
+            this.ctx.restore();
+        }
+    }
+
+    spawnDeathParticles(x, y) {
+        const count = CONFIG.DEATH_PARTICLE_COUNT || 12;
+        const lifetime = CONFIG.DEATH_PARTICLE_LIFETIME || 0.6;
+        for (let i = 0; i < count; i++) {
+            const angle = (Math.PI * 2 * i) / count + Math.random() * 0.3;
+            const speed = 80 + Math.random() * 120;
+            const life = lifetime * (0.7 + Math.random() * 0.3);
+            this.deathParticles.push({
+                x: x,
+                y: y,
+                vx: Math.cos(angle) * speed,
+                vy: Math.sin(angle) * speed,
+                life: life,
+                maxLife: life,
+                size: 2 + Math.random() * 3
+            });
+        }
+    }
+
+    updateDeathParticles(dt) {
+        for (let i = this.deathParticles.length - 1; i >= 0; i--) {
+            const p = this.deathParticles[i];
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.vx *= 0.92;
+            p.vy *= 0.92;
+            p.life -= dt;
+            if (p.life <= 0) {
+                this.deathParticles.splice(i, 1);
+            }
+        }
+    }
+
+    drawDeathParticles() {
+        for (const p of this.deathParticles) {
+            const screenX = p.x - this.cameraX;
+            const screenY = p.y - this.cameraY;
+            const progress = p.life / p.maxLife;
+            const size = p.size * progress;
+
+            this.ctx.fillStyle = `rgba(92, 74, 74, ${progress})`;
+            this.ctx.beginPath();
+            this.ctx.arc(screenX, screenY, size, 0, Math.PI * 2);
+            this.ctx.fill();
         }
     }
 
@@ -924,6 +1092,8 @@ class Game {
         // Draw projectiles and effects
         this.drawProjectiles();
         this.drawHitSparks();
+        this.drawDeathParticles();
+        this.drawDamageNumbers();
 
         // Apply darkness overlay for The Gallery (ruleset: darkness)
         if (this.zone && this.zone.ruleset === 'darkness' && this.localPlayer) {

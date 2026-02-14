@@ -78,6 +78,21 @@ const CONFIG = {
   // Speed Normalization
   // ===================
   SPEED_NORMALIZATION_FACTOR: 60,  // Divide velocity by this for network sync
+
+  // ===================
+  // Game Feel / Juice
+  // ===================
+  CAMERA_LERP_SPEED: 0.05,           // Lower = smoother (exponential decay base)
+  SCREEN_SHAKE_DAMAGE_TAKEN: 6,      // Shake intensity when player takes damage
+  SCREEN_SHAKE_DAMAGE_DEALT: 3,      // Shake intensity when hitting an enemy
+  SCREEN_SHAKE_ENEMY_KILL: 4,        // Shake intensity on enemy kill
+  HIT_STOP_DURATION: 0.04,           // Freeze frame duration in seconds
+  KNOCKBACK_FORCE: 300,              // Knockback impulse strength (pixels/sec)
+  KNOCKBACK_DECAY: 0.85,             // Knockback velocity multiplier per frame
+  DAMAGE_NUMBER_LIFETIME: 0.8,       // How long damage numbers last (seconds)
+  DAMAGE_NUMBER_SPEED: 60,           // Upward float speed (pixels/sec)
+  DEATH_PARTICLE_COUNT: 12,          // Particles spawned on enemy death
+  DEATH_PARTICLE_LIFETIME: 0.6,      // Particle lifetime (seconds)
 };
 
 // Make CONFIG available globally for non-module scripts
