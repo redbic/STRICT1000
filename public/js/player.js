@@ -81,6 +81,13 @@ class Player {
         this.isDead = false;
         this.damageFlashTimer = 0;
 
+        // Speech bubble for chat
+        this.speech = {
+            text: '',
+            createdAt: 0,
+            duration: 4000  // 4 seconds in milliseconds
+        };
+
         // Interpolation targets (used by remote players)
         this.targetX = undefined;
         this.targetY = undefined;
@@ -225,6 +232,11 @@ class Player {
 
         ctx.restore();
 
+        // Draw speech bubble if active
+        if (this.hasSpeech()) {
+            this.drawSpeechBubble(ctx, screenX, screenY - 60);
+        }
+
         // Draw username above character
         const labelY = screenY - 32;
         ctx.fillStyle = '#4a4540';
@@ -236,6 +248,81 @@ class Player {
         ctx.font = '12px Arial';
         ctx.textAlign = 'center';
         ctx.fillText(this.username, screenX, labelY + 12);
+    }
+
+    /**
+     * Draw speech bubble above player
+     * @param {CanvasRenderingContext2D} ctx
+     * @param {number} centerX - Center X of bubble
+     * @param {number} topY - Top Y of bubble
+     */
+    drawSpeechBubble(ctx, centerX, topY) {
+        ctx.save();
+
+        const bubbleWidth = 180;
+        const bubbleHeight = 50;
+        const cornerRadius = 6;
+        const bubbleX = centerX - bubbleWidth / 2;
+        const bubbleY = topY;
+
+        // Draw bubble background
+        ctx.fillStyle = 'rgba(26, 26, 26, 0.92)';
+        ctx.strokeStyle = '#666666';
+        ctx.lineWidth = 1;
+
+        // Draw rounded rectangle
+        ctx.beginPath();
+        ctx.moveTo(bubbleX + cornerRadius, bubbleY);
+        ctx.lineTo(bubbleX + bubbleWidth - cornerRadius, bubbleY);
+        ctx.quadraticCurveTo(bubbleX + bubbleWidth, bubbleY, bubbleX + bubbleWidth, bubbleY + cornerRadius);
+        ctx.lineTo(bubbleX + bubbleWidth, bubbleY + bubbleHeight - cornerRadius);
+        ctx.quadraticCurveTo(bubbleX + bubbleWidth, bubbleY + bubbleHeight, bubbleX + bubbleWidth - cornerRadius, bubbleY + bubbleHeight);
+
+        // Tail pointer
+        ctx.lineTo(centerX + 8, bubbleY + bubbleHeight);
+        ctx.lineTo(centerX - 8, bubbleY + bubbleHeight);
+
+        ctx.lineTo(bubbleX + cornerRadius, bubbleY + bubbleHeight);
+        ctx.quadraticCurveTo(bubbleX, bubbleY + bubbleHeight, bubbleX, bubbleY + bubbleHeight - cornerRadius);
+        ctx.lineTo(bubbleX, bubbleY + cornerRadius);
+        ctx.quadraticCurveTo(bubbleX, bubbleY, bubbleX + cornerRadius, bubbleY);
+        ctx.closePath();
+
+        ctx.fill();
+        ctx.stroke();
+
+        // Draw text
+        ctx.fillStyle = '#ffffff';
+        ctx.font = '11px Arial';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+
+        // Word wrap for long messages
+        const words = this.speech.text.split(' ');
+        let line1 = '';
+        let line2 = '';
+
+        for (const word of words) {
+            const testLine = line1 + (line1 ? ' ' : '') + word;
+            const metrics = ctx.measureText(testLine);
+            if (metrics.width > bubbleWidth - 12) {
+                if (line1) {
+                    line2 = word;
+                } else {
+                    line1 = word;
+                }
+            } else {
+                line1 = testLine;
+            }
+        }
+
+        const textY = bubbleY + bubbleHeight / 2;
+        ctx.fillText(line1, centerX, textY - 8);
+        if (line2) {
+            ctx.fillText(line2, centerX, textY + 8);
+        }
+
+        ctx.restore();
     }
 
     /**
@@ -624,5 +711,24 @@ class Player {
         const lerpFactor = 1 - Math.pow(0.001, dt);
         this.x += (this.targetX - this.x) * lerpFactor;
         this.y += (this.targetY - this.y) * lerpFactor;
+    }
+
+    /**
+     * Set speech bubble text that displays above player
+     * @param {string} text - Message to display
+     */
+    setSpeech(text) {
+        this.speech.text = text;
+        this.speech.createdAt = Date.now();
+    }
+
+    /**
+     * Check if speech bubble is currently active
+     * @returns {boolean}
+     */
+    hasSpeech() {
+        if (!this.speech.text) return false;
+        const elapsed = Date.now() - this.speech.createdAt;
+        return elapsed < this.speech.duration;
     }
 }

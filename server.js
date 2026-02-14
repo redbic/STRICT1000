@@ -15,6 +15,7 @@ const {
   isValidPlayerState,
   isValidZoneId,
   sanitizeInventory,
+  isValidChatMessage,
 } = require('./server/validation');
 const { createPool } = require('./server/db/pool');
 const { broadcastToZone, safeSend } = require('./server/websocket/broadcast');
@@ -56,6 +57,7 @@ const WS_MESSAGE_TYPES = new Set([
   'list_rooms',
   'player_death',
   'player_fire',
+  'player_chat',
 ]);
 // Outbound message types (server -> client):
 // room_update, player_state, game_start, zone_enter, player_zone,
@@ -500,6 +502,7 @@ wss.on('connection', (ws, request) => {
       case 'list_rooms':   handleListRooms(ws); break;
       case 'player_death': handlePlayerDeath(ws, data); break;
       case 'player_fire':  handlePlayerFire(ws, data); break;
+      case 'player_chat':  handlePlayerChat(ws, data); break;
       default: break;
     }
   });
@@ -902,6 +905,37 @@ async function handlePlayerDeath(ws, data) {
 
   // Send updated balance
   safeSend(ws, { type: 'balance_update', balance: newBalance !== null ? newBalance : 0 });
+}
+
+function handlePlayerChat(ws, data) {
+  if (!ws.roomId || !ws.username) {
+    debugLog('player_chat', 'missing roomId or username');
+    return;
+  }
+
+  const text = normalizeSafeString(data.text || '');
+  if (!isValidChatMessage(text)) {
+    debugLog('player_chat', 'invalid chat message', { text });
+    return;
+  }
+
+  const room = rooms.getRoom(ws.roomId);
+  if (!room) return;
+
+  const sender = room.players.find(p => p.id === ws.playerId);
+  if (!sender) return;
+
+  const zoneId = sender.zone;
+
+  // Broadcast to all players in the same zone
+  broadcastToZone(room, zoneId, {
+    type: 'chat_message',
+    playerId: ws.playerId,
+    username: ws.username,
+    text: text,
+  });
+
+  debugLog('player_chat', `${ws.username}: ${text}`);
 }
 
 function shutdown(signal) {

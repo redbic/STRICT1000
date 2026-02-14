@@ -9,6 +9,8 @@ const USERNAME_PATTERN = /^[A-Za-z0-9]([A-Za-z0-9 _-]*[A-Za-z0-9])?$/;
 const ALLOWED_ZONE_IDS = new Set(['hub', 'training', 'elevator', 'hallway', 'elevator2']);
 const PLAYER_STATE_KEYS = new Set(['id', 'x', 'y', 'angle', 'speed', 'zoneLevel', 'username', 'stunned', 'hp', 'isDead']);
 const INVENTORY_MAX_ITEMS = 16;
+const CHAT_MESSAGE_MAX_LENGTH = 200;
+const CHAT_MESSAGE_PATTERN = /^[A-Za-z0-9\s.,!?'"()-]*$/;
 
 function normalizeSafeString(value) {
   if (typeof value !== 'string') return '';
@@ -86,6 +88,13 @@ function sanitizeInventory(rawInventory) {
   return sanitized;
 }
 
+function isValidChatMessage(text) {
+  if (typeof text !== 'string') return false;
+  const normalized = normalizeSafeString(text);
+  if (normalized.length === 0 || normalized.length > CHAT_MESSAGE_MAX_LENGTH) return false;
+  return CHAT_MESSAGE_PATTERN.test(normalized);
+}
+
 module.exports = {
   normalizeSafeString,
   isSafeString,
@@ -96,8 +105,10 @@ module.exports = {
   isValidPlayerState,
   isValidZoneId,
   sanitizeInventory,
+  isValidChatMessage,
   ALLOWED_ZONE_IDS,
   INVENTORY_MAX_ITEMS,
+  CHAT_MESSAGE_MAX_LENGTH,
   MAX_ROOM_ID_LENGTH,
   MAX_PLAYER_ID_LENGTH,
   MAX_USERNAME_LENGTH,

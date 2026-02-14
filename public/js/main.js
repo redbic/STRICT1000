@@ -476,6 +476,22 @@ function setupNetworkHandlers() {
             gameState.game.spawnRemoteProjectile(data.x, data.y, data.angle, data.playerId);
         }
     };
+
+    gameState.networkManager.onChatMessage = (data) => {
+        // Chat message received from another player
+        if (gameState.game && data.playerId && data.playerId !== gameState.networkManager.playerId) {
+            const player = gameState.game.players.find(p => p.id === data.playerId);
+            if (player) {
+                player.setSpeech(data.text);
+                // Play TTS voice if available
+                if (window.StrictHotelTTS) {
+                    window.StrictHotelTTS.speakPlayerMessage(data.username, data.text);
+                }
+            }
+        }
+        // Add to chat history
+        appendChatMessage(data.username, data.text);
+    };
 }
 
 function updateHostStatus(hostId) {
@@ -864,6 +880,9 @@ async function startGame(zoneName) {
     showScreen('game');
     gameState.game.start();
 
+    // Initialize chat system
+    initializeChat();
+
     // Send updates to server
     if (gameState.networkManager) {
 
@@ -926,4 +945,90 @@ function recallToHub() {
     } else {
         console.error('No network connection for recall');
     }
+}
+
+// ===== CHAT SYSTEM =====
+
+function initializeChat() {
+    const chatInput = document.getElementById('chatInput');
+    const chatSendBtn = document.getElementById('chatSendBtn');
+    const muteTtsBtn = document.getElementById('btn-mute-tts');
+
+    if (!chatInput || !chatSendBtn) return;
+
+    // Send button click
+    chatSendBtn.addEventListener('click', sendChatMessage);
+
+    // Enter key in input
+    chatInput.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            sendChatMessage();
+        }
+    });
+
+    // Mute TTS button
+    if (muteTtsBtn && window.StrictHotelTTS) {
+        muteTtsBtn.addEventListener('click', () => {
+            window.StrictHotelTTS.toggleMute();
+        });
+    }
+}
+
+function sendChatMessage() {
+    const chatInput = document.getElementById('chatInput');
+    if (!chatInput) return;
+
+    const text = chatInput.value.trim();
+    if (!text) return;
+
+    // Send via network
+    if (gameState.networkManager) {
+        gameState.networkManager.sendChatMessage(text);
+    }
+
+    // Clear input
+    chatInput.value = '';
+}
+
+function appendChatMessage(username, text) {
+    const chatMessages = document.getElementById('chatMessages');
+    if (!chatMessages) return;
+
+    const messageEl = document.createElement('div');
+    messageEl.className = 'chat-message';
+    messageEl.innerHTML = `<span class="name">${escapeHtml(username)}:</span>${escapeHtml(text)}`;
+    chatMessages.appendChild(messageEl);
+
+    // Scroll to bottom
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+
+    // Keep only last 50 messages
+    const allMessages = chatMessages.querySelectorAll('.chat-message');
+    if (allMessages.length > 50) {
+        allMessages[0].remove();
+    }
+
+    // Auto-fade out after 10 seconds
+    setTimeout(() => {
+        if (messageEl.parentNode) {
+            messageEl.classList.add('fade-out');
+            setTimeout(() => {
+                if (messageEl.parentNode) {
+                    messageEl.remove();
+                }
+            }, 1000);
+        }
+    }, 10000);
+}
+
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
 }

@@ -92,6 +92,17 @@
                 <div class="inventory-header">Inventory (4x4)</div>
                 <div id="inventoryGrid" class="inventory-grid"></div>
             </div>
+            <div id="chatPanel" class="chat-panel">
+                <div class="chat-header">
+                    <span>Chat</span>
+                    <button id="btn-mute-tts" class="btn-mute-tts" title="Toggle TTS">🔊</button>
+                </div>
+                <div id="chatMessages" class="chat-messages"></div>
+                <div class="chat-input-container">
+                    <input type="text" id="chatInput" class="chat-input" placeholder="Say something...">
+                    <button id="chatSendBtn" class="chat-send-btn">Send</button>
+                </div>
+            </div>
         </div>
         <canvas id="gameCanvas"></canvas>
     </div>
@@ -108,6 +119,9 @@
     <!-- Centralized config (load first) -->
     <script src="/js/config/constants.js"></script>
     <script src="/js/config/tilesets.js"></script>
+
+    <!-- TTS Voice System -->
+    <script src="/js/tts.js"></script>
 
     <!-- Base classes -->
     <script src="/js/entities/entity.js"></script>

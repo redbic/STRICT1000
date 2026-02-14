@@ -21,6 +21,7 @@ class NetworkManager {
         this.onPlayerFire = null; // Callback when another player fires
         this.onEnemyStateUpdate = null; // Callback for server-authoritative enemy HP update
         this.onEnemyKilledSync = null; // Callback when server confirms enemy death
+        this.onChatMessage = null; // Callback for chat messages from other players
     }
     
     connect() {
@@ -117,6 +118,9 @@ class NetworkManager {
                 break;
             case 'enemy_killed_sync':
                 if (this.onEnemyKilledSync) this.onEnemyKilledSync(data);
+                break;
+            case 'chat_message':
+                if (this.onChatMessage) this.onChatMessage(data);
                 break;
         }
     }
@@ -220,7 +224,16 @@ class NetworkManager {
             angle: angle
         });
     }
-    
+
+    sendChatMessage(text) {
+        if (!this.connected) return;
+        if (typeof text !== 'string' || !text.trim()) return;
+        this.send({
+            type: 'player_chat',
+            text: text.trim()
+        });
+    }
+
     send(data) {
         if (this.ws && this.ws.readyState === WebSocket.OPEN) {
             this.ws.send(JSON.stringify(data));

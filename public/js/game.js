@@ -47,6 +47,7 @@ class Game {
         this.onEnemyDamage = null; // Callback for sending enemy damage to host (non-host players)
         this.onPlayerDeath = null; // Callback for when the local player dies
         this.onPlayerFire = null; // Callback for when local player fires (to sync to others)
+        this.onChatMessage = null; // Callback for when a chat message is received
 
         // Screen flash effect for damage feedback (muted for liminal aesthetic)
         this.screenFlash = { active: false, timer: 0, color: 'rgba(176, 64, 64, 0.25)' };
