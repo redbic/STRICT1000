@@ -21,7 +21,17 @@ class NetworkManager {
         this.onPlayerFire = null; // Callback when another player fires
         this.onEnemyStateUpdate = null; // Callback for server-authoritative enemy HP update
         this.onEnemyKilledSync = null; // Callback when server confirms enemy death
+        this.onEnemyAttack = null; // Callback when server-authoritative enemy attacks this player
         this.onChatMessage = null; // Callback for chat messages from other players
+        // Tank minigame callbacks
+        this.onTankSync = null;
+        this.onTankWaveStart = null;
+        this.onTankKilled = null;
+        this.onTankPlayerHit = null;
+        this.onTankPickupCollected = null;
+        this.onTankCrateDestroyed = null;
+        this.onTankGameOver = null;
+        this.onTankStateReset = null;
     }
     
     connect() {
@@ -119,8 +129,36 @@ class NetworkManager {
             case 'enemy_killed_sync':
                 if (this.onEnemyKilledSync) this.onEnemyKilledSync(data);
                 break;
+            case 'enemy_attack':
+                if (this.onEnemyAttack) this.onEnemyAttack(data);
+                break;
             case 'chat_message':
                 if (this.onChatMessage) this.onChatMessage(data);
+                break;
+            // Tank minigame messages
+            case 'tank_sync':
+                if (this.onTankSync) this.onTankSync(data);
+                break;
+            case 'tank_wave_start':
+                if (this.onTankWaveStart) this.onTankWaveStart(data);
+                break;
+            case 'tank_killed':
+                if (this.onTankKilled) this.onTankKilled(data);
+                break;
+            case 'tank_player_hit':
+                if (this.onTankPlayerHit) this.onTankPlayerHit(data);
+                break;
+            case 'tank_pickup_collected':
+                if (this.onTankPickupCollected) this.onTankPickupCollected(data);
+                break;
+            case 'tank_crate_destroyed':
+                if (this.onTankCrateDestroyed) this.onTankCrateDestroyed(data);
+                break;
+            case 'tank_game_over':
+                if (this.onTankGameOver) this.onTankGameOver(data);
+                break;
+            case 'tank_state_reset':
+                if (this.onTankStateReset) this.onTankStateReset(data);
                 break;
         }
     }
@@ -176,29 +214,14 @@ class NetworkManager {
         });
     }
     
-    sendEnemyKilled(enemyId, zone) {
-        if (!this.connected) return;
-        this.send({
-            type: 'enemy_killed',
-            enemyId: enemyId,
-            zone: zone
-        });
-    }
-    
-    sendEnemySync(enemies) {
-        if (!this.connected) return;
-        this.send({
-            type: 'enemy_sync',
-            enemies: enemies
-        });
-    }
-    
-    sendEnemyDamage(enemyId, damage) {
+    sendEnemyDamage(enemyId, damage, fromX, fromY) {
         if (!this.connected) return;
         this.send({
             type: 'enemy_damage',
             enemyId: enemyId,
-            damage: damage
+            damage: damage,
+            fromX: fromX,
+            fromY: fromY
         });
     }
     
@@ -232,6 +255,22 @@ class NetworkManager {
             type: 'player_chat',
             text: text.trim()
         });
+    }
+
+    sendTankCrateDamage(crateId, damage, fromX, fromY) {
+        if (!this.connected) return;
+        this.send({
+            type: 'tank_crate_damage',
+            crateId: crateId,
+            damage: damage,
+            fromX: fromX,
+            fromY: fromY
+        });
+    }
+
+    sendTankRestart() {
+        if (!this.connected) return;
+        this.send({ type: 'tank_restart' });
     }
 
     send(data) {

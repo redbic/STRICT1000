@@ -1,23 +1,71 @@
-/* ===== THE HOTEL - DARK DS PIXEL AESTHETIC ===== */
+/* ============================================
+   THE HOTEL — Liminal, institutional, fluorescent
+   ============================================ */
 
-/* Google Fonts - Press Start 2P */
-@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+/* --- Web Fonts --- */
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=IBM+Plex+Sans:wght@300;400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
-/* ===== CSS Variables ===== */
+/* --- Design Tokens (CSS Custom Properties) --- */
 :root {
-    --ds-bg: #0a0a0a;
-    --ds-surface: #050505;
-    --ds-border: #1a1a1a;
-    --ds-border-light: #2a2a2a;
-    --ds-text: #888888;
-    --ds-text-bright: #aaaaaa;
-    --ds-accent: #666666;
-    --ds-danger: #cc4444;
-    --ds-success: #44cc44;
-    --ds-gold: #ccaa44;
+    /* Primary backgrounds */
+    --color-cream: #f5f0e6;
+    --color-beige: #d4c8b0;
+    --color-off-white: #e8e4dc;
+    --color-warm-white: #f0ebe0;
+
+    /* Walls and structure */
+    --color-wall-beige: #c9b896;
+    --color-wall-cream: #e0d6c2;
+    --color-baseboard: #8b7355;
+    --color-wood-panel: #a08060;
+    --color-wood-dark: #6b5344;
+
+    /* Floors */
+    --color-carpet-beige: #b5a589;
+
+    /* Fluorescent lighting */
+    --color-fluorescent: #fffbe6;
+    --color-fluorescent-glow: rgba(255, 251, 220, 0.3);
+
+    /* Accent colors (muted, institutional) */
+    --color-exit-green: #4a7c4e;
+    --color-exit-red: #b04040;
+    --color-faded-teal: #5a8080;
+
+    /* Text */
+    --color-text-dark: #3a3530;
+    --color-text-mid: #4a4540;
+    --color-text-muted: #6a6560;
+    --color-text-light: #8a8580;
+
+    /* Borders */
+    --border-light: rgba(139, 115, 85, 0.3);
+    --border-mid: rgba(139, 115, 85, 0.4);
+    --border-heavy: rgba(139, 115, 85, 0.6);
+
+    /* Shadows */
+    --shadow-soft: rgba(80, 70, 55, 0.2);
+    --shadow-mid: rgba(80, 70, 55, 0.3);
+    --shadow-deep: rgba(40, 35, 25, 0.5);
+
+    /* Surfaces */
+    --surface-panel: rgba(240, 235, 224, 0.97);
+    --surface-panel-translucent: rgba(240, 235, 224, 0.92);
+    --surface-inset: rgba(212, 200, 176, 0.5);
+    --surface-input: rgba(255, 251, 240, 0.9);
+
+    /* Fonts */
+    --font-display: 'DM Serif Display', 'Georgia', serif;
+    --font-body: 'IBM Plex Sans', 'Segoe UI', sans-serif;
+    --font-mono: 'IBM Plex Mono', 'Consolas', monospace;
+
+    /* Spacing */
+    --radius-sm: 3px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
 }
 
-/* ===== Base Reset ===== */
+/* --- Reset --- */
 * {
     margin: 0;
     padding: 0;
@@ -25,17 +73,28 @@
 }
 
 body {
-    font-family: 'Press Start 2P', monospace;
-    font-size: 10px;
-    background: var(--ds-bg);
-    color: var(--ds-text);
+    font-family: var(--font-body);
+    background: var(--color-beige);
+    color: var(--color-text-dark);
     overflow: hidden;
-    image-rendering: pixelated;
-    image-rendering: crisp-edges;
-    line-height: 1.6;
 }
 
-/* ===== Screen Layouts ===== */
+/* --- Noise / Grain Texture Overlay --- */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-repeat: repeat;
+    background-size: 256px 256px;
+}
+
+/* ============================================
+   SCREENS
+   ============================================ */
 .screen {
     display: none;
     width: 100vw;
@@ -51,56 +110,116 @@ body {
     align-items: center;
 }
 
-/* ===== Menu Container - DS Style ===== */
+/* Menu/Lobby screen atmospheric background */
+#menu,
+#lobby {
+    background:
+        radial-gradient(ellipse at 30% 20%, rgba(255, 251, 220, 0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 80%, rgba(255, 251, 220, 0.1) 0%, transparent 50%),
+        linear-gradient(180deg,
+            var(--color-off-white) 0%,
+            var(--color-beige) 40%,
+            #c9bfa5 100%
+        );
+}
+
+/* Vignette on menu screens */
+#menu::after,
+#lobby::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background: radial-gradient(
+        ellipse at center,
+        transparent 40%,
+        rgba(60, 50, 40, 0.25) 100%
+    );
+}
+
+/* ============================================
+   MENU CONTAINER
+   ============================================ */
 .menu-container {
-    background: var(--ds-surface);
-    border: 3px solid var(--ds-border);
-    padding: 24px 20px;
-    box-shadow: 6px 6px 0 var(--ds-border);
-    text-align: center;
-    max-width: 500px;
-    width: 90%;
     position: relative;
+    z-index: 1;
+    background: var(--surface-panel);
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius-md);
+    padding: 44px 40px 36px;
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.4) inset,
+        0 8px 32px rgba(80, 70, 55, 0.18),
+        0 2px 8px rgba(80, 70, 55, 0.12);
+    text-align: center;
+    max-width: 560px;
+    width: 90%;
+    backdrop-filter: blur(8px);
+}
+
+/* Subtle inner border highlight (top edge catch-light) */
+.menu-container::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255, 251, 230, 0.6), transparent);
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
 }
 
 .game-title {
-    font-size: 18px;
-    margin-bottom: 20px;
-    color: var(--ds-text-bright);
-    letter-spacing: 2px;
+    font-family: var(--font-display);
+    font-size: 2.8em;
+    font-weight: 400;
+    margin-bottom: 8px;
+    color: var(--color-text-muted);
+    letter-spacing: 6px;
     text-transform: uppercase;
-    padding-bottom: 12px;
-    border-bottom: 2px solid var(--ds-border);
+}
+
+/* Subtle underline rule beneath title */
+.game-title::after {
+    content: '';
+    display: block;
+    width: 60px;
+    height: 1px;
+    background: var(--border-heavy);
+    margin: 16px auto 24px;
 }
 
 .menu-content {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    position: relative;
+    gap: 14px;
 }
 
-/* ===== Profile Bar - Compact DS Style ===== */
+/* ============================================
+   PROFILE BAR
+   ============================================ */
 .profile-bar {
     display: flex;
     align-items: center;
-    justify-content: center;
-    gap: 10px;
-    background: var(--ds-bg);
-    border: 2px solid var(--ds-border);
-    padding: 8px;
-    margin-bottom: 16px;
+    gap: 12px;
+    background: var(--surface-inset);
+    border: 1px solid var(--border-light);
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    margin: 4px auto 20px;
+    width: fit-content;
 }
 
 .profile-avatar {
-    width: 32px;
-    height: 32px;
-    background: var(--ds-surface);
-    border: 2px solid var(--ds-border-light);
+    width: 44px;
+    height: 44px;
+    border-radius: var(--radius-sm);
+    background: rgba(139, 115, 85, 0.15);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    border: 1px solid var(--border-light);
 }
 
 .profile-avatar-img {
@@ -111,7 +230,7 @@ body {
 }
 
 .profile-avatar-placeholder {
-    font-size: 16px;
+    font-size: 20px;
 }
 
 .profile-info {
@@ -119,75 +238,88 @@ body {
 }
 
 .profile-name {
-    font-weight: bold;
-    font-size: 9px;
-    color: var(--ds-text-bright);
+    font-weight: 500;
+    font-size: 15px;
+    color: var(--color-text-mid);
 }
 
 .profile-balance {
     display: flex;
     align-items: center;
-    gap: 4px;
-    font-size: 8px;
-    color: var(--ds-gold);
+    gap: 5px;
+    font-size: 13px;
+    color: var(--color-text-muted);
+    font-variant-numeric: tabular-nums;
 }
 
 .currency-icon {
-    font-size: 10px;
+    font-size: 15px;
 }
 
-/* ===== Username Input ===== */
+/* ============================================
+   INPUT FIELDS
+   ============================================ */
 #username {
-    padding: 10px 12px;
-    font-size: 10px;
-    border: 2px solid var(--ds-border);
+    padding: 14px 16px;
+    font-size: 16px;
+    font-family: var(--font-body);
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius-md);
     text-align: center;
-    background: var(--ds-bg);
-    color: var(--ds-text-bright);
-    font-family: 'Press Start 2P', monospace;
-    transition: all 0.15s;
+    background: var(--surface-input);
+    color: var(--color-text-dark);
+    transition: border-color 0.2s, box-shadow 0.2s;
+    letter-spacing: 0.5px;
 }
 
 #username::placeholder {
-    color: var(--ds-text);
+    color: var(--color-text-light);
+    font-weight: 300;
 }
 
 #username:focus {
     outline: none;
-    border-color: var(--ds-border-light);
-    box-shadow: 3px 3px 0 var(--ds-border);
+    border-color: var(--color-baseboard);
+    box-shadow: 0 0 0 3px rgba(139, 115, 85, 0.12);
+    background: var(--color-fluorescent);
 }
 
-/* ===== Character Selector ===== */
+/* ============================================
+   CHARACTER SELECTOR
+   ============================================ */
 .character-selector {
-    margin: 12px 0;
-    padding: 12px;
-    background: var(--ds-bg);
-    border: 2px solid var(--ds-border);
+    margin: 10px 0;
+    padding: 18px 16px;
+    background: rgba(212, 200, 176, 0.3);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
 }
 
 .character-selector-label {
-    font-size: 8px;
-    color: var(--ds-text);
-    margin-bottom: 10px;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--color-text-muted);
+    margin-bottom: 14px;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
 }
 
 .character-grid {
     display: flex;
     justify-content: center;
-    gap: 8px;
+    gap: 10px;
     flex-wrap: wrap;
 }
 
 .character-option {
-    width: 48px;
-    height: 64px;
-    border: 2px solid var(--ds-border);
-    background: var(--ds-surface);
+    width: 64px;
+    height: 80px;
+    border: 2px solid var(--border-light);
+    border-radius: var(--radius-md);
+    background: var(--surface-input);
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.2s ease;
     overflow: hidden;
     display: flex;
     align-items: center;
@@ -195,53 +327,92 @@ body {
     position: relative;
 }
 
+.character-option::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.5) inset;
+    pointer-events: none;
+}
+
 .character-option:hover {
-    border-color: var(--ds-border-light);
-    transform: translate(-2px, -2px);
-    box-shadow: 3px 3px 0 var(--ds-border);
+    border-color: var(--color-baseboard);
+    transform: translateY(-3px);
+    box-shadow: 0 6px 16px rgba(80, 70, 55, 0.2);
 }
 
 .character-option.selected {
-    border-color: var(--ds-accent);
-    border-width: 3px;
-    background: var(--ds-bg);
-    box-shadow: 4px 4px 0 var(--ds-border);
+    border-color: var(--color-wood-dark);
+    border-width: 2px;
+    background: rgba(255, 245, 220, 0.95);
+    box-shadow:
+        0 0 0 3px rgba(139, 115, 85, 0.2),
+        0 4px 12px rgba(80, 70, 55, 0.15);
+    transform: translateY(-2px);
 }
 
 .character-option canvas {
     image-rendering: pixelated;
 }
 
-/* ===== Menu Buttons - DS Pixel Style ===== */
+/* ============================================
+   BUTTONS — Tactile, elevator-panel feel
+   ============================================ */
 .menu-btn {
-    padding: 12px 24px;
-    font-size: 9px;
-    background: var(--ds-surface);
-    color: var(--ds-text-bright);
-    border: 2px solid var(--ds-border);
-    cursor: pointer;
-    transition: all 0.15s;
-    font-weight: bold;
-    letter-spacing: 1px;
+    padding: 14px 28px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
-    font-family: 'Press Start 2P', monospace;
+    color: var(--color-cream);
+    background:
+        linear-gradient(180deg,
+            rgba(255, 255, 255, 0.08) 0%,
+            transparent 40%,
+            rgba(0, 0, 0, 0.05) 100%
+        ),
+        linear-gradient(135deg, var(--color-wood-panel) 0%, var(--color-baseboard) 100%);
+    border: 1px solid var(--color-wood-dark);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.15) inset,
+        0 -1px 0 rgba(0, 0, 0, 0.1) inset,
+        0 2px 4px rgba(80, 70, 55, 0.2);
     position: relative;
 }
 
 .menu-btn:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: 3px 3px 0 var(--ds-border);
-    border-color: var(--ds-border-light);
+    transform: translateY(-1px);
+    box-shadow:
+        0 1px 0 rgba(255, 255, 255, 0.15) inset,
+        0 -1px 0 rgba(0, 0, 0, 0.1) inset,
+        0 4px 12px rgba(80, 70, 55, 0.25);
+    background:
+        linear-gradient(180deg,
+            rgba(255, 255, 255, 0.12) 0%,
+            transparent 40%,
+            rgba(0, 0, 0, 0.03) 100%
+        ),
+        linear-gradient(135deg, #b08a6a 0%, #9b8365 100%);
 }
 
 .menu-btn:active {
-    transform: translate(0, 0);
-    box-shadow: none;
+    transform: translateY(1px);
+    box-shadow:
+        0 -1px 0 rgba(255, 255, 255, 0.1) inset,
+        0 1px 0 rgba(0, 0, 0, 0.15) inset,
+        0 1px 2px rgba(80, 70, 55, 0.15);
 }
 
-/* ===== Game Canvas ===== */
+/* ============================================
+   GAME SCREEN
+   ============================================ */
 #game {
-    background: var(--ds-bg);
+    background: var(--color-carpet-beige);
 }
 
 #gameCanvas {
@@ -249,16 +420,15 @@ body {
     margin: 0;
     width: 100vw;
     height: 100vh;
-    background: var(--ds-bg);
+    background: var(--color-carpet-beige);
 }
 
-/* ===== Game UI Container ===== */
 #gameUI {
     position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
+    top: 20px;
+    left: 20px;
+    right: 20px;
+    bottom: 20px;
     z-index: 10;
     pointer-events: none;
 }
@@ -267,297 +437,207 @@ body {
     pointer-events: auto;
 }
 
-/* ===== Top-Left HUD Info ===== */
+/* ============================================
+   HUD — Differentiated hierarchy
+   ============================================ */
+
+/* Primary HUD: Depth + HP (top-left, most prominent) */
 #gameInfo {
-    position: absolute;
-    top: 8px;
-    left: 8px;
     display: flex;
-    gap: 12px;
-    background: var(--ds-surface);
-    border: 2px solid var(--ds-border);
-    padding: 8px 12px;
-    box-shadow: 3px 3px 0 var(--ds-border);
+    gap: 16px;
+    background: rgba(60, 50, 40, 0.75);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(139, 115, 85, 0.25);
+    padding: 10px 16px;
+    border-radius: var(--radius-md);
+    width: fit-content;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .ui-element {
-    font-size: 8px;
-    font-weight: bold;
-    color: var(--ds-text-bright);
-    font-family: 'Press Start 2P', monospace;
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--color-cream);
+    letter-spacing: 0.5px;
 }
 
-/* ===== Top-Right Profile ===== */
+/* Secondary HUD: Profile/Balance (top-right, subdued) */
 .hud-profile {
     position: absolute;
-    top: 8px;
-    right: 8px;
+    top: 0;
+    right: 0;
     display: flex;
     align-items: center;
-    gap: 8px;
-    padding: 6px 10px;
-    background: var(--ds-surface);
-    border: 2px solid var(--ds-border);
-    box-shadow: 3px 3px 0 var(--ds-border);
+    gap: 10px;
+    padding: 8px 12px;
+    background: rgba(240, 235, 224, 0.8);
+    backdrop-filter: blur(6px);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    box-shadow: 0 2px 6px rgba(80, 70, 55, 0.1);
 }
 
 .hud-avatar {
-    width: 24px;
-    height: 24px;
-    background: var(--ds-bg);
-    border: 2px solid var(--ds-border-light);
+    width: 28px;
+    height: 28px;
+    border-radius: var(--radius-sm);
+    background: rgba(139, 115, 85, 0.15);
     display: flex;
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    border: 1px solid var(--border-light);
+}
+
+.hud-avatar .profile-avatar-placeholder {
+    font-size: 14px;
 }
 
 .hud-balance {
-    font-weight: bold;
-    font-size: 8px;
+    font-family: var(--font-mono);
+    font-weight: 400;
+    font-size: 13px;
     display: flex;
     align-items: center;
-    gap: 4px;
-    color: var(--ds-gold);
-    font-family: 'Press Start 2P', monospace;
+    gap: 5px;
+    color: var(--color-text-mid);
+    font-variant-numeric: tabular-nums;
 }
 
-/* ===== Bottom-Left Controls Panel ===== */
+/* Tertiary HUD: Controls (bottom-left, fades away) */
 #controlsInfo {
     position: absolute;
-    bottom: 8px;
-    left: 8px;
-    background: var(--ds-surface);
-    border: 2px solid var(--ds-border);
-    padding: 10px 12px;
-    font-size: 7px;
-    line-height: 1.8;
-    max-width: 180px;
+    bottom: 0;
+    left: 0;
+    background: rgba(60, 50, 40, 0.65);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(139, 115, 85, 0.15);
+    padding: 12px 14px;
+    border-radius: var(--radius-md);
+    font-size: 12px;
+    line-height: 1.6;
+    max-width: 200px;
     z-index: 1001;
-    color: var(--ds-text);
-    box-shadow: 3px 3px 0 var(--ds-border);
+    color: rgba(245, 240, 230, 0.85);
+    transition: opacity 0.6s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+#controlsInfo.collapsed {
+    opacity: 0;
+    pointer-events: none;
 }
 
 .controls-title {
-    font-size: 8px;
-    font-weight: bold;
-    margin-bottom: 6px;
-    color: var(--ds-text-bright);
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 1.5px;
+    margin-bottom: 8px;
+    color: rgba(245, 240, 230, 0.6);
 }
 
 .controls-item {
     display: flex;
     justify-content: space-between;
-    gap: 8px;
-    margin-bottom: 2px;
+    gap: 10px;
+    font-family: var(--font-body);
+    font-size: 12px;
 }
 
 .controls-key {
-    font-weight: bold;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 11px;
     white-space: nowrap;
-    color: var(--ds-accent);
+    color: rgba(255, 251, 230, 0.9);
+    background: rgba(255, 255, 255, 0.08);
+    padding: 1px 5px;
+    border-radius: 2px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .recall-btn {
     margin-top: 10px;
     width: 100%;
-    padding: 8px 10px;
-    font-size: 7px;
-    background: var(--ds-bg);
-    color: var(--ds-text-bright);
-    border: 2px solid var(--ds-border);
-    letter-spacing: 1px;
+    padding: 7px 12px;
+    font-size: 11px;
+    letter-spacing: 1.5px;
+    background:
+        linear-gradient(180deg, rgba(255,255,255,0.06) 0%, transparent 50%),
+        linear-gradient(135deg, var(--color-baseboard) 0%, var(--color-wood-dark) 100%);
+    color: var(--color-cream);
+    border: 1px solid rgba(107, 83, 68, 0.6);
 }
 
-.recall-btn:hover {
-    transform: translate(-2px, -2px);
-    box-shadow: 2px 2px 0 var(--ds-border);
-}
-
-/* ===== Bottom-Center Hotbar ===== */
+/* ============================================
+   HOTBAR
+   ============================================ */
 .hotbar {
     position: absolute;
-    bottom: 8px;
+    bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--ds-surface);
-    border: 2px solid var(--ds-border);
-    padding: 8px 10px;
-    box-shadow: 3px 3px 0 var(--ds-border);
+    background: rgba(60, 50, 40, 0.75);
+    backdrop-filter: blur(6px);
+    border: 1px solid rgba(139, 115, 85, 0.2);
+    border-radius: var(--radius-md);
+    padding: 8px 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .hotbar-title {
-    font-size: 7px;
-    opacity: 0.7;
-    text-align: center;
-    margin-bottom: 6px;
-    color: var(--ds-text);
+    font-family: var(--font-body);
+    font-size: 10px;
+    font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 1px;
+    text-align: center;
+    margin-bottom: 6px;
+    color: rgba(245, 240, 230, 0.5);
 }
 
 .hotbar-slots {
     display: grid;
-    grid-template-columns: repeat(4, 36px);
-    gap: 6px;
+    grid-template-columns: repeat(4, 42px);
+    gap: 5px;
 }
 
 .hotbar-slot,
 .inventory-slot {
-    width: 36px;
-    height: 36px;
-    border: 2px solid var(--ds-border);
-    background: var(--ds-bg);
+    width: 42px;
+    height: 42px;
+    border: 1px solid rgba(139, 115, 85, 0.35);
+    background: rgba(255, 251, 240, 0.12);
+    border-radius: var(--radius-sm);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 16px;
-    transition: all 0.15s;
+    font-size: 20px;
+    transition: background 0.15s;
 }
 
 .hotbar-slot:hover,
 .inventory-slot:hover {
-    border-color: var(--ds-border-light);
-    background: var(--ds-surface);
-    box-shadow: 2px 2px 0 var(--ds-border);
+    background: rgba(255, 251, 240, 0.2);
 }
 
-/* ===== Right Side Chat Panel ===== */
-.chat-panel {
-    position: absolute;
-    bottom: 8px;
-    right: 8px;
-    width: 280px;
-    max-height: 350px;
-    background: var(--ds-surface);
-    border: 2px solid var(--ds-border);
-    display: flex;
-    flex-direction: column;
-    box-shadow: 4px 4px 0 var(--ds-border);
-    z-index: 100;
-}
-
-.chat-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 10px;
-    border-bottom: 2px solid var(--ds-border);
-    background: var(--ds-bg);
-    font-weight: bold;
-    color: var(--ds-text-bright);
-    font-size: 8px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.btn-mute-tts {
-    background: none;
-    border: none;
-    color: var(--ds-text);
-    font-size: 12px;
-    cursor: pointer;
-    padding: 2px 4px;
-    transition: all 0.15s;
-}
-
-.btn-mute-tts:hover {
-    background: var(--ds-border);
-}
-
-.btn-mute-tts.muted {
-    opacity: 0.5;
-}
-
-.chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: 8px;
-    font-size: 7px;
-    color: var(--ds-text);
-    background: var(--ds-bg);
-}
-
-.chat-message {
-    margin-bottom: 6px;
-    word-wrap: break-word;
-    padding: 6px 8px;
-    background: var(--ds-surface);
-    border-left: 2px solid var(--ds-border-light);
-}
-
-.chat-message .name {
-    color: var(--ds-text-bright);
-    font-weight: bold;
-    margin-right: 6px;
-}
-
-.chat-input-container {
-    display: flex;
-    gap: 6px;
-    padding: 8px;
-    border-top: 2px solid var(--ds-border);
-    background: var(--ds-surface);
-}
-
-.chat-input {
-    flex: 1;
-    background: var(--ds-bg);
-    border: 2px solid var(--ds-border);
-    color: var(--ds-text-bright);
-    padding: 6px 8px;
-    font-size: 7px;
-    font-family: 'Press Start 2P', monospace;
-    outline: none;
-    transition: all 0.15s;
-}
-
-.chat-input:focus {
-    border-color: var(--ds-border-light);
-    box-shadow: 2px 2px 0 var(--ds-border);
-}
-
-.chat-input::placeholder {
-    color: var(--ds-text);
-}
-
-.chat-send-btn {
-    background: var(--ds-bg);
-    border: 2px solid var(--ds-border);
-    color: var(--ds-text-bright);
-    padding: 6px 10px;
-    font-size: 7px;
-    font-weight: bold;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    cursor: pointer;
-    transition: all 0.15s;
-    font-family: 'Press Start 2P', monospace;
-}
-
-.chat-send-btn:hover {
-    transform: translate(-1px, -1px);
-    box-shadow: 2px 2px 0 var(--ds-border);
-}
-
-.chat-send-btn:active {
-    transform: translate(0, 0);
-    box-shadow: none;
-}
-
-/* ===== Inventory Panel (Centered) ===== */
+/* ============================================
+   INVENTORY PANEL
+   ============================================ */
 .inventory-panel {
     position: absolute;
     left: 50%;
     top: 50%;
     transform: translate(-50%, -50%);
-    background: var(--ds-surface);
-    border: 3px solid var(--ds-border);
-    padding: 16px;
+    background: var(--surface-panel);
+    border: 1px solid var(--border-mid);
+    border-radius: var(--radius-md);
+    padding: 18px;
     display: none;
-    box-shadow: 6px 6px 0 var(--ds-border);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
 }
 
 .inventory-panel.open {
@@ -565,123 +645,147 @@ body {
 }
 
 .inventory-header {
-    font-size: 9px;
-    font-weight: bold;
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
     margin-bottom: 12px;
     text-align: center;
-    color: var(--ds-text-bright);
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    color: var(--color-text-muted);
 }
 
 .inventory-grid {
     display: grid;
-    grid-template-columns: repeat(4, 44px);
-    gap: 6px;
+    grid-template-columns: repeat(4, 48px);
+    gap: 5px;
 }
 
 .inventory-slot {
-    width: 44px;
-    height: 44px;
+    width: 48px;
+    height: 48px;
+    background: var(--surface-input);
+    border: 1px solid var(--border-mid);
 }
 
-/* ===== Lobby ===== */
+/* ============================================
+   LOBBY
+   ============================================ */
 #playersList {
-    background: var(--ds-bg);
-    border: 2px solid var(--ds-border);
-    padding: 16px;
-    margin: 16px 0;
-    max-height: 280px;
+    background: var(--surface-inset);
+    padding: 20px;
+    border-radius: var(--radius-md);
+    margin: 20px 0;
+    max-height: 300px;
     overflow-y: auto;
+    border: 1px solid var(--border-light);
+}
+
+#playersList h3 {
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--color-text-muted);
+    margin-bottom: 12px;
 }
 
 .player-item {
-    padding: 10px;
-    margin: 6px 0;
-    background: var(--ds-surface);
-    border: 2px solid var(--ds-border);
-    color: var(--ds-text);
+    padding: 10px 14px;
+    margin: 5px 0;
+    background: var(--surface-input);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-mid);
+    font-size: 14px;
+    border: 1px solid var(--border-light);
 }
 
+/* ============================================
+   ROOM BROWSER
+   ============================================ */
 .room-browser {
-    margin-top: 20px;
+    margin-top: 22px;
 }
 
 .room-browser h3 {
-    margin-bottom: 10px;
-    font-size: 10px;
-    font-weight: bold;
-    color: var(--ds-text-bright);
+    font-family: var(--font-body);
+    font-size: 11px;
+    font-weight: 500;
     text-transform: uppercase;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
+    margin-bottom: 10px;
+    color: var(--color-text-muted);
 }
 
 .room-list {
-    background: var(--ds-bg);
-    border: 2px solid var(--ds-border);
-    padding: 10px;
-    max-height: 180px;
+    background: var(--surface-inset);
+    padding: 8px;
+    border-radius: var(--radius-md);
+    max-height: 200px;
     overflow-y: auto;
+    border: 1px solid var(--border-light);
 }
 
 .room-list-empty {
     text-align: center;
-    opacity: 0.6;
-    padding: 10px;
-    color: var(--ds-text);
+    padding: 16px 10px;
+    color: var(--color-text-light);
+    font-size: 13px;
+    font-style: italic;
 }
 
 .room-list-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 10px 12px;
-    margin: 6px 0;
-    background: var(--ds-surface);
-    border: 2px solid var(--ds-border);
+    padding: 10px 14px;
+    margin: 4px 0;
+    background: var(--surface-input);
+    border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: all 0.15s;
+    transition: all 0.15s ease;
+    border: 1px solid transparent;
 }
 
 .room-list-item:hover {
-    background: var(--ds-bg);
-    border-color: var(--ds-border-light);
-    box-shadow: 3px 3px 0 var(--ds-border);
+    background: var(--color-fluorescent);
+    border-color: var(--border-light);
+    transform: translateX(2px);
 }
 
 .room-list-item .room-info {
     text-align: left;
-    color: var(--ds-text);
 }
 
 .room-list-item .room-players {
-    font-size: 8px;
-    opacity: 0.8;
-    color: var(--ds-text);
+    font-size: 12px;
+    color: var(--color-text-muted);
+    margin-top: 2px;
 }
 
 .room-list-item .join-label {
-    font-weight: bold;
-    font-size: 8px;
-    color: var(--ds-text-bright);
-    text-transform: uppercase;
-    letter-spacing: 1px;
+    font-family: var(--font-mono);
+    font-weight: 500;
+    font-size: 11px;
+    color: var(--color-wood-dark);
+    letter-spacing: 0.5px;
 }
 
 .room-status {
-    font-size: 7px;
-    color: var(--ds-text);
-    opacity: 0.9;
+    font-size: 11px;
+    color: var(--color-baseboard);
+    font-style: italic;
 }
 
-/* ===== Death Screen ===== */
+/* ============================================
+   DEATH SCREEN
+   ============================================ */
 .death-screen {
     position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: var(--ds-bg);
+    inset: 0;
+    background:
+        radial-gradient(ellipse at center, rgba(232, 228, 220, 0.98), rgba(200, 190, 170, 0.96));
     display: none;
     justify-content: center;
     align-items: center;
@@ -694,229 +798,220 @@ body {
 }
 
 .death-text {
-    font-size: 32px;
-    color: var(--ds-danger);
-    font-family: 'Press Start 2P', monospace;
-    letter-spacing: 4px;
+    font-family: var(--font-display);
+    font-size: 56px;
+    font-weight: 400;
+    color: var(--color-text-muted);
+    letter-spacing: 12px;
     text-transform: uppercase;
-    margin-bottom: 20px;
+    animation: deathFadeIn 2s ease-in;
 }
 
 .death-subtext {
-    color: var(--ds-text);
-    margin-top: 30px;
-    font-size: 9px;
-    font-family: 'Press Start 2P', monospace;
+    font-family: var(--font-body);
+    color: var(--color-text-muted);
+    margin-top: 40px;
+    font-size: 14px;
+    font-weight: 300;
     letter-spacing: 1px;
+    animation: deathFadeIn 2.5s ease-in;
 }
 
 .death-penalty {
-    color: var(--ds-text);
+    font-family: var(--font-mono);
+    color: var(--color-text-light);
     margin-top: 16px;
-    font-size: 8px;
-    font-family: 'Press Start 2P', monospace;
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    animation: deathFadeIn 3s ease-in;
 }
 
-/* ===== Scrollbar Styling ===== */
+@keyframes deathFadeIn {
+    0% { opacity: 0; transform: translateY(8px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ============================================
+   FLUORESCENT FLICKER
+   ============================================ */
+@keyframes fluorescent {
+    0%, 100% { opacity: 1; }
+    92% { opacity: 1; }
+    93% { opacity: 0.8; }
+    94% { opacity: 1; }
+    96% { opacity: 0.9; }
+    97% { opacity: 1; }
+}
+
+.fluorescent-flicker {
+    animation: fluorescent 8s infinite;
+}
+
+/* ============================================
+   CHAT PANEL
+   ============================================ */
+.chat-panel {
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    width: 320px;
+    max-height: 400px;
+    background: rgba(26, 26, 26, 0.92);
+    backdrop-filter: blur(8px);
+    border: 1px solid rgba(100, 100, 100, 0.3);
+    border-radius: var(--radius-md);
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    z-index: 100;
+}
+
+.chat-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 12px;
+    border-bottom: 1px solid rgba(100, 100, 100, 0.2);
+    background: rgba(40, 40, 40, 0.6);
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: rgba(200, 200, 200, 0.7);
+}
+
+.btn-mute-tts {
+    background: none;
+    border: none;
+    color: #cccccc;
+    font-size: 14px;
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    transition: background 0.2s;
+}
+
+.btn-mute-tts:hover {
+    background: rgba(100, 100, 100, 0.3);
+}
+
+.btn-mute-tts.muted {
+    opacity: 0.4;
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 10px;
+    font-family: var(--font-body);
+    font-size: 12px;
+    color: #e0e0e0;
+}
+
+.chat-message {
+    margin-bottom: 5px;
+    word-wrap: break-word;
+    animation: chatFadeIn 0.3s ease-out;
+    line-height: 1.4;
+}
+
+.chat-message.fade-out {
+    animation: chatFadeOut 1s ease-out forwards;
+}
+
+.chat-message .name {
+    color: #88ccff;
+    font-weight: 500;
+    margin-right: 6px;
+}
+
+.chat-input-container {
+    display: flex;
+    gap: 4px;
+    padding: 8px;
+    border-top: 1px solid rgba(100, 100, 100, 0.2);
+    background: rgba(20, 20, 20, 0.6);
+    border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.chat-input {
+    flex: 1;
+    font-family: var(--font-body);
+    background: rgba(50, 50, 50, 0.6);
+    border: 1px solid rgba(100, 100, 100, 0.3);
+    border-radius: var(--radius-sm);
+    color: #ffffff;
+    padding: 7px 10px;
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.chat-input:focus {
+    border-color: rgba(136, 204, 255, 0.5);
+}
+
+.chat-input::placeholder {
+    color: rgba(150, 150, 150, 0.6);
+}
+
+.chat-send-btn {
+    font-family: var(--font-mono);
+    background: rgba(136, 204, 255, 0.1);
+    border: 1px solid rgba(136, 204, 255, 0.3);
+    border-radius: var(--radius-sm);
+    color: #88ccff;
+    padding: 6px 12px;
+    font-size: 11px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    letter-spacing: 0.5px;
+}
+
+.chat-send-btn:hover {
+    background: rgba(136, 204, 255, 0.2);
+    border-color: rgba(136, 204, 255, 0.5);
+}
+
+.chat-send-btn:active {
+    transform: scale(0.97);
+}
+
+@keyframes chatFadeIn {
+    from {
+        opacity: 0;
+        transform: translateX(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes chatFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* ============================================
+   SCROLLBAR STYLING
+   ============================================ */
 ::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
+    width: 4px;
 }
 
 ::-webkit-scrollbar-track {
-    background: var(--ds-bg);
+    background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-    background: var(--ds-border);
-    border: 1px solid var(--ds-border-light);
+    background: rgba(139, 115, 85, 0.3);
+    border-radius: 2px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: var(--ds-border-light);
-}
-
-/* ===== Responsive ===== */
-@media (max-width: 768px) {
-    body {
-        font-size: 8px;
-    }
-
-    .game-title {
-        font-size: 14px;
-    }
-
-    #gameInfo {
-        top: 4px;
-        left: 4px;
-        padding: 6px 8px;
-    }
-
-    .hud-profile {
-        top: 4px;
-        right: 4px;
-        padding: 4px 8px;
-    }
-
-    #controlsInfo {
-        bottom: 4px;
-        left: 4px;
-        max-width: 140px;
-        font-size: 6px;
-    }
-
-    .hotbar {
-        bottom: 4px;
-    }
-
-    .chat-panel {
-        bottom: 4px;
-        right: 4px;
-        width: 220px;
-        max-height: 280px;
-    }
-}
-
-@media (max-width: 480px) {
-    .chat-panel {
-        width: calc(100% - 16px);
-        left: 8px;
-        right: 8px;
-        bottom: 8px;
-        max-height: 200px;
-    }
-
-    #controlsInfo {
-        display: none;
-    }
-
-    .hotbar-slots {
-        grid-template-columns: repeat(4, 32px);
-        gap: 4px;
-    }
-
-    .hotbar-slot {
-        width: 32px;
-        height: 32px;
-    }
-}
-
-/* ===== Connection Status Indicator ===== */
-.connection-status {
-    position: fixed;
-    top: 8px;
-    right: 8px;
-    background: var(--ds-surface);
-    border: 2px solid var(--ds-danger);
-    padding: 8px 12px;
-    font-size: 8px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    box-shadow: 3px 3px 0 var(--ds-border);
-    z-index: 2000;
-}
-
-.connection-status.connected {
-    border-color: var(--ds-success);
-}
-
-.connection-status .status-icon {
-    font-size: 12px;
-}
-
-.connection-status .status-text {
-    color: var(--ds-text-bright);
-}
-
-/* ===== Audio Control Panel ===== */
-.audio-panel {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 1000;
-}
-
-.audio-toggle-btn {
-    background: var(--ds-surface);
-    border: 2px solid var(--ds-border);
-    color: var(--ds-text-bright);
-    padding: 8px 12px;
-    font-size: 18px;
-    cursor: pointer;
-    border-radius: 0;
-    font-family: 'Press Start 2P', monospace;
-    transition: all 0.2s;
-}
-
-.audio-toggle-btn:hover {
-    background: var(--ds-border);
-    border-color: var(--ds-border-light);
-    color: var(--ds-gold);
-}
-
-.audio-controls {
-    position: absolute;
-    top: 50px;
-    right: 0;
-    background: var(--ds-surface);
-    border: 2px solid var(--ds-border);
-    padding: 16px;
-    border-radius: 0;
-    min-width: 240px;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.5);
-}
-
-.audio-control-group {
-    margin-bottom: 14px;
-}
-
-.audio-control-group:last-child {
-    margin-bottom: 0;
-}
-
-.audio-control-group label {
-    display: block;
-    color: var(--ds-text);
-    font-size: 8px;
-    margin-bottom: 6px;
-    font-family: 'Press Start 2P', monospace;
-    text-transform: uppercase;
-}
-
-.audio-control-group input[type="range"] {
-    width: 150px;
-    margin-right: 8px;
-    vertical-align: middle;
-    accent-color: var(--ds-gold);
-}
-
-.audio-control-group span {
-    color: var(--ds-gold);
-    font-size: 10px;
-    font-family: 'Press Start 2P', monospace;
-    vertical-align: middle;
-}
-
-.mute-btn {
-    width: 100%;
-    padding: 8px;
-    background: var(--ds-bg);
-    border: 2px solid var(--ds-border);
-    color: var(--ds-text-bright);
-    cursor: pointer;
-    border-radius: 0;
-    font-family: 'Press Start 2P', monospace;
-    font-size: 8px;
-    transition: all 0.2s;
-}
-
-.mute-btn:hover {
-    background: var(--ds-border);
-    border-color: var(--ds-border-light);
-    color: var(--ds-gold);
-}
-
-.mute-btn:active {
-    background: var(--ds-border-light);
+    background: rgba(139, 115, 85, 0.5);
 }

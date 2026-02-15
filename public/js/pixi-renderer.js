@@ -611,7 +611,7 @@ class PixiRenderer {
         const nameLabel = new PIXI.Text({
             text: player.username || 'Player',
             style: {
-                fontFamily: 'Arial',
+                fontFamily: "'IBM Plex Sans', sans-serif",
                 fontSize: 12,
                 fill: 0x999999
             }

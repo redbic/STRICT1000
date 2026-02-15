@@ -22,7 +22,7 @@ function setupNetworkCallbacks(networkManager, state, handlers = {}) {
     }
 
     if (data.hostId) {
-      state.setHostId(data.hostId);
+      state.currentHostId = data.hostId;
     }
   };
 
@@ -46,7 +46,6 @@ function setupNetworkCallbacks(networkManager, state, handlers = {}) {
     if (state.game && data.zoneId && data.playerId === networkManager.playerId) {
       const zonePlayers = data.zonePlayers || [];
       state.game.transitionZone(data.zoneId, zonePlayers, networkManager.playerId);
-      state.updateZoneHostStatus();
     }
   };
 
@@ -57,11 +56,6 @@ function setupNetworkCallbacks(networkManager, state, handlers = {}) {
     const playerInfo = state.currentRoomPlayers.find(p => p.id === data.playerId);
     if (playerInfo) {
       playerInfo.zone = data.zoneId;
-    }
-
-    // If host changed zones, update zone host status
-    if (data.playerId === state.currentHostId) {
-      state.updateZoneHostStatus();
     }
 
     // Handle player leaving/entering our zone
@@ -113,24 +107,24 @@ function setupNetworkCallbacks(networkManager, state, handlers = {}) {
   };
 
   networkManager.onEnemySync = (data) => {
-    if (state.game && !state.game.isHost && !state.game.isZoneHost) {
+    // Server is authoritative — always apply enemy sync
+    if (state.game) {
       state.game.applyEnemySync(data.enemies);
     }
   };
 
   networkManager.onHostAssigned = (data) => {
+    // Keep host ID for UI purposes (party leader display)
     if (data.hostId) {
-      state.setHostId(data.hostId);
+      state.currentHostId = data.hostId;
     }
   };
 
-  networkManager.onEnemyDamage = (data) => {
-    if (state.isAuthoritative() && data.enemyId && typeof data.damage === 'number') {
-      const enemy = state.game.enemies.find(e => e.id === data.enemyId);
-      if (enemy) {
-        enemy.takeDamage(data.damage);
-      }
-    }
+  // Server-authoritative enemy melee attacks
+  networkManager.onEnemyAttack = (data) => {
+    if (!state.game || !state.game.localPlayer) return;
+    if (data.targetPlayerId !== networkManager.playerId) return;
+    state.game.localPlayer.takeDamage(data.damage);
   };
 
   networkManager.onPlayerLeft = (data) => {

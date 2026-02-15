@@ -113,13 +113,13 @@ const EntityRenderer = {
 
     // Shadow text
     ctx.fillStyle = '#4a4540';
-    ctx.font = '11px Arial';
+    ctx.font = "11px 'IBM Plex Sans', sans-serif";
     ctx.textAlign = 'center';
     ctx.fillText(username, x, labelY);
 
     // Main text
     ctx.fillStyle = '#999999';
-    ctx.font = '12px Arial';
+    ctx.font = "12px 'IBM Plex Sans', sans-serif";
     ctx.fillText(username, x, labelY + 12);
   },
 

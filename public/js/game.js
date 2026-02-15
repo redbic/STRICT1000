@@ -41,7 +41,6 @@ class Game {
         this.hitStop = { timer: 0 };
         this.damageNumbers = [];
         this.deathParticles = [];
-        this.weaponTrails = [];
 
         this.activeMinigame = null; // TankGame or CardGame controller
         this.enemies = [];
@@ -49,13 +48,12 @@ class Game {
         this.hitSparks = []; // Visual effects for projectile hits
         this.lastMouse = { x: 0, y: 0 };
         this.onEnemyKilled = null; // Callback for when an enemy is killed
-        this.isHost = false; // Whether this client is the host (authoritative for enemies)
-        this.isZoneHost = false; // Whether this client is authoritative for enemies in current zone
-        this.zoneTransitionGrace = 0; // Grace period after zone transition to receive enemy syncs
-        this.onEnemyDamage = null; // Callback for sending enemy damage to host (non-host players)
+        this.onEnemyDamage = null; // Callback for sending enemy damage to server (enemyId, damage, fromX, fromY)
         this.onPlayerDeath = null; // Callback for when the local player dies
         this.onPlayerFire = null; // Callback for when local player fires (to sync to others)
         this.onChatMessage = null; // Callback for when a chat message is received
+        this.onTankRestart = null; // Callback for tank game restart request
+        this.onTankCrateDamage = null; // Callback for sending crate damage to server (crateId, damage, fromX, fromY)
 
         // Screen flash effect for damage feedback (muted for liminal aesthetic)
         this.screenFlash = { active: false, timer: 0, color: 'rgba(176, 64, 64, 0.25)' };
@@ -113,8 +111,7 @@ class Game {
                 console.log('Frame:', {
                     deltaTime: this.deltaTime,
                     fps: Math.round(1 / this.deltaTime),
-                    isHost: this.isHost,
-                    isZoneHost: this.isZoneHost
+                    serverAuthoritative: true
                 });
                 console.log('Player:', {
                     id: p.id,
@@ -183,13 +180,6 @@ class Game {
             const proj = this.localPlayer.fireProjectile(angle);
             if (proj) {
                 this.projectiles.push(proj);
-
-                // Create weapon trail from barrel to projectile spawn point
-                const barrelLength = CONFIG.GUN_BARREL_LENGTH || 20;
-                const barrelX = this.localPlayer.x + Math.cos(angle) * barrelLength;
-                const barrelY = this.localPlayer.y + Math.sin(angle) * barrelLength;
-                this.createWeaponTrail(barrelX, barrelY, proj.x, proj.y);
-
                 // Notify network to sync projectile to other players
                 if (this.onPlayerFire) {
                     this.onPlayerFire(proj.x, proj.y, proj.angle);
@@ -297,13 +287,6 @@ class Game {
         this.portalCooldown = 0;
         this.keys = {};
 
-        // Grace period after zone transition - accept enemy syncs even if host
-        // This allows the previous zone host to hand off their enemy state
-        const gracePeriod = (typeof CONFIG !== 'undefined' && CONFIG.ZONE_TRANSITION_GRACE_MS)
-            ? CONFIG.ZONE_TRANSITION_GRACE_MS / 1000
-            : 0.5;
-        this.zoneTransitionGrace = gracePeriod;
-
         // Use server-provided enemy state if available (multiplayer, server-authoritative)
         // Otherwise fall back to zone data (single-player or legacy)
         if (serverEnemies && Array.isArray(serverEnemies)) {
@@ -408,11 +391,6 @@ class Game {
             }
         }
 
-        // Update zone transition grace period
-        if (this.zoneTransitionGrace > 0) {
-            this.zoneTransitionGrace -= frameDt;
-        }
-
         // Track HP before all updates to detect damage
         const hpBeforeUpdate = this.localPlayer ? this.localPlayer.hp : 0;
 
@@ -433,13 +411,7 @@ class Game {
                 this.localPlayer.updateMovement(this.keys, this.zone, dt);
             }
 
-            // Update enemies with fixed timestep (only if authoritative)
-            if (this.isHost || this.isZoneHost) {
-                this.enemies.forEach(enemy => {
-                    const nearestPlayer = this.getNearestPlayer(enemy);
-                    enemy.update(this.zone, nearestPlayer, dt);
-                });
-            }
+            // Enemy AI is server-authoritative (ZoneSession) — no local enemy updates
 
             this.physicsAccumulator -= this.PHYSICS_DT;
         }
@@ -482,7 +454,6 @@ class Game {
         // Update juice effects
         this.updateDamageNumbers(frameDt);
         this.updateDeathParticles(frameDt);
-        this.updateWeaponTrails(frameDt);
 
         // Enemy AI is now updated in the fixed timestep loop above
 
@@ -596,39 +567,28 @@ class Game {
         }
     }
 
-    getNearestPlayer(enemy) {
-        let nearest = null;
-        let minDist = Infinity;
-        this.players.forEach(player => {
-            if (player.hp <= 0) return;
-            const dist = Math.hypot(player.x - enemy.x, player.y - enemy.y);
-            if (dist < minDist) {
-                minDist = dist;
-                nearest = player;
-            }
-        });
-        return nearest;
-    }
-
     applyEnemySync(enemyStates) {
         if (!Array.isArray(enemyStates)) return;
 
-        // Apply position and AI state sync (NOT HP - HP is server-authoritative)
+        // Server-authoritative: apply full enemy state including HP and knockback
         enemyStates.forEach(state => {
             const enemy = this.enemies.find(e => e.id === state.id);
             if (enemy) {
-                // Position sync
+                // Position sync (server-authoritative)
                 enemy.x = state.x;
                 enemy.y = state.y;
-                // AI state sync (but NOT HP - server handles HP via enemy_state_update)
+                // HP sync (server-authoritative)
+                if (state.hp !== undefined) enemy.hp = state.hp;
+                if (state.maxHp !== undefined) enemy.maxHp = state.maxHp;
+                // AI state sync
                 enemy.stunned = state.stunned;
                 enemy.stunnedTime = state.stunnedTime;
                 enemy.attackCooldown = state.attackCooldown;
+                // Knockback state (for visual interpolation between server ticks)
+                enemy.knockbackVX = state.knockbackVX || 0;
+                enemy.knockbackVY = state.knockbackVY || 0;
             }
         });
-
-        // Note: Enemy removal is handled by server via enemy_killed_sync
-        // We no longer filter enemies based on sync - server is authoritative
     }
 
     updateProjectiles(dt) {
@@ -636,44 +596,59 @@ class Game {
             const proj = this.projectiles[i];
             proj.update(dt, this.zone);
 
-            // Check enemy collisions
-            if (proj.alive) {
+            // Check enemy collisions (skip remote projectiles — they are visual only)
+            if (proj.alive && proj.damage > 0) {
+                // Standard zone enemies
                 for (const enemy of this.enemies) {
                     if (this.checkProjectileHit(proj, enemy)) {
-                        // Create hit spark effect
                         this.createHitSpark(proj.x, proj.y);
-
-                        // Play impact and hurt sounds with spatial audio
-                        if (window.gameState?.audioManager) {
-                            const panAmount = this.calculatePan(proj.x);
-                            gameState.audioManager.playSound('impact', {
-                                volume: CONFIG.AUDIO_IMPACT_VOLUME,
-                                pan: panAmount,
-                                pitchVariation: CONFIG.AUDIO_PITCH_VARIATION
-                            });
-
-                            // Layer enemy hurt sound with slight delay for depth
-                            setTimeout(() => {
-                                gameState.audioManager.playSound('enemy_hurt', {
-                                    volume: CONFIG.AUDIO_ENEMY_HURT_VOLUME,
-                                    pan: panAmount,
-                                    pitchVariation: CONFIG.AUDIO_PITCH_VARIATION * 1.5
-                                });
-                            }, 25);
-                        }
-
-                        // Game feel: damage number, shake, knockback (hit stop removed - only on kills)
                         this.spawnDamageNumber(proj.x, proj.y - 10, proj.damage);
                         this.triggerScreenShake(CONFIG.SCREEN_SHAKE_DAMAGE_DEALT, 0.08);
+                        this.triggerHitStop(CONFIG.HIT_STOP_DURATION);
                         enemy.applyKnockback(proj.x, proj.y, CONFIG.KNOCKBACK_FORCE);
-
-                        // Server-authoritative: always send damage to server
-                        // Server updates state and broadcasts to all players
                         if (this.onEnemyDamage) {
-                            this.onEnemyDamage(enemy.id, proj.damage);
+                            this.onEnemyDamage(enemy.id, proj.damage, proj.x, proj.y);
                         }
                         proj.alive = false;
                         break;
+                    }
+                }
+
+                // Tank minigame enemies and crates (client-side prediction for visual feedback)
+                if (proj.alive && this.activeMinigame && this.activeMinigame.tankEnemies) {
+                    // Check tank enemies
+                    for (const tank of this.activeMinigame.tankEnemies) {
+                        if (!tank.alive) continue;
+                        if (this.checkProjectileHit(proj, tank)) {
+                            this.createHitSpark(proj.x, proj.y);
+                            this.spawnDamageNumber(proj.x, proj.y - 10, proj.damage);
+                            this.triggerScreenShake(CONFIG.SCREEN_SHAKE_DAMAGE_DEALT, 0.08);
+                            this.triggerHitStop(CONFIG.HIT_STOP_DURATION);
+                            // Send damage to server via existing enemy_damage flow
+                            if (this.onEnemyDamage) {
+                                this.onEnemyDamage(tank.id, proj.damage, proj.x, proj.y);
+                            }
+                            proj.alive = false;
+                            break;
+                        }
+                    }
+
+                    // Check crates
+                    if (proj.alive && this.activeMinigame.crates) {
+                        for (const crate of this.activeMinigame.crates) {
+                            if (!crate.alive) continue;
+                            if (this.checkProjectileHit(proj, crate)) {
+                                this.createHitSpark(proj.x, proj.y);
+                                this.spawnDamageNumber(proj.x, proj.y - 10, proj.damage);
+                                this.triggerScreenShake(CONFIG.SCREEN_SHAKE_DAMAGE_DEALT, 0.08);
+                                // Send crate damage to server
+                                if (this.onTankCrateDamage) {
+                                    this.onTankCrateDamage(crate.id, proj.damage, proj.x, proj.y);
+                                }
+                                proj.alive = false;
+                                break;
+                            }
+                        }
                     }
                 }
             }
@@ -809,18 +784,6 @@ class Game {
         this.hitStop.timer = Math.max(this.hitStop.timer, duration);
     }
 
-    /**
-     * Calculate stereo pan based on world X position relative to camera
-     * @param {number} worldX - World x coordinate
-     * @returns {number} Pan value (-1 to 1, left to right)
-     */
-    calculatePan(worldX) {
-        const cameraCenter = this.cameraX + this.canvas.width / 2;
-        const offset = worldX - cameraCenter;
-        const panRange = CONFIG.AUDIO_SPATIAL_PAN_RANGE || 600;
-        return Math.max(-1, Math.min(1, offset / panRange));
-    }
-
     spawnDamageNumber(x, y, amount) {
         const lifetime = CONFIG.DAMAGE_NUMBER_LIFETIME || 0.8;
         this.damageNumbers.push({
@@ -907,46 +870,6 @@ class Game {
             this.ctx.fillStyle = `rgba(92, 74, 74, ${progress})`;
             this.ctx.beginPath();
             this.ctx.arc(screenX, screenY, size, 0, Math.PI * 2);
-            this.ctx.fill();
-        }
-    }
-
-    /**
-     * Create weapon trail particles from barrel to projectile spawn point
-     */
-    createWeaponTrail(startX, startY, endX, endY) {
-        const count = CONFIG.WEAPON_TRAIL_PARTICLE_COUNT || 5;
-        for (let i = 0; i < count; i++) {
-            const t = i / count;
-            this.weaponTrails.push({
-                x: startX + (endX - startX) * t,
-                y: startY + (endY - startY) * t,
-                lifetime: CONFIG.WEAPON_TRAIL_LIFETIME || 0.15,
-                maxLifetime: CONFIG.WEAPON_TRAIL_LIFETIME || 0.15,
-                size: 3 - (i * 0.4) // Smaller towards bullet tip
-            });
-        }
-    }
-
-    updateWeaponTrails(dt) {
-        for (let i = this.weaponTrails.length - 1; i >= 0; i--) {
-            this.weaponTrails[i].lifetime -= dt;
-            if (this.weaponTrails[i].lifetime <= 0) {
-                this.weaponTrails.splice(i, 1);
-            }
-        }
-    }
-
-    drawWeaponTrails() {
-        for (const trail of this.weaponTrails) {
-            const progress = trail.lifetime / trail.maxLifetime;
-            const alpha = progress * 0.6;
-            const screenX = trail.x - this.cameraX;
-            const screenY = trail.y - this.cameraY;
-
-            this.ctx.fillStyle = `rgba(255, 220, 100, ${alpha})`;
-            this.ctx.beginPath();
-            this.ctx.arc(screenX, screenY, trail.size * progress, 0, Math.PI * 2);
             this.ctx.fill();
         }
     }
@@ -1206,7 +1129,6 @@ class Game {
         });
 
         // Draw projectiles and effects
-        this.drawWeaponTrails(); // Draw trails before projectiles for proper layering
         this.drawProjectiles();
         this.drawHitSparks();
         this.drawDeathParticles();

@@ -202,7 +202,7 @@ class Zone {
             ctx.shadowBlur = 0;
 
             ctx.fillStyle = '#3a3530';
-            ctx.font = '18px Arial';
+            ctx.font = "18px 'IBM Plex Sans', sans-serif";
             ctx.textAlign = 'center';
             ctx.fillText(item.icon || '📦', itemX, itemY + 6);
         });
@@ -381,7 +381,7 @@ class Zone {
             ctx.strokeRect(px + pw/2 - 40, py - 28, 80, 20);
 
             ctx.fillStyle = '#4a4540';
-            ctx.font = '11px Arial';
+            ctx.font = "11px 'IBM Plex Sans', sans-serif";
             ctx.textAlign = 'center';
             ctx.fillText(portal.label.toUpperCase(), px + pw/2, py - 14);
         }
@@ -394,7 +394,7 @@ class Zone {
             ctx.fill();
 
             ctx.fillStyle = '#f5f0e6';
-            ctx.font = '16px Arial';
+            ctx.font = "16px 'IBM Plex Sans', sans-serif";
             ctx.textAlign = 'center';
             ctx.fillText('🔒', px + pw/2, py + ph/2 + 5);
         }

@@ -240,12 +240,12 @@ class Player {
         // Draw username above character
         const labelY = screenY - 32;
         ctx.fillStyle = '#4a4540';
-        ctx.font = '11px Arial';
+        ctx.font = "11px 'IBM Plex Sans', sans-serif";
         ctx.textAlign = 'center';
         ctx.fillText(this.username, screenX, labelY);
 
         ctx.fillStyle = '#999999';
-        ctx.font = '12px Arial';
+        ctx.font = "12px 'IBM Plex Sans', sans-serif";
         ctx.textAlign = 'center';
         ctx.fillText(this.username, screenX, labelY + 12);
     }
@@ -293,7 +293,7 @@ class Player {
 
         // Draw text
         ctx.fillStyle = '#ffffff';
-        ctx.font = '11px Arial';
+        ctx.font = "11px 'IBM Plex Sans', sans-serif";
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
 
@@ -560,7 +560,7 @@ class Player {
         if (this.gun.reloading) {
             const reloadProgress = 1 - (this.gun.reloadTimer / this.gun.reloadTime);
             ctx.fillStyle = 'rgba(139, 0, 0, 0.9)';
-            ctx.font = '11px Arial';
+            ctx.font = "11px 'IBM Plex Sans', sans-serif";
             ctx.textAlign = 'center';
             ctx.fillText('RELOADING', screenX, screenY - 55);
 
