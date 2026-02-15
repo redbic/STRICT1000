@@ -1071,6 +1071,21 @@ class Game {
         }
     }
 
+    drawEntitiesCulled(entities) {
+        entities.forEach(entity => {
+            const rect = {
+                x: entity.x - entity.width / 2,
+                y: entity.y - entity.height / 2,
+                width: entity.width,
+                height: entity.height
+            };
+            if (!this.zone || this.zone.isVisible(rect, this.cameraX, this.cameraY,
+                                                   this.canvas.width, this.canvas.height)) {
+                entity.draw(this.ctx, this.cameraX, this.cameraY);
+            }
+        });
+    }
+
     // Canvas 2D fallback rendering
     drawCanvas() {
         // Clear canvas (defensive programming in case zone doesn't fill entire canvas)
@@ -1087,46 +1102,10 @@ class Game {
             this.zone.draw(this.ctx, this.cameraX, this.cameraY);
         }
 
-        // Draw players and enemies with visibility culling
-        this.players.forEach(player => {
-            const playerRect = {
-                x: player.x - player.width/2,
-                y: player.y - player.height/2,
-                width: player.width,
-                height: player.height
-            };
-            if (!this.zone || this.zone.isVisible(playerRect, this.cameraX, this.cameraY,
-                                                   this.canvas.width, this.canvas.height)) {
-                player.draw(this.ctx, this.cameraX, this.cameraY);
-            }
-        });
-
-        this.enemies.forEach(enemy => {
-            const enemyRect = {
-                x: enemy.x - enemy.width/2,
-                y: enemy.y - enemy.height/2,
-                width: enemy.width,
-                height: enemy.height
-            };
-            if (!this.zone || this.zone.isVisible(enemyRect, this.cameraX, this.cameraY,
-                                                   this.canvas.width, this.canvas.height)) {
-                enemy.draw(this.ctx, this.cameraX, this.cameraY);
-            }
-        });
-
-        // Draw NPCs with visibility culling
-        this.npcs.forEach(npc => {
-            const npcRect = {
-                x: npc.x - npc.width/2,
-                y: npc.y - npc.height/2,
-                width: npc.width,
-                height: npc.height
-            };
-            if (!this.zone || this.zone.isVisible(npcRect, this.cameraX, this.cameraY,
-                                                    this.canvas.width, this.canvas.height)) {
-                npc.draw(this.ctx, this.cameraX, this.cameraY);
-            }
-        });
+        // Draw players, enemies, and NPCs with visibility culling
+        this.drawEntitiesCulled(this.players);
+        this.drawEntitiesCulled(this.enemies);
+        this.drawEntitiesCulled(this.npcs);
 
         // Draw projectiles and effects
         this.drawProjectiles();

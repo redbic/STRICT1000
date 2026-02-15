@@ -52,8 +52,6 @@ const WS_MESSAGE_TYPES = new Set([
   'player_update',
   'game_start',
   'zone_enter',
-  'enemy_killed',
-  'enemy_sync',
   'enemy_damage',
   'list_rooms',
   'player_death',
@@ -486,8 +484,6 @@ wss.on('connection', (ws, request) => {
       case 'player_update': handlePlayerUpdate(ws, data); break;
       case 'game_start':   handleGameStart(ws); break;
       case 'zone_enter':   handleZoneEnter(ws, data); break;
-      case 'enemy_killed': handleEnemyKilled(ws, data); break;
-      case 'enemy_sync':   handleEnemySync(ws, data); break;
       case 'enemy_damage': handleEnemyDamage(ws, data); break;
       case 'list_rooms':   handleListRooms(ws); break;
       case 'player_death': handlePlayerDeath(ws, data); break;
@@ -562,6 +558,19 @@ function handleJoinRoom(ws, data) {
 }
 
 /**
+ * Get room and player context for a WebSocket connection.
+ * @returns {{ room: Object, player: Object } | null}
+ */
+function getPlayerContext(ws) {
+  if (!ws.roomId) return null;
+  const room = rooms.getRoom(ws.roomId);
+  if (!room) return null;
+  const player = room.players.find(p => p.id === ws.playerId);
+  if (!player) return null;
+  return { room, player };
+}
+
+/**
  * Remove a player from their zone session (shared by handleLeaveRoom and handleDisconnect)
  */
 function removePlayerFromZoneSession(roomId, playerId) {
@@ -579,23 +588,35 @@ function removePlayerFromZoneSession(roomId, playerId) {
   }
 }
 
-function handleLeaveRoom(ws) {
+/**
+ * Remove a player from a room (shared logic for leave and disconnect).
+ * @param {WebSocket} ws
+ * @param {'leave'|'disconnect'} reason
+ */
+function removeFromRoom(ws, reason) {
   if (!ws.roomId) return;
+  const roomId = ws.roomId;
 
-  // Remove player from zone session before removing from room
-  removePlayerFromZoneSession(ws.roomId, ws.playerId);
+  removePlayerFromZoneSession(roomId, ws.playerId);
 
-  const result = rooms.removePlayer(ws.roomId, ws.playerId);
+  const result = reason === 'disconnect'
+    ? rooms.removePlayerByWs(roomId, ws)
+    : rooms.removePlayer(roomId, ws.playerId);
+
   if (result) {
-    const { room: updatedRoom, newHostId } = result;
+    const { newHostId } = result;
     if (newHostId) {
-      rooms.broadcastToRoom(ws.roomId, { type: 'host_assigned', hostId: newHostId });
+      rooms.broadcastToRoom(roomId, { type: 'host_assigned', hostId: newHostId });
     }
-    rooms.broadcastToRoom(ws.roomId, {
-      type: 'room_update',
-      players: rooms.getPlayerRoster(updatedRoom),
-      hostId: updatedRoom.hostId,
-    });
+    if (reason === 'disconnect') {
+      rooms.broadcastToRoom(roomId, { type: 'player_left', playerId: ws.playerId });
+    } else {
+      rooms.broadcastToRoom(roomId, {
+        type: 'room_update',
+        players: rooms.getPlayerRoster(result.room),
+        hostId: result.room.hostId,
+      });
+    }
   }
 
   broadcastRoomList();
@@ -603,33 +624,27 @@ function handleLeaveRoom(ws) {
   ws.playerId = null;
 }
 
+function handleLeaveRoom(ws) {
+  removeFromRoom(ws, 'leave');
+}
+
 function handlePlayerUpdate(ws, data) {
-  if (!ws.roomId) {
-    debugLog('player_update', 'no roomId');
-    return;
-  }
-  const room = rooms.getRoom(ws.roomId);
-  if (!room) {
-    debugLog('player_update', 'room not found', { roomId: ws.roomId });
-    return;
-  }
+  const ctx = getPlayerContext(ws);
+  if (!ctx) return;
 
   if (!isValidPlayerState(data.state)) {
     debugLog('player_update', 'invalid state');
     return;
   }
 
-  const sender = room.players.find(p => p.id === ws.playerId);
-  if (!sender) return;
-
-  broadcastToZone(room, sender.zone, {
+  broadcastToZone(ctx.room, ctx.player.zone, {
     type: 'player_state',
     playerId: ws.playerId,
     state: data.state,
   }, ws);
 
   // Forward player position to zone session for enemy AI targeting
-  const session = room.zoneSessions && room.zoneSessions.get(sender.zone);
+  const session = ctx.room.zoneSessions && ctx.room.zoneSessions.get(ctx.player.zone);
   if (session && data.state) {
     session.updatePlayerPosition(
       ws.playerId,
@@ -738,40 +753,15 @@ async function handleZoneEnter(ws, data) {
   safeSend(ws, zoneEnterMsg);
 }
 
-function handleEnemyKilled(ws, data) {
-  // Legacy handler - no longer used. Enemy kills are handled by ZoneSession when HP reaches 0.
-  debugLog('enemy_killed', 'ignoring legacy enemy_killed message');
-}
-
-function handleEnemySync(ws, data) {
-  // No-op: server now runs enemy simulation via ZoneSession.
-  // Client-sent enemy syncs are no longer accepted.
-}
-
 function handleEnemyDamage(ws, data) {
-  if (!ws.roomId || !data.enemyId || typeof data.damage !== 'number') {
-    debugLog('enemy_damage', 'missing required fields');
-    return;
-  }
-  if (data.damage < 0 || data.damage > 100) {
-    debugLog('enemy_damage', 'invalid damage value', { damage: data.damage });
-    return;
-  }
+  if (!data.enemyId || typeof data.damage !== 'number') return;
+  if (data.damage < 0 || data.damage > 100) return;
 
-  const room = rooms.getRoom(ws.roomId);
-  if (!room) return;
+  const ctx = getPlayerContext(ws);
+  if (!ctx) return;
 
-  const sender = room.players.find(p => p.id === ws.playerId);
-  if (!sender) return;
-
-  const zoneId = sender.zone;
-
-  // Delegate to zone session for damage + knockback + death handling
-  const session = room.zoneSessions && room.zoneSessions.get(zoneId);
-  if (!session) {
-    debugLog('enemy_damage', 'no zone session', { zone: zoneId });
-    return;
-  }
+  const session = ctx.room.zoneSessions && ctx.room.zoneSessions.get(ctx.player.zone);
+  if (!session) return;
 
   const fromX = Number.isFinite(data.fromX) ? data.fromX : undefined;
   const fromY = Number.isFinite(data.fromY) ? data.fromY : undefined;
@@ -803,45 +793,36 @@ async function handleZoneEnemyDeath(roomId, zoneId, enemyId, killerUsername, kil
 // --- Tank minigame handlers ---
 
 function handleTankRestart(ws) {
-  if (!ws.roomId) return;
-  const room = rooms.getRoom(ws.roomId);
-  if (!room) return;
-  const player = room.players.find(p => p.id === ws.playerId);
-  if (!player) return;
+  const ctx = getPlayerContext(ws);
+  if (!ctx) return;
 
-  const session = room.zoneSessions && room.zoneSessions.get(player.zone);
+  const session = ctx.room.zoneSessions && ctx.room.zoneSessions.get(ctx.player.zone);
   if (!session || !session.restart) return;
 
   session.restart();
 }
 
 function handleTankCrateDamage(ws, data) {
-  if (!ws.roomId || !data.crateId || typeof data.damage !== 'number') return;
+  if (!data.crateId || typeof data.damage !== 'number') return;
   if (data.damage < 0 || data.damage > 10) return;
 
-  const room = rooms.getRoom(ws.roomId);
-  if (!room) return;
-  const player = room.players.find(p => p.id === ws.playerId);
-  if (!player) return;
+  const ctx = getPlayerContext(ws);
+  if (!ctx) return;
 
-  const session = room.zoneSessions && room.zoneSessions.get(player.zone);
+  const session = ctx.room.zoneSessions && ctx.room.zoneSessions.get(ctx.player.zone);
   if (!session || !session.applyCrateDamage) return;
 
   session.applyCrateDamage(data.crateId, data.damage);
 }
 
 function handlePlayerFire(ws, data) {
-  if (!ws.roomId) return;
   if (typeof data.x !== 'number' || typeof data.y !== 'number' || typeof data.angle !== 'number') return;
   if (!Number.isFinite(data.x) || !Number.isFinite(data.y) || !Number.isFinite(data.angle)) return;
 
-  const room = rooms.getRoom(ws.roomId);
-  if (!room) return;
+  const ctx = getPlayerContext(ws);
+  if (!ctx) return;
 
-  const sender = room.players.find(p => p.id === ws.playerId);
-  if (!sender) return;
-
-  broadcastToZone(room, sender.zone, {
+  broadcastToZone(ctx.room, ctx.player.zone, {
     type: 'player_fire',
     playerId: ws.playerId,
     x: data.x,
@@ -851,26 +832,7 @@ function handlePlayerFire(ws, data) {
 }
 
 function handleDisconnect(ws) {
-  if (!ws.roomId) return;
-
-  const roomId = ws.roomId;
-
-  // Remove player from zone session before removing from room
-  removePlayerFromZoneSession(roomId, ws.playerId);
-
-  const result = rooms.removePlayerByWs(roomId, ws);
-
-  if (result) {
-    const { newHostId } = result;
-    if (newHostId) {
-      rooms.broadcastToRoom(roomId, { type: 'host_assigned', hostId: newHostId });
-    }
-    rooms.broadcastToRoom(roomId, { type: 'player_left', playerId: ws.playerId });
-  }
-
-  broadcastRoomList();
-  ws.roomId = null;
-  ws.playerId = null;
+  removeFromRoom(ws, 'disconnect');
 }
 
 function handleListRooms(ws) {
@@ -910,27 +872,15 @@ async function handlePlayerDeath(ws, data) {
 }
 
 function handlePlayerChat(ws, data) {
-  if (!ws.roomId || !ws.username) {
-    debugLog('player_chat', 'missing roomId or username');
-    return;
-  }
+  if (!ws.username) return;
 
   const text = normalizeSafeString(data.text || '');
-  if (!isValidChatMessage(text)) {
-    debugLog('player_chat', 'invalid chat message', { text });
-    return;
-  }
+  if (!isValidChatMessage(text)) return;
 
-  const room = rooms.getRoom(ws.roomId);
-  if (!room) return;
+  const ctx = getPlayerContext(ws);
+  if (!ctx) return;
 
-  const sender = room.players.find(p => p.id === ws.playerId);
-  if (!sender) return;
-
-  const zoneId = sender.zone;
-
-  // Broadcast to all players in the same zone
-  broadcastToZone(room, zoneId, {
+  broadcastToZone(ctx.room, ctx.player.zone, {
     type: 'chat_message',
     playerId: ws.playerId,
     username: ws.username,

@@ -1,20 +1,18 @@
 // Player class for adventure character
 // Uses centralized CONFIG from config/constants.js
 
-// Local aliases for frequently accessed config values
-const PLAYER_MAX_SPEED = typeof CONFIG !== 'undefined' ? CONFIG.PLAYER_MAX_SPEED : 350;
-const PLAYER_ACCELERATION = typeof CONFIG !== 'undefined' ? CONFIG.PLAYER_ACCELERATION : 2200;
-const PLAYER_FRICTION = typeof CONFIG !== 'undefined' ? CONFIG.PLAYER_FRICTION : 8;
-const PLAYER_DEFAULT_HP = typeof CONFIG !== 'undefined' ? CONFIG.PLAYER_DEFAULT_HP : 100;
-const PLAYER_SIZE = typeof CONFIG !== 'undefined' ? CONFIG.PLAYER_SIZE : 30;
-const PLAYER_STUN_FRICTION = typeof CONFIG !== 'undefined' ? CONFIG.PLAYER_STUN_FRICTION : 12;
-
-// Gun constants (aliased from CONFIG)
-const PLAYER_GUN_FIRE_RATE = typeof CONFIG !== 'undefined' ? CONFIG.GUN_FIRE_RATE : 0.75;
-const PLAYER_GUN_DAMAGE = typeof CONFIG !== 'undefined' ? CONFIG.GUN_DAMAGE : 25;
-const PLAYER_GUN_MAGAZINE_SIZE = typeof CONFIG !== 'undefined' ? CONFIG.GUN_MAGAZINE_SIZE : 5;
-const PLAYER_GUN_RELOAD_TIME = typeof CONFIG !== 'undefined' ? CONFIG.GUN_RELOAD_TIME : 1.75;
-const PLAYER_GUN_BARREL_LENGTH = typeof CONFIG !== 'undefined' ? CONFIG.GUN_BARREL_LENGTH : 20;
+const _C = typeof CONFIG !== 'undefined' ? CONFIG : {};
+const PLAYER_MAX_SPEED = _C.PLAYER_MAX_SPEED || 350;
+const PLAYER_ACCELERATION = _C.PLAYER_ACCELERATION || 2200;
+const PLAYER_FRICTION = _C.PLAYER_FRICTION || 8;
+const PLAYER_DEFAULT_HP = _C.PLAYER_DEFAULT_HP || 100;
+const PLAYER_SIZE = _C.PLAYER_SIZE || 30;
+const PLAYER_STUN_FRICTION = _C.PLAYER_STUN_FRICTION || 12;
+const PLAYER_GUN_FIRE_RATE = _C.GUN_FIRE_RATE || 0.75;
+const PLAYER_GUN_DAMAGE = _C.GUN_DAMAGE || 25;
+const PLAYER_GUN_MAGAZINE_SIZE = _C.GUN_MAGAZINE_SIZE || 5;
+const PLAYER_GUN_RELOAD_TIME = _C.GUN_RELOAD_TIME || 1.75;
+const PLAYER_GUN_BARREL_LENGTH = _C.GUN_BARREL_LENGTH || 20;
 
 class Player {
     /**
