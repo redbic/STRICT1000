@@ -97,13 +97,13 @@ const CONFIG = {
   // ===================
   // Audio System
   // ===================
-  AUDIO_MASTER_VOLUME: 0.8,           // Master volume (0-1)
-  AUDIO_SFX_VOLUME: 1.0,              // SFX volume multiplier on master
-  AUDIO_MUSIC_VOLUME: 0.4,            // Music volume (lower than SFX)
-  AUDIO_GUN_FIRE_VOLUME: 0.7,         // Gun fire sound volume
-  AUDIO_IMPACT_VOLUME: 0.6,           // Projectile impact volume
-  AUDIO_ENEMY_HURT_VOLUME: 0.5,       // Enemy damage grunt volume
-  AUDIO_ENEMY_DEATH_VOLUME: 0.7,      // Enemy death sound volume
+  AUDIO_MASTER_VOLUME: 0.4,           // Master volume (0-1)
+  AUDIO_SFX_VOLUME: 0.5,              // SFX volume multiplier on master
+  AUDIO_MUSIC_VOLUME: 0.2,            // Music volume (lower than SFX)
+  AUDIO_GUN_FIRE_VOLUME: 0.35,        // Gun fire sound volume
+  AUDIO_IMPACT_VOLUME: 0.3,           // Projectile impact volume
+  AUDIO_ENEMY_HURT_VOLUME: 0.25,      // Enemy damage grunt volume
+  AUDIO_ENEMY_DEATH_VOLUME: 0.35,     // Enemy death sound volume
   AUDIO_PITCH_VARIATION: 0.1,         // ±10% pitch randomization
   AUDIO_SPATIAL_PAN_RANGE: 600,       // Distance for full L/R stereo pan
   MUSIC_FADE_DURATION: 2.0,           // Music fade in/out time (seconds)

@@ -9,7 +9,7 @@ const MAX_USERNAME_LENGTH = (typeof CONFIG !== 'undefined' && CONFIG.MAX_USERNAM
   ? CONFIG.MAX_USERNAME_LENGTH
   : 32;
 
-// Consolidated game state to reduce global namespace pollution
+// Consolidated game state - exposed on window for non-module scripts (player.js, tank-game.js)
 const gameState = {
     game: null,
     networkManager: null,
@@ -24,6 +24,7 @@ const gameState = {
     inventorySaveTimeout: null,
     selectedCharacter: 1 // Default to character 1 (range: 1-7 for players)
 };
+window.gameState = gameState;
 
 // Helper function to update balance display
 function updateBalanceDisplay(balance) {
@@ -136,15 +137,16 @@ document.addEventListener('DOMContentLoaded', async () => {
         await gameState.audioManager.loadSound('impact', '/sounds/sfx/impact.ogg');
         await gameState.audioManager.loadSound('enemy_hurt', '/sounds/sfx/enemy_hurt.ogg');
         await gameState.audioManager.loadSound('enemy_death', '/sounds/sfx/enemy_death.ogg');
+        await gameState.audioManager.loadSound('portal_enter', '/sounds/sfx/portal_enter.ogg');
 
-        // Load background music
+        // Load footstep variations
+        await gameState.audioManager.loadSound('footstep_0', '/sounds/sfx/footstep_0.ogg');
+        await gameState.audioManager.loadSound('footstep_1', '/sounds/sfx/footstep_1.ogg');
+        await gameState.audioManager.loadSound('footstep_2', '/sounds/sfx/footstep_2.ogg');
+        await gameState.audioManager.loadSound('footstep_3', '/sounds/sfx/footstep_3.ogg');
+
+        // Load background music (don't auto-play on login screen)
         await gameState.audioManager.loadMusic('combat_theme', '/sounds/music/combat_theme.ogg');
-
-        // Start background music with fade-in
-        gameState.audioManager.playMusic('combat_theme', {
-            loop: true,
-            fadeIn: CONFIG.MUSIC_FADE_DURATION || 2.0
-        });
     }
 
     // Check for saved username
@@ -177,6 +179,17 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Initialize character selection grid after sprites are loaded
     initCharacterSelector();
+
+    // Resume AudioContext on first user interaction (browser autoplay policy)
+    const resumeAudio = () => {
+        if (gameState.audioManager?.context?.state === 'suspended') {
+            gameState.audioManager.context.resume();
+        }
+        document.removeEventListener('click', resumeAudio);
+        document.removeEventListener('keydown', resumeAudio);
+    };
+    document.addEventListener('click', resumeAudio);
+    document.addEventListener('keydown', resumeAudio);
 });
 
 function setupEventListeners() {

@@ -612,6 +612,13 @@ class TankGame {
         this.game.spawnDeathParticles(tank.x, tank.y);
         this.game.triggerScreenShake(C.SCREEN_SHAKE_ENEMY_KILL || 4, 0.15);
 
+        // Play death sound
+        if (typeof gameState !== 'undefined' && gameState.audioManager) {
+            gameState.audioManager.playSound('enemy_death', {
+                volume: C.AUDIO_ENEMY_DEATH_VOLUME || 0.6
+            });
+        }
+
         // Coin reward via existing enemy kill system
         if (this.game.onEnemyKilled) {
             this.game.onEnemyKilled(`tank-${this.currentWave}-${index}`, tank.x, tank.y);
