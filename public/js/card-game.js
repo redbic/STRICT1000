@@ -2,6 +2,208 @@
 // Full screen takeover — replaces game update/draw entirely
 // Dark candlelit atmosphere, turn-based combat, sacrifice mechanic
 
+// ==========================================
+// Procedural Audio — all sounds synthesized
+// ==========================================
+class CardAudio {
+    constructor() {
+        try {
+            this.ctx = new (window.AudioContext || window.webkitAudioContext)();
+            this.master = this.ctx.createGain();
+            this.master.gain.value = 0.35;
+            this.master.connect(this.ctx.destination);
+        } catch (_) {
+            this.ctx = null;
+        }
+    }
+
+    resume() {
+        if (this.ctx && this.ctx.state === 'suspended') this.ctx.resume();
+    }
+
+    // -- Utility helpers --
+
+    _osc(type, freq, duration, vol = 0.3, freqEnd = null) {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const o = this.ctx.createOscillator();
+        const g = this.ctx.createGain();
+        o.type = type;
+        o.frequency.setValueAtTime(freq, now);
+        if (freqEnd !== null) o.frequency.exponentialRampToValueAtTime(Math.max(freqEnd, 20), now + duration);
+        g.gain.setValueAtTime(vol, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        o.connect(g).connect(this.master);
+        o.start(now);
+        o.stop(now + duration);
+    }
+
+    _noise(duration, vol = 0.15, filterFreq = 4000, filterEnd = null) {
+        if (!this.ctx) return;
+        const now = this.ctx.currentTime;
+        const len = Math.max(1, Math.floor(this.ctx.sampleRate * duration));
+        const buf = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
+        const src = this.ctx.createBufferSource();
+        src.buffer = buf;
+        const filt = this.ctx.createBiquadFilter();
+        filt.type = 'lowpass';
+        filt.frequency.setValueAtTime(filterFreq, now);
+        if (filterEnd !== null) filt.frequency.exponentialRampToValueAtTime(Math.max(filterEnd, 20), now + duration);
+        const g = this.ctx.createGain();
+        g.gain.setValueAtTime(vol, now);
+        g.gain.exponentialRampToValueAtTime(0.001, now + duration);
+        src.connect(filt).connect(g).connect(this.master);
+        src.start(now);
+        src.stop(now + duration);
+    }
+
+    _chord(freqs, duration, type = 'sine', vol = 0.12) {
+        freqs.forEach(f => this._osc(type, f, duration, vol));
+    }
+
+    // -- Game event sounds --
+
+    cardSelect() {
+        this.resume();
+        this._osc('sine', 900, 0.06, 0.2, 1400);
+    }
+
+    cardPlace() {
+        this.resume();
+        // Table thud + paper slap
+        this._osc('sine', 90, 0.12, 0.35, 40);
+        this._noise(0.08, 0.12, 2000, 400);
+    }
+
+    sacrifice() {
+        this.resume();
+        // Dark resonant sweep downward
+        this._osc('sawtooth', 250, 0.35, 0.2, 50);
+        this._osc('sine', 120, 0.4, 0.15, 40);
+        this._noise(0.2, 0.08, 1500, 200);
+    }
+
+    sacrificeComplete() {
+        this.resume();
+        // Blood payment gong
+        this._osc('sine', 160, 0.5, 0.25, 80);
+        this._osc('sine', 320, 0.35, 0.12, 160);
+        this._noise(0.15, 0.1, 3000, 500);
+    }
+
+    bellRing() {
+        this.resume();
+        // Metallic bell with harmonics
+        this._osc('sine', 880, 0.8, 0.2);
+        this._osc('sine', 1320, 0.6, 0.1);
+        this._osc('sine', 2640, 0.4, 0.06);
+        this._osc('triangle', 440, 0.9, 0.08);
+    }
+
+    attack() {
+        this.resume();
+        // Quick impact slash
+        this._noise(0.1, 0.2, 3000, 600);
+        this._osc('sine', 100, 0.08, 0.25, 50);
+    }
+
+    directDamage() {
+        this.resume();
+        // Heavy HP hit
+        this._osc('sine', 65, 0.2, 0.35, 30);
+        this._noise(0.15, 0.18, 2500, 300);
+        this._osc('square', 80, 0.1, 0.08, 40);
+    }
+
+    cardDeath() {
+        this.resume();
+        // Crumble / shatter
+        this._noise(0.3, 0.15, 5000, 200);
+        this._osc('sawtooth', 180, 0.25, 0.1, 40);
+    }
+
+    drawCard() {
+        this.resume();
+        // Paper shuffle swoosh
+        this._noise(0.07, 0.1, 6000, 2000);
+    }
+
+    drawSquirrel() {
+        this.resume();
+        // Cute chirp
+        this._osc('sine', 1200, 0.08, 0.15, 1800);
+        setTimeout(() => this._osc('sine', 1400, 0.06, 0.12, 2000), 80);
+    }
+
+    dealerPlace() {
+        this.resume();
+        // Darker thud
+        this._osc('sine', 60, 0.15, 0.3, 30);
+        this._noise(0.1, 0.1, 1200, 300);
+    }
+
+    airborneAttack() {
+        this.resume();
+        // Whoosh overhead
+        this._noise(0.25, 0.12, 800, 4000);
+        this._osc('sine', 300, 0.2, 0.08, 800);
+    }
+
+    deathtouchKill() {
+        this.resume();
+        // Poison hiss + death
+        this._noise(0.3, 0.15, 8000, 3000);
+        this._osc('sawtooth', 400, 0.2, 0.08, 100);
+    }
+
+    cancelAction() {
+        this.resume();
+        // Soft low click
+        this._osc('sine', 400, 0.04, 0.15, 300);
+    }
+
+    victory() {
+        this.resume();
+        // Major chord - C E G (triumphant)
+        this._chord([262, 330, 392], 1.2, 'sine', 0.15);
+        this._chord([524, 660, 784], 0.8, 'triangle', 0.06);
+        // Rising shimmer
+        setTimeout(() => this._osc('sine', 784, 0.6, 0.1, 1568), 200);
+    }
+
+    defeat() {
+        this.resume();
+        // Minor chord - C Eb Gb (ominous)
+        this._chord([131, 156, 185], 1.5, 'sawtooth', 0.08);
+        this._chord([262, 311, 370], 1.2, 'sine', 0.06);
+        // Low rumble
+        this._osc('sine', 50, 1.5, 0.12, 25);
+    }
+
+    turnStart() {
+        this.resume();
+        // Subtle ambient tone
+        this._osc('sine', 220, 0.3, 0.06, 260);
+        this._osc('triangle', 330, 0.2, 0.03);
+    }
+
+    combatStart() {
+        this.resume();
+        // Tension build
+        this._osc('sine', 150, 0.4, 0.1, 200);
+        this._noise(0.15, 0.06, 1000, 400);
+    }
+
+    introAmbience() {
+        this.resume();
+        // Dark ambient drone
+        this._osc('sine', 80, 2.0, 0.08, 75);
+        this._osc('triangle', 120, 1.5, 0.04, 110);
+    }
+}
+
 class CardGame {
     constructor(game) {
         this.game = game;
@@ -70,10 +272,14 @@ class CardGame {
         this.candleFlicker = 1.0;
         this.candleTimer = 0;
 
+        // Procedural audio
+        this.audio = new CardAudio();
+
         // Start intro
         this.queueDealerText("Ah... a visitor.");
         this.queueDealerText("Sit. Let us play a game.");
         this.speakDealer("Ah, a visitor. Sit. Let us play a game.");
+        this.audio.introAmbience();
         this.stateTimer = 4.0;
 
         // Hide game UI during card game
@@ -145,12 +351,15 @@ class CardGame {
     }
 
     drawCards(count) {
+        let drawn = 0;
         for (let i = 0; i < count; i++) {
             if (this.playerHand.length >= 10) break;
             if (this.deck.length > 0) {
                 this.playerHand.push(this.deck.pop());
+                drawn++;
             }
         }
+        if (drawn > 0) this.audio.drawCard();
     }
 
     drawSquirrel() {
@@ -160,6 +369,7 @@ class CardGame {
         } else {
             this.playerHand.push(this.createCard('squirrel'));
         }
+        this.audio.drawSquirrel();
     }
 
     // ==================
@@ -171,6 +381,8 @@ class CardGame {
         this.turn++;
         this.sacrificeMode = false;
         this.sacrificeTarget = null;
+
+        this.audio.turnStart();
 
         // Draw 1 card + 1 free squirrel
         this.drawCards(1);
@@ -211,9 +423,11 @@ class CardGame {
         // Remove the card from the board (sacrifice it)
         this.playerBoard[laneIndex] = null;
         this.sacrificeCount++;
+        this.audio.sacrifice();
 
         if (this.sacrificeCount >= this.sacrificeNeeded) {
             // Place the card
+            this.audio.sacrificeComplete();
             this.placeCard(this.sacrificeTarget.handIndex, this.sacrificeTarget.laneIndex);
             this.sacrificeMode = false;
             this.sacrificeTarget = null;
@@ -224,6 +438,7 @@ class CardGame {
         const card = this.playerHand.splice(handIndex, 1)[0];
         card.justPlayed = true;
         this.playerBoard[laneIndex] = card;
+        this.audio.cardPlace();
     }
 
     ringBell() {
@@ -232,9 +447,15 @@ class CardGame {
         this.stateTimer = 0.5;
         this.sacrificeMode = false;
         this.sacrificeTarget = null;
+        this.audio.bellRing();
     }
 
     resolveCombat() {
+        this.audio.combatStart();
+        let anyAttack = false;
+        let anyDeath = false;
+        let anyDirectDmg = false;
+
         // Player creatures attack first
         for (let i = 0; i < this.LANES; i++) {
             const attacker = this.playerBoard[i];
@@ -253,21 +474,32 @@ class CardGame {
                 if (defender && attacker.sigil === 'airborne' && defender.sigil !== 'mighty_leap') {
                     // Airborne bypasses this blocker — direct damage to dealer
                     this.dealerHP -= attacker.attack;
+                    this.audio.airborneAttack();
+                    anyDirectDmg = true;
                 } else if (defender) {
                     if (attacker.sigil === 'deathtouch') {
                         defender.currentHealth = 0;
+                        this.audio.deathtouchKill();
                     } else {
                         defender.currentHealth -= attacker.attack;
+                        anyAttack = true;
                     }
                     if (defender.currentHealth <= 0) {
                         this.dealerBoard[lane] = null;
+                        anyDeath = true;
                     }
                 } else {
                     // No defender — direct damage to dealer
                     this.dealerHP -= attacker.attack;
+                    anyDirectDmg = true;
                 }
             });
         }
+
+        // Play aggregate sounds (avoid overlapping too many)
+        if (anyAttack) this.audio.attack();
+        if (anyDeath) this.audio.cardDeath();
+        if (anyDirectDmg) this.audio.directDamage();
 
         // Check win
         if (this.dealerHP <= 0) {
@@ -275,8 +507,13 @@ class CardGame {
             this.stateTimer = 0;
             this.queueDealerText("...Impossible.");
             this.speakDealer("Impossible.");
+            this.audio.victory();
             return;
         }
+
+        let anyDealerAttack = false;
+        let anyDealerDeath = false;
+        let anyDealerDirectDmg = false;
 
         // Dealer creatures attack
         for (let i = 0; i < this.LANES; i++) {
@@ -288,21 +525,30 @@ class CardGame {
                 // Check for mighty_leap blocking airborne
                 if (attacker.sigil === 'airborne' && defender.sigil !== 'mighty_leap') {
                     this.playerHP -= attacker.attack;
+                    this.audio.airborneAttack();
+                    anyDealerDirectDmg = true;
                 } else {
                     defender.currentHealth -= attacker.attack;
+                    anyDealerAttack = true;
                     if (defender.currentHealth <= 0) {
                         // Check undying sigil
                         if (defender.sigil === 'undying') {
                             defender.currentHealth = 1;
                         } else {
                             this.playerBoard[i] = null;
+                            anyDealerDeath = true;
                         }
                     }
                 }
             } else {
                 this.playerHP -= attacker.attack;
+                anyDealerDirectDmg = true;
             }
         }
+
+        if (anyDealerAttack) this.audio.attack();
+        if (anyDealerDeath) this.audio.cardDeath();
+        if (anyDealerDirectDmg) this.audio.directDamage();
 
         // Check loss
         if (this.playerHP <= 0) {
@@ -310,6 +556,7 @@ class CardGame {
             this.stateTimer = 0;
             this.queueDealerText("How... unfortunate.");
             this.speakDealer("How unfortunate.");
+            this.audio.defeat();
             return;
         }
 
@@ -341,6 +588,7 @@ class CardGame {
                 }
 
                 this.dealerBoard[i] = this.createCard(cardId);
+                this.audio.dealerPlace();
             }
         }
 
@@ -386,6 +634,8 @@ class CardGame {
             this.state = 'playerTurn';
             this.turn = 1;
             this.stateTimer = 0;
+            this.audio.resume();
+            this.audio.bellRing();
             return;
         }
 
@@ -402,6 +652,7 @@ class CardGame {
             // Penalty and restart or exit
             const C = typeof CONFIG !== 'undefined' ? CONFIG : {};
             // Restart game
+            this.audio.bellRing();
             this.restart();
             return;
         }
@@ -435,6 +686,7 @@ class CardGame {
             // Right-click or click elsewhere to cancel (handled by right-click context menu being prevented)
             // Cancel if clicking elsewhere
             this.cancelSacrifice();
+            this.audio.cancelAction();
             return;
         }
 
@@ -444,6 +696,7 @@ class CardGame {
             if (this.isPointInRect(x, y, cardRect)) {
                 // Selected a card — now need a lane
                 this.selectedHandCard = i;
+                this.audio.cardSelect();
                 return;
             }
         }
@@ -1224,6 +1477,10 @@ class CardGame {
         // Stop any ongoing TTS
         if (typeof window !== 'undefined' && window.speechSynthesis) {
             window.speechSynthesis.cancel();
+        }
+        // Close audio context
+        if (this.audio && this.audio.ctx) {
+            this.audio.ctx.close().catch(() => {});
         }
     }
 }
