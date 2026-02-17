@@ -1227,3 +1227,8 @@ class CardGame {
         }
     }
 }
+
+// Register with minigame registry
+if (typeof registerMinigame === 'function') {
+    registerMinigame('cardgame', CardGame);
+}

@@ -359,15 +359,13 @@ class Game {
 
         this.gameStarted = true;
 
-        // Minigame lifecycle: detect ruleset and create controller
+        // Minigame lifecycle: detect ruleset and create controller via registry
         if (this.activeMinigame) {
             this.activeMinigame.destroy();
             this.activeMinigame = null;
         }
-        if (this.zone && this.zone.ruleset === 'tanks' && typeof TankGame !== 'undefined') {
-            this.activeMinigame = new TankGame(this);
-        } else if (this.zone && this.zone.ruleset === 'cardgame' && typeof CardGame !== 'undefined') {
-            this.activeMinigame = new CardGame(this);
+        if (this.zone && this.zone.ruleset && typeof createMinigame === 'function') {
+            this.activeMinigame = createMinigame(this.zone.ruleset, this);
         }
     }
     

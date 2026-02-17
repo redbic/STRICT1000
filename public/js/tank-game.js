@@ -512,3 +512,8 @@ class TankGame {
         this.healthPickups = [];
     }
 }
+
+// Register with minigame registry
+if (typeof registerMinigame === 'function') {
+    registerMinigame('tanks', TankGame);
+}

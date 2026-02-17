@@ -67,7 +67,34 @@ const ZoneLoader = {
     },
 
     /**
-     * Clear the cache
+     * Load zone data directly from an object (for server-generated/procedural zones).
+     * Bypasses JSON file loading — stores directly into cache.
+     * @param {string} zoneId - Zone identifier
+     * @param {Object} zoneData - Zone data object
+     * @returns {Object} The processed zone data
+     */
+    loadFromData(zoneId, zoneData) {
+        // Build floor map if floor data exists
+        if (zoneData.floor && zoneData.floor.tiles) {
+            zoneData.floorMap = new Map();
+            zoneData.floor.tiles.forEach(tile => {
+                zoneData.floorMap.set(`${tile.x},${tile.y}`, tile);
+            });
+        }
+        this.cache.set(zoneId, zoneData);
+        return zoneData;
+    },
+
+    /**
+     * Remove a specific zone from the cache (for disposable/temporary zones).
+     * @param {string} zoneId - Zone identifier to evict
+     */
+    clearZone(zoneId) {
+        this.cache.delete(zoneId);
+    },
+
+    /**
+     * Clear the entire cache
      */
     clearCache() {
         this.cache.clear();
